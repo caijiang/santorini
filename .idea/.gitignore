@@ -1,0 +1,7 @@
+httpRequests/
+inspectionProfiles/
+gradle.xml
+kotlinc.xml
+misc.xml
+workspace.xml
+ApifoxUploaderProjectSetting.xml
