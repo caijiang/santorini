@@ -33,15 +33,15 @@ fun Application.configureSecurity(
         oauth("auth-oauth-feishu") {
             client = httpClient
             // 是我方的回调地址 必须写到对方后台去
-            urlProvider = { "http://localhost:8080/callbackFeishu" }
+            urlProvider = { System.getenv("FEISHU_CALLBACK_URL") }
             providerLookup = {
                 OAuthServerSettings.OAuth2ServerSettings(
                     name = "feishu",
                     authorizeUrl = "https://accounts.feishu.cn/open-apis/authen/v1/authorize",
                     accessTokenUrl = "https://open.feishu.cn/open-apis/authen/v2/oauth/token",
                     requestMethod = HttpMethod.Post,
-                    clientId = "cli_a65cc60f00ee900c",
-                    clientSecret = "jNbIn9mYRmM8yBf1rMnIRdItgPQj2Fc3"
+                    clientId = System.getenv("FEISHU_APP_ID"),
+                    clientSecret = System.getenv("FEISHU_APP_SECRET")
                 )
             }
         }

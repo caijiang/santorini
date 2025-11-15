@@ -5,7 +5,7 @@ import io.ktor.server.sessions.*
 import kotlinx.serialization.json.Json
 import java.util.Base64
 
-private val key = Base64.getDecoder().decode(System.getenv("SESSION-KEY"))
+private val key = Base64.getDecoder().decode(System.getenv("SESSION_KEY"))
 
 fun RoutingCall.saveUserData(data: InSiteUserData?) {
     if (data == null) sessions.clear<String>()
