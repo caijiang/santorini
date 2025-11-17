@@ -40,4 +40,10 @@ public class Demos {
         Utils.findOrCreateServiceAccountAndAssignRoles(client, root, Map.of("foo", "bar"), role);
         Utils.findOrCreateServiceAccountAndAssignRoles(client, root, Map.of("foo", "bar2"), Utils.findRole(root, "manager", client));
     }
+
+    public static void case3() {
+        KubernetesClient client = new KubernetesClientBuilder().build();
+        Utils.createTokenForServiceAccount(client, "user-account79rx6", client.getNamespace())
+                .join();
+    }
 }

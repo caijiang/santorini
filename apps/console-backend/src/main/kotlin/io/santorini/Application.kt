@@ -35,4 +35,5 @@ private fun Application.consoleModuleEntry(
     configureSecurity(httpClient, kubernetesClient, audit)
     configureHTTP()
     configureRouting()
+    configureKubernetes(kubernetesClient)
 }

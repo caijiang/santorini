@@ -32,4 +32,11 @@ object Utils {
         labels: Map<String, String>,
         vararg roles: Role
     ) = client.findOrCreateServiceAccountAndAssignRoles(root, labels, *roles)
+
+    @JvmStatic
+    fun createTokenForServiceAccount(
+        client: KubernetesClient = KubernetesClientBuilder().build(),
+        serviceAccountName: String,
+        namespace: String
+    ) = client.createTokenForServiceAccount(serviceAccountName, namespace)
 }
