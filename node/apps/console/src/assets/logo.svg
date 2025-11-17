@@ -1,0 +1,24 @@
+<svg fill="none" height="64" viewBox="0 0 64 64" width="64" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆环（高级感） -->
+  <circle cx="32" cy="32" r="24" stroke="var(--ant-color-primary)" stroke-opacity="0.2" stroke-width="2"/>
+
+  <!-- 主体：盾牌+钥匙孔（私密+Root权限） -->
+  <path d="M32 12L16 24V36C16 46 24 52 32 52C40 52 48 46 48 36V24L32 12Z"
+        fill="url(#gradient)"
+        stroke="var(--ant-color-border)"/>
+
+  <!-- 钥匙孔（Root权限隐喻） -->
+  <circle cx="32" cy="32" fill="var(--ant-color-bg-container)" r="6"/>
+  <rect fill="var(--ant-color-text)" height="8" rx="2" width="4" x="30" y="20"/>
+
+  <!-- 高光效果（明亮感） -->
+  <path d="M32 16L44 24V32" opacity="0.5" stroke="white" stroke-linecap="round" stroke-width="2"/>
+
+  <!-- 渐变定义（高级感） -->
+  <defs>
+    <linearGradient gradientUnits="userSpaceOnUse" id="gradient" x1="32" x2="32" y1="12" y2="52">
+      <stop stop-color="var(--ant-color-primary)" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="var(--ant-color-primary)" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+</svg>
