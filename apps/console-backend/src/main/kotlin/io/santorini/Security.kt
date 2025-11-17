@@ -2,24 +2,28 @@ package io.santorini
 
 import common.LoginUser
 import io.fabric8.kubernetes.client.KubernetesClient
-import io.fabric8.kubernetes.client.KubernetesClientBuilder
 import io.ktor.client.*
-import io.ktor.client.engine.apache.*
 import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
+import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.santorini.kubernetes.findOrCreateServiceAccount
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 
 fun Application.configureSecurity(
-    httpClient: HttpClient = HttpClient(Apache),
-    kubernetesClient: KubernetesClient = KubernetesClientBuilder().build(),
-    audit: OAuthPlatformUserDataAudit = EnvOAuthPlatformUserDataAudit
+    httpClient: HttpClient,
+    kubernetesClient: KubernetesClient,
+    audit: OAuthPlatformUserDataAudit
 ) {
+    install(ContentNegotiation) {
+        json(Json)
+    }
     install(Sessions) {
 //        cookie<UserSession>("USER_SESSION") {
 //            cookie.extensions["SameSite"] = "lax"
@@ -66,6 +70,7 @@ fun Application.configureSecurity(
         get("currentLogin") {
 // 401
             val user = call.queryUserData()
+            log.debug("Getting user data from data: {}", user)
             if (user == null) {
                 call.respond(HttpStatusCode.Unauthorized)
             } else {
@@ -104,7 +109,7 @@ fun Application.configureSecurity(
                         account.metadata.name
                     )
                 )
-                call.respondRedirect("/hello")
+                call.respondRedirect("/")
             }
         }
         authenticate("auth-oauth-google") {

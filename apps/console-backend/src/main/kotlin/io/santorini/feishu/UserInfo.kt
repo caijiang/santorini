@@ -17,6 +17,6 @@ data class UserInfo(
     val avatarUrl: String,
     @SerialName("open_id")
     val openId: String,
-    @SerialName("user_id")
-    val userId: String,
+//    @SerialName("user_id")
+//    val userId: String,
 )

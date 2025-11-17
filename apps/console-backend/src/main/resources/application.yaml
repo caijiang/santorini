@@ -1,6 +1,6 @@
 ktor:
   application:
     modules:
-      - io.santorini.ApplicationKt.module
+      - io.santorini.ApplicationKt.consoleModule
   deployment:
     port: 8080

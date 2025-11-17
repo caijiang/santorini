@@ -23,6 +23,7 @@ fun KubernetesClient.findOrCreateServiceAccountAndAssignRoles(
         .firstOrNull()
 
     if (current != null) {
+        // TODO 用户可能有了，权限没有分配呢？
         return current
     }
 
@@ -52,13 +53,11 @@ fun KubernetesClient.findOrCreateServiceAccountAndAssignRoles(
         .let {
             var c = it
             for (role in roles) {
-                c = c.addNewSubject()
+                c = c.withNewRoleRef()
                     .withApiGroup("rbac.authorization.k8s.io")
                     .withKind("Role")
-                    .withNamespace(role.metadata.namespace)
                     .withName(role.metadata.name)
-                    .endSubject()
-//                c = c.addNewSubject("rbac.authorization.k8s.io", "Role", role.metadata.name, role.metadata.namespace)
+                    .endRoleRef()
             }
             c
         }

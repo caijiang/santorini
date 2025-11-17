@@ -1,11 +1,12 @@
 package io.santorini
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import kotlinx.serialization.json.Json
-import java.util.Base64
 
-private val key = Base64.getDecoder().decode(System.getenv("SESSION_KEY"))
+private val key = System.getenv("SESSION_KEY")?.toByteArray(Charsets.UTF_8) ?: AesGcmCrypto.generateKey()
+private val log = KotlinLogging.logger {}
 
 fun RoutingCall.saveUserData(data: InSiteUserData?) {
     if (data == null) sessions.clear<String>()
@@ -17,5 +18,7 @@ fun RoutingCall.saveUserData(data: InSiteUserData?) {
 
 fun RoutingCall.queryUserData(): InSiteUserData? {
     val current = sessions.get<String>() ?: return null
-    return Json.decodeFromString<InSiteUserData>(AesGcmCrypto.decrypt(current, key))
+    log.debug { "Getting user data from data: $current" }
+    val s1 = AesGcmCrypto.decrypt(current, key)
+    return Json.decodeFromString<InSiteUserData>(s1)
 }

@@ -1,21 +1,18 @@
 package io.santorini
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.auth.*
-import io.ktor.utils.io.*
 import io.santorini.feishu.ResponseBody
 import io.santorini.feishu.UserInfo
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
-import kotlinx.serialization.json.io.decodeFromSource
 import java.security.MessageDigest
-import java.util.Base64
+import java.util.*
 
 //对外访问的 auth
+private val log = KotlinLogging.logger {}
 
 /**
  * 认证平台
@@ -40,6 +37,7 @@ interface OAuthPlatformUserData {
     val stablePk: String
     val name: String
     val avatarUrl: String
+
     @Suppress("unused")
     val hashId: String
         get() {
@@ -74,11 +72,12 @@ suspend fun OAuthAccessTokenResponse.OAuth2.fetchData(
 //        https://open.feishu.cn/document/server-docs/authentication-management/login-state-management/get?appId=cli_a65cc60f00ee900c
         // https://open.feishu.cn/document/server-docs/contact-v3/user/get?appId=cli_a65cc60f00ee900c
         // https://open.feishu.cn/document/server-docs/contact-v3/group/member_belong
+        log.info { "Fetching OAuth Platform.${platform.name};$tokenType $accessToken" }
         return client.get {
             method = HttpMethod.Get
             url("https://open.feishu.cn/open-apis/authen/v1/user_info")
             headers {
-                append("Authorization", "${extraParameters["token_type"]} $accessToken")
+                append("Authorization", "$tokenType $accessToken")
                 append("Content-Type", "application/json; charset=utf-8")
             }
         }.body<ResponseBody<UserInfo>>().makeSureSuccessWithResult().let {
