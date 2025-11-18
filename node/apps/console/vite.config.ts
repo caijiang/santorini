@@ -8,6 +8,7 @@ export default defineConfig(() => ({
   server: {
     proxy: {
       '/currentLogin': 'https://op.k8s.mingshz.com',
+      '/token': 'https://op.k8s.mingshz.com',
       '/password**': 'https://op.k8s.mingshz.com',
       '/passkeyHelp**': 'https://op.k8s.mingshz.com',
       '/kubernetes': 'https://op.k8s.mingshz.com',

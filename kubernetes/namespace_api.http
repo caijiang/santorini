@@ -1,0 +1,3 @@
+### a
+GET {{url}}/api/v1/namespaces
+Authorization: Bearer {{JWT}}

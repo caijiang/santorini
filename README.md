@@ -8,6 +8,7 @@
 2. 可以管理版本,包括查看历史版本，发布新版，重启
 3. 可以查看日志
 4. 可以查看节点运行状况
+5. 允许跨 namespace 管理,但只有除了`default`其他需要声明才可以
 
 ## 是什么
 
@@ -22,30 +23,14 @@
 
 ### 服务
 
-
+不同于 kubernetes 所阐述的服务概念，这里的服务更偏向于部署物作为基本的管理单位，可以对此分配角色：负责人，技术负责人等等。
 
 ### 环境
 
-空间内对环境的描述，包括基本环境和命名环境。
+等同于 kubernetes 所托管 namespace.
 
-This project uses [Gradle](https://gradle.org/).
-To build and run the application, use the *Gradle* tool window by clicking the Gradle icon in the right-hand toolbar,
-or run it directly from the terminal:
+## 统一约束
 
-* Run `./gradlew run` to build and run the application.
-* Run `./gradlew build` to only build the application.
-* Run `./gradlew check` to run all checks, including tests.
-* Run `./gradlew clean` to clean all build outputs.
+### labels
 
-Note the usage of the Gradle Wrapper (`./gradlew`).
-This is the suggested way to use Gradle in production projects.
-
-[Learn more about the Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html).
-
-[Learn more about Gradle tasks](https://docs.gradle.org/current/userguide/command_line_interface.html#common_tasks).
-
-This project follows the suggested multi-module setup and consists of the `app` and `utils` subprojects.
-The shared build logic was extracted to a convention plugin located in `buildSrc`.
-
-This project uses a version catalog (see `gradle/libs.versions.toml`) to declare and version dependencies
-and both a build cache and a configuration cache (see `gradle.properties`).
+- santorini.io/manageable=true 表示这个 kubernetes 资源由本系统委托管理。

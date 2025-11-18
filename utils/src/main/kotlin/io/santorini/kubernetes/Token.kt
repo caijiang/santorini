@@ -25,7 +25,7 @@ fun KubernetesClient.createTokenForServiceAccount(
   "apiVersion": "authentication.k8s.io/v1",
   "kind": "TokenRequest",
   "spec": {
-    "audiences": ["api"],
+    "audiences": ["https://kubernetes.default.svc.cluster.local"],
     "expirationSeconds": 86400
   }
 }"""

@@ -47,5 +47,8 @@ bin/
 # kotlin
 .kotlin/
 
+# 通常
+http-client.private.env.json
+
 # 特殊
 local-upload-sftp-config.json

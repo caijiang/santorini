@@ -1,0 +1,29 @@
+import {createApi} from '@reduxjs/toolkit/query/react';
+import {apiBase} from "@private-everest/app-support";
+
+export const tokenApi = createApi({
+      reducerPath: 'consoleTokenApi',
+      baseQuery: apiBase,
+      tagTypes: ['kubernetesJWTToken'],
+      endpoints: (build) => {
+        return {
+          // queryFn
+          kubernetesJWTToken: build.query<string, undefined>(
+            {
+              providesTags: ['kubernetesJWTToken'],
+              query: () => ({
+                url: '/token',
+                method: 'POST'
+              })
+            }
+          ),
+        }
+          ;
+      },
+    }
+  )
+;
+
+export const {
+  useKubernetesJWTTokenQuery,
+} = tokenApi;
