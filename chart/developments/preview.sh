@@ -5,5 +5,9 @@ CHART_DIR="$(dirname "$SCRIPT_DIR")"
 echo "脚本目录: $SCRIPT_DIR"
 echo "上一级目录: $CHART_DIR"
 
-kubectl apply -f "${SCRIPT_DIR}/preview/*.yaml"
-
+if [ $1 = "-D" ]; then
+  echo 准备删除
+  kubectl delete -f "${SCRIPT_DIR}/preview/**/*.yaml" -f "${SCRIPT_DIR}/preview/*.yaml"
+else
+  kubectl apply -f "${SCRIPT_DIR}/preview/**/*.yaml" -f "${SCRIPT_DIR}/preview/*.yaml"
+fi

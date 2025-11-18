@@ -1,0 +1,36 @@
+# 负责创建 configMap 和 secret 来存储 mysql 的连接信息
+# common-required-1761823733-mysqlSettings.namespace.svc.cluster.local
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.santoriniName" . }}
+  labels:
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+data:
+  mysql-database: {{ .Values.santorini.mysql.name | default "santorini" | quote }}
+{{- if not .Values.santorini.mysql.enable }}
+  # 这里是使用自配的 mysql
+  mysql-host: {{ .Values.santorini.mysql.host | required "santorini.mysql.host is required / santorini.mysql.host 必须填写" | quote }}
+  mysql-port: {{ .Values.santorini.mysql.port | quote }}
+  mysql-root-username: {{ .Values.santorini.mysql.rootName | quote }}
+  mysql-username: {{ .Values.santorini.mysql.username | default "santorini" | quote }}
+  # 如果不存在的话 就自动创建
+  {{- if .Values.santorini.mysql.username }}
+  mysql-create-username: "false"
+  {{- else }}
+  mysql-create-username: "true"
+  {{- end }}
+  {{- if .Values.santorini.mysql.name }}
+  mysql-create-database: "false"
+  {{- else }}
+  mysql-create-database: "true"
+  {{- end}}
+{{- else }}
+  # 这里使用的是内置的 mysql
+  mysql-host: {{ include "common.mysqlName" . | quote }}
+  mysql-port: "3306"
+  mysql-root-username: {{ .Values.santorini.mysql.rootName | quote }}
+  mysql-username: {{ .Values.santorini.mysql.username | default "santorini" | quote }}
+  mysql-create-username: "true"
+  mysql-create-database: "true"
+{{- end }}

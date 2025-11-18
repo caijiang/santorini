@@ -1,0 +1,35 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  # 这里扮演的是pod
+  name: release-name-santorini-santorini
+  labels:
+    helm.sh/chart: santorini-0.1.0
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: "0.0.1"
+rules:
+  - apiGroups: [ "rbac.authorization.k8s.io" ]
+    resources: [ "rolebindings" ]
+    resourceNames: [ ]
+    verbs: [ "get", "list", "watch", "create", "update", "delete" ]
+  # 允许新增 ServiceAccount
+  - apiGroups: [ "" ]
+    resources: [ "serviceaccounts" ]
+    resourceNames: [ ]
+    verbs: [ "get","list","create" ]
+  # 允许获取自己的pod信息
+  - apiGroups: [ "*" ]
+    resources: [ "pods","replicasets","deployments" ]
+    resourceNames: [ ]
+    verbs: [ "get","list" ]
+  # 允许获取 Role 信息
+  - apiGroups: [ "rbac.authorization.k8s.io" ]
+    resources: [ "roles" ]
+    resourceNames: [ ]
+    verbs: [ "get","list" ]
+  # 允许创建 token
+  - apiGroups: [ "" ]
+    resources: [ "serviceaccounts/token" ]
+    verbs: [ "create" ]
+    resourceNames: [ ]

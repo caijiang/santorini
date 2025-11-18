@@ -24,6 +24,12 @@ helm unittest .
 
 毕竟首次开发 chart 给整个流程定义一下几个阶段:
 
+### print
+
+打印阶段
+
+通过dry-run 进行 install
+
 ### preview
 
 预览阶段

@@ -7,6 +7,9 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/version: 0.0.1
     helm.sh/chart: santorini-0.1.0
+  annotations:
+    "meta.helm.sh/release-namespace": kube-santorini
+    "meta.helm.sh/release-name": release-name
   name: release-name-santorini-common-letsencrypt-issuer
 spec:
   acme:

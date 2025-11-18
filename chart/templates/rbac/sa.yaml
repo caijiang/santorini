@@ -1,0 +1,7 @@
+{{/*负责跑服务的 pod 身份*/}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "common.santoriniName" . }}
+  labels:
+    {{- include "common.labels.withoutName" . | nindent 4 }}

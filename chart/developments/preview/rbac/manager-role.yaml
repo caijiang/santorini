@@ -1,0 +1,16 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  # 这里扮演的是管理员
+  name: release-name-santorini-santorini-manager
+  labels:
+    santorini.io/role: manager
+    helm.sh/chart: santorini-0.1.0
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: "0.0.1"
+rules:
+  - apiGroups: [ "*" ]
+    resources: [ "pods","replicasets","deployments" ]
+    resourceNames: [ ]
+    verbs: [ "get","list" ]

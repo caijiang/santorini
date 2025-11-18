@@ -1,0 +1,4 @@
+domain: example.com
+
+santorini:
+  manager: foo

@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "common.santoriniName" . }}
+  labels:
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "common.santoriniName" . }}
+roleRef:
+  kind: Role
+  name: {{ include "common.santoriniName" . }}
+  apiGroup: rbac.authorization.k8s.io

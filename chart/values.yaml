@@ -3,16 +3,22 @@ masterEmail: ""
 # 主要工作域名，必填
 domain: ""
 
+# 缺省的 namespace
+#namespace: "kube-santorini"
+
 santorini:
-  # 默认则新增，有值则应用; 只要同时设置了 host 则认为使用自配的 mysql
   mysql:
+    # 只有声明了 false 才表示使用自配 mysql
     enable: true
     host: ""
+    # 保持默认，并且使用内置 mysql 则会自动新建
+    name: ""
     port: 3306
+    rootName: "root"
+    rootPassword: ""
+    #    如果填入则不会自动创建
     username: ""
     password: ""
-  # 数据库名称,默认则会自动新建，反之使用即有的
-  database: ""
   # 管理员名字，必须提供的
   manager: ""
   # 如果想自行定义host

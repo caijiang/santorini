@@ -1,0 +1,182 @@
+# 初始化容器有 2 个功能
+# 1. 检查是否需要建立数据库： 基于上方的配置 主机可通过 docker 指令: 构建一个mysql 环境: docker run -p 13306:3306 --rm --name create-database-test-mysql -d -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=op mysql:8.0.27
+# 2. 兼容之前的 JAVA_OPTS 为环境唯一要求的经典 boot 镜像组
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.santoriniConsoleBackendName" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "common.santoriniConsoleBackendName" . }}
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "common.santoriniConsoleBackendName" . }}
+      {{- include "common.matchLabels.withoutName" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "common.santoriniConsoleBackendName" . }}
+        {{- include "common.matchLabels.withoutName" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "common.santoriniName" . }}
+      volumes:
+        - name: shared-data
+          emptyDir: { }
+      initContainers:
+        - name: init-db
+          image: mysql:8.0.27
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" .}}
+                  key: mysql-database
+            - name: MYSQL_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-host
+            - name: MYSQL_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-port
+            - name: MYSQL_ROOT_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-root-username
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.mysqlName" . }}
+                  key: mysql-root-password
+                  optional: true
+            - name: MYSQL_CREATE_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-create-username
+            - name: MYSQL_CREATE_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-create-database
+            - name: MYSQL_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-password
+                  optional: false
+          command:
+            - sh
+            - -c
+            - |
+              echo "Running init SQL...MYSQL_CREATE_USERNAME:${MYSQL_CREATE_USERNAME},MYSQL_CREATE_DATABASE:${MYSQL_CREATE_DATABASE}"
+              export SQL_C="CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+              export SQL_G="GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';"
+              if [ ${MYSQL_CREATE_DATABASE} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;"; fi
+              if [ ${MYSQL_CREATE_USERNAME} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "$SQL_C"; fi
+              if [ ${MYSQL_CREATE_USERNAME} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "$SQL_G"; fi
+        - name: init-env
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - echo "DYNAMIC_VALUE=$(date +%s)" > /work/envfile
+          volumeMounts:
+            - name: shared-data
+              mountPath: /work
+      containers:
+        #  ctr -n k8s.io image import --base-name “santorini-console-backend:latest” /root/jib-image.tar
+        #  docker image load -i /root/jib-image.tar
+        #  docker run --rm -d --name santorini-console-backend -p 8080:8080 santorini-console-backend:latest
+        - name: console-backend
+          image: santorini-console-backend:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MANAGER_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: manager-name
+            - name: SESSION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: session
+            - name: FEISHU_CALLBACK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: feishu-url
+            - name: FEISHU_APP_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: feishu-id
+            - name: FEISHU_APP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: feishu-secret
+            - name: MYSQL_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-host
+            - name: MYSQL_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-port
+            - name: MYSQL_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-password
+                  optional: false
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            limits:
+              cpu: "250m"
+              memory: 256Mi
+            requests:
+              cpu: 125m
+              memory: 128Mi
+          volumeMounts:
+            - name: shared-data
+              mountPath: /work
+        - name: jshell
+          image: jshell-auto-v2:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              cpu: "500m"
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          volumeMounts:
+            - name: shared-data
+              mountPath: /work
+          command:
+            - sh
+            - -c
+            - |
+              sleep 360000
