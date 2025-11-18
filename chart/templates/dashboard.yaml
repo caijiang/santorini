@@ -1,0 +1,70 @@
+# 这里展示是怎么添加一个超级管理员
+# apiVersion: v1
+# kind: ServiceAccount
+# metadata:
+#   name: admin-user
+#   namespace: kubernetes-dashboard
+# ---
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRoleBinding
+# metadata:
+#   name: admin-user
+# roleRef:
+#   apiGroup: rbac.authorization.k8s.io
+#   kind: ClusterRole
+#   name: cluster-admin
+# subjects:
+# - kind: ServiceAccount
+#   name: admin-user
+#   namespace: kubernetes-dashboard
+# # kubectl -n kubernetes-dashboard create token admin-user
+# ---
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: admin-user
+#   namespace: kubernetes-dashboard
+#   annotations:
+#     kubernetes.io/service-account.name: "admin-user"
+# type: kubernetes.io/service-account-token
+
+# # kubectl get secret admin-user -n kubernetes-dashboard -o jsonpath="{.data.token}" | base64 -d
+
+# ---
+{{ $defaultIssuerName := (include "santorini.issuer" .) }}
+{{ if .Values.dashboard.expose }}
+{{- $defaultHost := printf "dashboard.%s" .Values.domain -}}
+{{/*# 定义 host 名字*/}}
+{{- $hostName := default $defaultHost .Values.dashboard.entrances.one.domain -}}
+{{- $issuerName := default $defaultIssuerName .Values.dashboard.entrances.one.issuerName -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # add an annotation indicating the issuer to use.
+    cert-manager.io/cluster-issuer: {{ $issuerName }}
+  name: "{{ include "common.names.fullname" . }}-dashboard-expose-0"
+  namespace: kubernetes-dashboard
+  labels:
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ $hostName }}
+      secretName: "{{ include "common.names.fullname" . }}-dashboard-expose-0-tls"
+  rules:
+    - host: {{ $hostName }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kubernetes-dashboard-kong-proxy
+                port:
+                  number: 443
+{{ end }}

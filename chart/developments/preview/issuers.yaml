@@ -1,0 +1,21 @@
+#file: noinspection KubernetesUnknownResourcesInspection
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  labels:
+    app.kubernetes.io/instance: RELEASE-NAME
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: 0.0.1
+    helm.sh/chart: santorini-0.1.0
+  name: release-name-santorini-common-letsencrypt-issuer
+spec:
+  acme:
+    email: manager@k8s.mingshz.com
+    privateKeySecretRef:
+      name: release-name-santorini-common-letsencrypt-issuer-account-key
+    profile: tlsserver
+    server: https://acme-v02.api.letsencrypt.org/directory
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: nginx

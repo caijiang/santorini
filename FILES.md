@@ -1,0 +1,7 @@
+- ai ai给的不错主意
+- apps 输出应用
+- buildSrc 构建逻辑（已经不被 gradle 官方推荐）
+- gradle gradle以及wrapper
+- kubernetes k8s 方面的训练
+- node 前端应用组
+- chart 整体体系打包好的 helm chart

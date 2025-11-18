@@ -31,6 +31,9 @@ tasks.register<UploadAndExecuteSshTask>("uploadAndExecuteSsh") {
 tasks.named("buildImage") {
     finalizedBy("uploadAndExecuteSsh")
 }
+tasks.named("test") {
+    finalizedBy(":chart:test")
+}
 
 //tasks.named("clean") {
 //    finalizedBy(tasks.named<UploadAndExecuteSshTask>("uploadAndExecuteSsh").apply {

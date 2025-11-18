@@ -1,0 +1,22 @@
+suite: test my deployment
+templates:
+  - issuers.yaml
+tests:
+  - it: should be a ClusterIssuer
+    set:
+      domain: example.com
+    asserts:
+      - isKind:
+          of: ClusterIssuer
+  - it: 入参只有 domain 时,masterEmail 自动生成
+    set:
+      domain: example.com
+    asserts:
+      - matchSnapshot: { }
+
+  - it: masterEmail有了就用传入的
+    set:
+      domain: not.com
+      masterEmail: foo@bar.com
+    asserts:
+      - matchSnapshot: { }
