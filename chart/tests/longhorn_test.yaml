@@ -1,0 +1,17 @@
+suite: 测试longhorn暴露功能
+templates:
+  - longhorn.yaml
+tests:
+  - it: 默认关闭
+    set:
+      domain: example.com
+    asserts:
+      - notExists:
+          path: '$.'
+  - it: 打开后,默认生成一个入口
+    set:
+      domain: example.com
+      longhorn:
+        expose: true
+    asserts:
+      - matchSnapshot: { }

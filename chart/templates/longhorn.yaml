@@ -1,0 +1,37 @@
+{{ $defaultIssuerName := (include "santorini.issuer" .) }}
+{{ if .Values.longhorn.expose }}
+{{- $defaultHost := printf "longhorn.%s" .Values.domain -}}
+{{/*# 定义 host 名字*/}}
+{{- $hostName := default $defaultHost .Values.longhorn.entrances.one.domain -}}
+{{- $issuerName := default $defaultIssuerName .Values.longhorn.entrances.one.issuerName -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # add an annotation indicating the issuer to use.
+    cert-manager.io/cluster-issuer: {{ $issuerName }}
+  name: "{{ include "common.names.fullname" . }}-longhorn-expose-0"
+  namespace: longhorn-system
+  labels:
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ $hostName }}
+      secretName: "{{ include "common.names.fullname" . }}-longhorn-expose-0-tls"
+  rules:
+    - host: {{ $hostName }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: longhorn-frontend
+                port:
+                  number: 80
+{{ end }}
