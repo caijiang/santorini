@@ -31,7 +31,7 @@ object Utils {
         root: HasMetadata,
         labels: Map<String, String>,
         vararg roles: Role
-    ) = client.findOrCreateServiceAccountAndAssignRoles(root, labels, *roles)
+    ) = client.findOrCreateServiceAccountAndAssignRoles(root, labels, roles.toList(), emptyList())
 
     @JvmStatic
     fun createTokenForServiceAccount(

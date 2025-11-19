@@ -1,5 +1,9 @@
 # console-backend
 
+## TODO
+
+- has been blocked for 2297 ms, time limit is 2000 ms
+
 ## 开发体验
 
 像这样只能跑在 kubernetes 的 app 是应该是怎么样的开发体验。

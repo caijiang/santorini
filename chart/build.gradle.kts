@@ -25,7 +25,7 @@ tasks.register("test") {
                 .start()
                 .onExit()
                 .join()
-            ps.inputReader().readAllLines().forEach { line -> logger.info(line) }
+            ps.inputReader().lines().forEach { line -> logger.info(line) }
             val code = ps.exitValue()
             if (code != 0)
                 throw GradleException("helm unittest failed")
