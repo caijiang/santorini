@@ -26,5 +26,5 @@ Authorization: Bearer {{JWT}}
 
 ### 本地访问 Token
 ### a
-GET {{url}}/api/v1/namespaces
+GET {{url}}/api/v1/namespaces?labelSelector=santorini.io/manageable=true
 Authorization: Bearer {{JWT}}

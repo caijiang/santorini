@@ -11,6 +11,7 @@
     "@private-everest/module": "^0.0.2",
     "@reduxjs/toolkit": "^2.10.1",
     "antd": "^5.28.1",
+    "cdk8s-plus-33": "^2.4.6",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-redux": "^9.2.0",
