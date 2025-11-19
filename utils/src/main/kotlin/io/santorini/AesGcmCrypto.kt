@@ -1,13 +1,14 @@
 package io.santorini
 
 import java.security.SecureRandom
-import java.util.Base64
+import java.util.*
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
+ * TODO 注意会抛出 AEADBadTagException
  * @author CJ
  */
 object AesGcmCrypto {

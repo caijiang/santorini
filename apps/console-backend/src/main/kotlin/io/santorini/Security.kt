@@ -12,6 +12,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.santorini.kubernetes.findOrCreateServiceAccount
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -97,7 +99,11 @@ fun Application.configureSecurity(
                 // 准入检测， 据此 在内部建立与之对应的用户
                 // 寻找用户 如果已经找到了 那就算了
                 // 不用担心异常  https://ktor.io/docs/server-status-pages.html 可以处理的
-                val account = kubernetesClient.findOrCreateServiceAccount(platformUserData, result)
+                val account = withContext(Dispatchers.IO) {
+//                    async {
+                    kubernetesClient.findOrCreateServiceAccount(platformUserData, result)
+//                    }
+                }
                 //
                 call.saveUserData(
                     InSiteUserData(
