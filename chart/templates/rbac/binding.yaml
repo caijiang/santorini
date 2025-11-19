@@ -11,3 +11,76 @@ roleRef:
   kind: Role
   name: {{ include "common.santoriniName" . }}
   apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "common.santoriniName" . }}
+  labels:
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    namespace: {{ .Release.Namespace }}
+    name: {{ include "common.santoriniName" . }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "common.santoriniName" . }}
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ printf "%s-with-manager" (include "common.santoriniName" .) }}
+  labels:
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "common.santoriniName" . }}
+roleRef:
+  kind: Role
+  name: {{ include "common.santoriniManager" . }}
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ printf "%s-with-manager" (include "common.santoriniName" .) }}
+  labels:
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    namespace: {{ .Release.Namespace }}
+    name: {{ include "common.santoriniName" . }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "common.santoriniManager" . }}
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ printf "%s-with-user" (include "common.santoriniName" .) }}
+  labels:
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "common.santoriniName" . }}
+roleRef:
+  kind: Role
+  name: {{ include "common.santoriniUser" . }}
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ printf "%s-with-user" (include "common.santoriniName" .) }}
+  labels:
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    namespace: {{ .Release.Namespace }}
+    name: {{ include "common.santoriniName" . }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "common.santoriniUser" . }}
+  apiGroup: rbac.authorization.k8s.io

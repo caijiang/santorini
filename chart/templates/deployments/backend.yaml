@@ -17,7 +17,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ include "common.santoriniConsoleBackendName" . }}
-        {{- include "common.matchLabels.withoutName" . | nindent 8 }}
+        {{- include "common.labels.withoutName" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "common.santoriniName" . }}
       volumes:

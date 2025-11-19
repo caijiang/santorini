@@ -1,0 +1,16 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  # 这里扮演的是pod
+  name: {{ include "common.santoriniName" . }}
+  labels:
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+rules:
+  - apiGroups: [ "rbac.authorization.k8s.io" ]
+    resources: [ "clusterroles" ]
+    resourceNames: [ ]
+    verbs: [ "list","get" ]
+  - apiGroups: [ "rbac.authorization.k8s.io" ]
+    resources: [ "clusterrolebindings" ]
+    resourceNames: [ ]
+    verbs: [ "get", "list", "watch", "create", "update", "delete" ]
