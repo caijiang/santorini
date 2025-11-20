@@ -1,5 +1,5 @@
 /// <reference types='vitest' />
-import {defineConfig} from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig(() => ({
@@ -7,11 +7,21 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/apps/santorini',
   server: {
     proxy: {
-      '/currentLogin': 'https://op.k8s.mingshz.com',
-      '/token': 'https://op.k8s.mingshz.com',
-      '/password**': 'https://op.k8s.mingshz.com',
-      '/passkeyHelp**': 'https://op.k8s.mingshz.com',
       '/kubernetes': 'https://op.k8s.mingshz.com',
+      '/': {
+        target: 'https://op.k8s.mingshz.com',
+        changeOrigin: true,
+        // undefined -> 继续转发
+        bypass: (req) => {
+          // if (req.url?.startsWith('/kubernetes')) return req.url;
+          if (
+            req.headers['x-everest'] == '1' ||
+            req.headers['X-EVEREST'] == '1'
+          )
+            return undefined;
+          return req.url;
+        },
+      },
     },
     port: 4200,
     host: 'localhost',
