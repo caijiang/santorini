@@ -1,6 +1,8 @@
 package io.santorini
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.http.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import kotlinx.serialization.json.Json
@@ -21,4 +23,25 @@ fun RoutingCall.queryUserData(): InSiteUserData? {
     log.debug { "Getting user data from data: $current" }
     val s1 = AesGcmCrypto.decrypt(current, key)
     return Json.decodeFromString<InSiteUserData>(s1)
+}
+
+/**
+ * 按授权
+ */
+suspend fun RoutingContext.withAuthorization(
+    audit: OAuthPlatformUserDataAuditResult? = null,
+    block: suspend RoutingContext.() -> Unit
+) {
+    val user = call.queryUserData()
+    if (user == null) {
+        call.respond(HttpStatusCode.Unauthorized)
+    } else {
+        if (audit == null) {
+            block()
+        } else if (user.audit != audit) {
+            call.respond(HttpStatusCode.Forbidden)
+        } else {
+            block()
+        }
+    }
 }

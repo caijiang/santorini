@@ -2,17 +2,14 @@
 
 package io.santorini
 
-import io.github.oshai.kotlinlogging.KotlinLogging
+import io.kotest.matchers.shouldBe
+import io.ktor.client.plugins.cookies.*
+import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
 import io.ktor.server.testing.*
-import org.junit.jupiter.api.Assertions.*
+import io.santorini.io.santorini.test.mockUserModule
 import kotlin.test.Test
-
-private val log = KotlinLogging.logger {}
 
 /**
  * @author CJ
@@ -23,49 +20,26 @@ class SecurityKtTest {
         testApplication {
             application {
                 consoleModule()
-                myModule()
+                mockUserModule()
             }
 
-            val cookies = client.get("/writeUser").apply {
-                assertEquals(HttpStatusCode.OK, status)
-            }.let {
-                val sc = it.headers["Set-Cookie"]
-                log.info {
-                    sc
+            val client = createClient {
+                install(HttpCookies) {
+                    storage = AcceptAllCookiesStorage()
                 }
-                assertNotNull(sc)
-                // 分析 SetCookie
-                sc!!.split("; ").first().split("=")
-            }
-            client.get("/currentLogin") {
-                log.info { "设置 cookie: $cookies" }
-                log.info { "设置 cookie: ${cookies.last().decodeURLQueryComponent()}" }
-                cookie(cookies.first(), cookies.last().decodeURLQueryComponent())
-            }.apply {
-                assertEquals(HttpStatusCode.OK, status)
-                val ct = contentType()
-                assertNotNull(ct)
-                assertTrue(ct!!.match(ContentType.Application.Json))
+                install(Logging) {
+                    level = LogLevel.ALL
+                }
             }
 
-        }
-    }
-}
+            client.get("/mockUser").apply {
+                status shouldBe HttpStatusCode.OK
+            }
+            client.get("https://localhost/currentLogin").apply {
+                status shouldBe HttpStatusCode.OK
+                contentType()?.match(ContentType.Application.Json) shouldBe true
+            }
 
-private fun Application.myModule() {
-    routing {
-        get("/writeUser") {
-            call.saveUserData(
-                InSiteUserData(
-                    OAuthPlatform.Feishu,
-                    "1",
-                    "测试人物",
-                    "https://abc.com",
-                    "AGT",
-                    "SA1"
-                )
-            )
-            call.respondText("Hello World!")
         }
     }
 }

@@ -4,10 +4,8 @@ import common.LoginUser
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.ktor.client.*
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
@@ -15,7 +13,6 @@ import io.santorini.kubernetes.findOrCreateServiceAccount
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 
 
 fun Application.configureSecurity(
@@ -23,9 +20,6 @@ fun Application.configureSecurity(
     kubernetesClient: KubernetesClient,
     audit: OAuthPlatformUserDataAudit
 ) {
-    install(ContentNegotiation) {
-        json(Json)
-    }
     install(Sessions) {
 //        cookie<UserSession>("USER_SESSION") {
 //            cookie.extensions["SameSite"] = "lax"
@@ -107,6 +101,7 @@ fun Application.configureSecurity(
                 //
                 call.saveUserData(
                     InSiteUserData(
+                        result,
                         platformUserData.platform,
                         platformUserData.stablePk,
                         platformUserData.name,
@@ -124,6 +119,7 @@ fun Application.configureSecurity(
             }
 
             get("/callback") {
+                @Suppress("UNUSED_VARIABLE")
                 val principal: OAuthAccessTokenResponse.OAuth2? = call.authentication.principal()
 //                call.sessions.set(UserSession(principal?.accessToken.toString()))
                 call.respondRedirect("/hello")
@@ -137,6 +133,7 @@ fun Application.configureSecurity(
  */
 @Serializable
 data class InSiteUserData(
+    val audit: OAuthPlatformUserDataAuditResult,
     val platform: OAuthPlatform,
     /**
      * 稳定的 id
