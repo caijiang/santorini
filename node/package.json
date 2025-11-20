@@ -6,9 +6,9 @@
   "private": true,
   "dependencies": {
     "@ant-design/pro-components": "^2.8.10",
-    "@private-everest/app-support": "^0.0.4",
+    "@private-everest/app-support": "^0.0.8",
     "@private-everest/generated-common": "^0.0.2",
-    "@private-everest/module": "^0.0.2",
+    "@private-everest/module": "^0.0.5",
     "@reduxjs/toolkit": "^2.10.1",
     "antd": "^5.28.1",
     "cdk8s-plus-33": "^2.4.6",

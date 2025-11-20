@@ -5,6 +5,7 @@ import { Skeleton } from 'antd';
 import modules from '../app/modules';
 import {
   useCurrentLoginUserQuery,
+  useMainMenu,
   userMenu,
 } from '@private-everest/app-support';
 import { common } from '@private-everest/generated-common';
@@ -12,6 +13,7 @@ import logo from '../assets/logo.svg';
 
 export default () => {
   const location = useLocation();
+  const r = useMainMenu(modules);
   const { data: currentUser } = useCurrentLoginUserQuery(undefined);
   return (
     <ProLayout
@@ -39,7 +41,7 @@ export default () => {
             name: '首页',
             path: '/',
           },
-          ...modules.flatMap((it) => it.mainNav?.(currentUser) ?? []),
+          ...r,
         ],
       }}
       menuItemRender={(menuItemProps, defaultDom) => {

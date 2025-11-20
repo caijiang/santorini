@@ -1,29 +1,34 @@
 // import {ModuleRouteObject} from "@private-everest/module";
-import Root from "../layouts/Root";
-import modules from "./modules";
-import {Redirect, routesInMainNav, routesInRoot} from "@private-everest/app-support";
-import Main from "../layouts/Main";
-import {lazy} from "react";
-import {createHashRouter, RouterProvider} from "react-router-dom";
+import Root from '../layouts/Root';
+import modules from './modules';
+import {
+  Redirect,
+  routesInMainNav,
+  routesInRoot,
+  updateRouterType,
+} from '@private-everest/app-support';
+import Main from '../layouts/Main';
+import { lazy } from 'react';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-const Login = lazy(() => import('../pages/Login'))
+const Login = lazy(() => import('../pages/Login'));
 
-const router = createHashRouter([
+const router = createBrowserRouter([
   {
     path: '/',
-    element: <Root/>,
+    element: <Root />,
     children: [
-      ...(routesInRoot(modules)),
+      ...routesInRoot(modules),
       {
         path: 'login',
-        element: <Login/>,
+        element: <Login />,
       },
       {
         path: 'about',
-        element: <div>About</div>
+        element: <div>About</div>,
       },
       {
-        element: <Main/>,
+        element: <Main />,
         children: [
           ...routesInMainNav(modules),
           // {
@@ -33,12 +38,14 @@ const router = createHashRouter([
           // },
           {
             index: true,
-            element: <Redirect to="/home"/>
-          }
-        ]
-      }
-    ]
-  }
-])
+            element: <Redirect to="/home" />,
+          },
+        ],
+      },
+    ],
+  },
+]);
+
+updateRouterType('browser');
 
 export default () => <RouterProvider router={router}/>

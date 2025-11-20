@@ -20,12 +20,16 @@ interface Env {
 export const envApi = createApi({
   reducerPath: 'consoleEnvApi',
   baseQuery: apiBase,
-  // tagTypes: ['kubernetesJWTToken'],
+  tagTypes: ['env'],
   endpoints: (build) => {
     return {
+      updateEnv: build.mutation<undefined, any>({
+        invalidatesTags: ['env'],
+        query: (arg) => ({ url: '/envs', method: 'POST', body: arg }),
+      }),
       // queryFn
-      envs: build.query<CUEnv[] | undefined, ObjectMeta[] | undefined>({
-        // providesTags: ['kubernetesJWTToken'],
+      envs: build.query<CUEnv[] | undefined, ObjectMeta[] | undefined, Env[]>({
+        providesTags: ['env'],
         query: (arg) => ({
           url: `/envs/batch/${
             arg?.map((it) => it.name!!)?.join(',') ?? '99999'
@@ -39,9 +43,10 @@ export const envApi = createApi({
           if (!_.isArrayLike(baseQueryReturnValue)) {
             return undefined;
           }
-          const ss = baseQueryReturnValue as Env[];
           return arg.map((meta) => {
-            const server = ss.find((it) => it.id == meta.name);
+            const server = baseQueryReturnValue.find(
+              (it) => it.id == meta.name
+            );
             if (!server) {
               return {
                 kubeMeta: meta,
@@ -63,4 +68,4 @@ export const envApi = createApi({
   },
 });
 
-export const { useEnvsQuery } = envApi;
+export const { useEnvsQuery, useUpdateEnvMutation } = envApi;

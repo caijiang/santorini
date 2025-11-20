@@ -61,7 +61,7 @@ class EnvService(database: Database) {
     suspend fun createOrUpdate(data: EnvData) {
         dbQuery {
             val now = Envs.select(Envs.id)
-                .where { Envs.id eq data.name }
+                .where { Envs.id eq data.id!! }
                 .map { it[Envs.id] }
             if (now.isEmpty()) {
                 create(data)

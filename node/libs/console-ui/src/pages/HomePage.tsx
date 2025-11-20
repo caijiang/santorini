@@ -4,6 +4,7 @@ import { useNamespacesQuery } from '../apis/common';
 import { useEnvs } from '../hooks/common';
 import { CUEnv } from '../apis/env';
 import { Space, Tag } from 'antd';
+import EnvEditor from '../components/EnvEditor';
 
 export default () => {
   // const { data:now } = useCurrentLoginUserQuery(undefined);
@@ -36,7 +37,7 @@ export default () => {
             ),
           },
           actions: {
-            render: () => <a>设置</a>,
+            render: (_, e) => <EnvEditor data={e} />,
           },
         }}
       ></ProList>
