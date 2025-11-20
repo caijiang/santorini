@@ -50,7 +50,7 @@ fun Application.configureConsoleEnv(database: Database) {
                 if (data.id.isNullOrBlank()) {
                     call.respond(HttpStatusCode.BadRequest)
                 } else {
-                    service.create(data)
+                    service.createOrUpdate(data)
                     call.respond(HttpStatusCode.OK)
                 }
             }

@@ -58,6 +58,20 @@ class EnvService(database: Database) {
         }
     }
 
+    suspend fun createOrUpdate(data: EnvData) {
+        dbQuery {
+            val now = Envs.select(Envs.id)
+                .where { Envs.id eq data.name }
+                .map { it[Envs.id] }
+            if (now.isEmpty()) {
+                create(data)
+            } else {
+                update(data.id!!, data)
+            }
+        }
+    }
+
+    @Suppress("MemberVisibilityCanBePrivate")
     suspend fun create(data: EnvData) {
         dbQuery {
             Envs.insert {
