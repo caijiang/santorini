@@ -9,7 +9,14 @@ interface OAuthPlatformUserDataAudit {
 }
 
 enum class OAuthPlatformUserDataAuditResult {
-    Manager, User
+    Manager, User;
+
+    fun toGrantAuthorities(): Array<String> {
+        if (this == User) {
+            return arrayOf("ROLE_USER")
+        }
+        return arrayOf("ROLE_USER", "ROLE_MANAGER")
+    }
 }
 
 object EnvOAuthPlatformUserDataAudit : OAuthPlatformUserDataAudit {
