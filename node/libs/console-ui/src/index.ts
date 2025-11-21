@@ -3,23 +3,7 @@ import mainRoutes from './mainRoutes';
 import { tokenApi } from './apis/token';
 import { commonApi } from './apis/common';
 import { envApi } from './apis/env';
-import { useEnvs } from './hooks/common';
-
-function useMainNav() {
-  // const store = useStore()
-  // console.warn('store: ',store)
-  const env = useEnvs();
-  return [
-    // {
-    //   name: '首页2',
-    //   path: '/home',
-    // }
-    ...(env ?? []).map((it) => ({
-      name: it.name,
-      path: `/envFor/${it.id}`,
-    })),
-  ];
-}
+import { useMainNav } from './menu';
 
 export default {
   middlewares: [tokenApi.middleware, commonApi.middleware, envApi.middleware],

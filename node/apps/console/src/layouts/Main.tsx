@@ -18,7 +18,7 @@ export default () => {
   return (
     <ProLayout
       title="超级平台"
-      siderWidth={100}
+      siderWidth={135}
       logo={logo}
       breadcrumbRender={(items) => {
         if (!items) return items;

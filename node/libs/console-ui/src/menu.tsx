@@ -1,0 +1,16 @@
+import { useEnvs } from './hooks/common';
+
+export function useMainNav() {
+  const env = useEnvs();
+  return [
+    // {
+    //   name: '添加服务',
+    //   icon: <PlusSquareFilled />,
+    //   path: '/addService',
+    // },
+    ...(env ?? []).map((it) => ({
+      name: it.name,
+      path: `/envFor/${it.id}`,
+    })),
+  ];
+}

@@ -34,3 +34,4 @@
 ### labels
 
 - santorini.io/manageable=true 表示这个 kubernetes 资源由本系统委托管理。
+- santorini.io/service-type 表示具体的服务类型
