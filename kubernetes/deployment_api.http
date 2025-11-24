@@ -4,6 +4,10 @@ GET {{url}}/apis/apps/v1/namespaces/{{namespace}}/deployments?
     labelSelector=app.kubernetes.io/name=release-name-common-required-santorini-console-backend1
 Authorization: Bearer {{JWT}}
 
+### 查看 deployment
+GET {{url}}/apis/apps/v1/deployments?labelSelector=santorini.io/service-type
+Authorization: Bearer {{JWT}}
+
 ### a
 GET {{url}}/api/v1/namespaces/{{namespace}}/pods
 Authorization: Bearer {{JWT}}

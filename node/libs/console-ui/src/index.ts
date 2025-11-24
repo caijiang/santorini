@@ -4,13 +4,20 @@ import { tokenApi } from './apis/token';
 import { commonApi } from './apis/common';
 import { envApi } from './apis/env';
 import { useMainNav } from './menu';
+import { serviceApi } from './apis/service';
 
 export default {
-  middlewares: [tokenApi.middleware, commonApi.middleware, envApi.middleware],
+  middlewares: [
+    tokenApi.middleware,
+    commonApi.middleware,
+    envApi.middleware,
+    serviceApi.middleware,
+  ],
   reducers: {
     [tokenApi.reducerPath]: tokenApi.reducer,
     [commonApi.reducerPath]: commonApi.reducer,
     [envApi.reducerPath]: envApi.reducer,
+    [serviceApi.reducerPath]: serviceApi.reducer,
   },
   routesInMainNav: mainRoutes,
   mainMenuHookGenerator: () => useMainNav,

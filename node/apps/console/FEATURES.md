@@ -13,16 +13,5 @@
 都是键值对。
 ConfigMap-SantoriniEnvConfig
 Secret-SantoriniEnvConfig
-
-服务的定义:
-
-1. 是一组可以执行的容器
-2. 具备特定的服务端口(集群内开放)
-3. 内置了一些类型,比如 JVM 服务(有一个 init 可以很聪明地把环境变量转变成 jvm 服务友好的 JAVA_OPTS)
-
-这样我们就可以推导出服务新增方式: 导入和草稿
-id,type
-自由的 yaml 编辑,执行前服务端会对此润色:
-
-- 标准标注 主要必要引入 helm 的,santorini 管理的资源跟 helm 管理的资源无关。
-- 我们把什么都在外面了，那
+ConfigMap-SantoriniEnvSPConfig
+Secret-SantoriniEnvSPConfig
