@@ -39,3 +39,6 @@ include("apps:console-backend")
 findProject(":apps:console-backend")?.name = "console-backend"
 include(":chart")
 //findProject(":chart")?.name = "Santorini Chart"
+include("share")
+include("share:santorini-model")
+findProject(":share:santorini-model")?.name = "santorini-model"

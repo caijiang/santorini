@@ -52,3 +52,6 @@ http-client.private.env.json
 
 # 特殊
 local-upload-sftp-config.json
+
+# 反向前端
+kotlin-js-store

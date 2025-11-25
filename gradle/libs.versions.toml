@@ -29,6 +29,7 @@ kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit5", versio
 
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 ktorPlugin = { module = "io.ktor.plugin:io.ktor.plugin.gradle.plugin", version.ref = "ktor" }
+kotlinSerializationPlugin = { module = "org.jetbrains.kotlin.plugin.serialization:org.jetbrains.kotlin.plugin.serialization.gradle.plugin", version.ref = "kotlin" }
 kotlinxDatetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinxSerialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJSON" }
 kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
@@ -38,5 +39,5 @@ kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", 
 kotlinxEcosystem = ["kotlinxDatetime", "kotlinxSerialization", "kotlinxCoroutines"]
 
 [plugins]
-kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+#kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 #ktor = { id = "io.ktor.plugin", version.ref = "ktor" }

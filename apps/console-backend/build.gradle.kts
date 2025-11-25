@@ -5,7 +5,8 @@ plugins {
 //    id("buildsrc.convention.upload-image")
     id("io.ktor.plugin")
 //    alias(libs.plugins.ktor)
-    alias(libs.plugins.kotlinPluginSerialization)
+    kotlin("plugin.serialization")
+//    alias(libs.plugins.kotlinPluginSerialization)
 //    id("com.google.cloud.tools.jib") version "3.4.0"
 }
 
