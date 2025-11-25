@@ -5,6 +5,7 @@ import { commonApi } from './apis/common';
 import { envApi } from './apis/env';
 import { useMainNav } from './menu';
 import { serviceApi } from './apis/service';
+import { listenerMiddleware } from './module-private';
 
 export default {
   middlewares: [
@@ -12,6 +13,7 @@ export default {
     commonApi.middleware,
     envApi.middleware,
     serviceApi.middleware,
+    listenerMiddleware.middleware,
   ],
   reducers: {
     [tokenApi.reducerPath]: tokenApi.reducer,

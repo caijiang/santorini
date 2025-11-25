@@ -1,20 +1,20 @@
 import {
   createAsyncThunk,
-  createListenerMiddleware,
   createSlice,
   ListenerEffectAPI,
   PayloadAction,
 } from '@reduxjs/toolkit';
 import { CUEnv } from '../apis/env';
 import {
-  LastReleaseDeploymentSummary,
+  EnvRelatedServiceResource,
   serviceApi,
   ServiceConfigData,
 } from '../apis/service';
 import _ from 'lodash';
 import { commonApi } from '../apis/common';
 import { App } from 'cdk8s';
-import { ServiceChart } from './ServiceChart';
+import { ServiceChart, ServiceCreatorProps } from './ServiceChart';
+import { listenerMiddleware } from '../module-private';
 
 interface DeployHelpState {
   image?: string;
@@ -25,7 +25,7 @@ interface DeployHelpState {
 
 function toLastReleaseDeploymentSummary(
   state: DeployHelpState
-): LastReleaseDeploymentSummary | undefined {
+): EnvRelatedServiceResource | undefined {
   if (state.image && state.secretNames) {
     const st = state.image.split(':', 2);
     if (st.length == 1) {
@@ -98,28 +98,7 @@ const changeCurrentEnv = createAsyncThunk(
   }
 );
 
-// 监听 slice 的值 自动拉取
-// const awaitForDeploymentSummary = createAsyncThunk(
-//   'service/awaitForDeploymentSummary',
-//   async (_, { getState }) => {
-//     // @ts-ignore
-//     const s = getState()[deployServiceSlice.name] as DeployHelpState;
-//     const rs = toLastReleaseDeploymentSummary(s)
-//     if (rs!=null) return rs
-//     return await new Promise((resolve) => {
-//       const unsubscribe = store.subscribe(() => {
-//         const s = store.getState() as RootState;
-//
-//         if (s.some.ready) {
-//           unsubscribe(); // 停止监听
-//           resolve(s.some.data!);
-//         }
-//       });
-//     });
-//   }
-// );
 
-const listenerMiddleware = createListenerMiddleware();
 
 const toStartP2 = async (
   _: any,
@@ -132,7 +111,7 @@ const toStartP2 = async (
     const { service, targetEnv } = root;
     if (service && targetEnv) {
       await dispatch(
-        deployServiceToEnvP2({ service, env: targetEnv, envSpec: r })
+        deployServiceToEnvP2({ service, env: targetEnv, envRelated: r })
       );
     }
   }
@@ -150,15 +129,17 @@ listenerMiddleware.startListening({
  */
 const deployServiceToEnvP2 = createAsyncThunk(
   'service/deploy/p2',
-  async (input: {
-    service: ServiceConfigData;
-    env: CUEnv;
-    envSpec: LastReleaseDeploymentSummary;
-  }) => {
+  async (input: ServiceCreatorProps) => {
+    // 要注意 id 部署物或者其他什么 都有个名字 比如 a-deployment 但我们的 id 是其中的 a
     const app = new App({});
-    new ServiceChart(app, 'st', {
-      disableResourceNameHashes: true,
-    });
+    new ServiceChart(
+      app,
+      input.service.id,
+      {
+        disableResourceNameHashes: true,
+      },
+      input
+    );
     console.log(app.synthYaml());
   }
 );
@@ -201,7 +182,7 @@ export const startDeployServiceToEnv = createAsyncThunk(
         deployServiceToEnvP2({
           service: serviceData,
           env: input.env,
-          envSpec: lastRelease,
+          envRelated: lastRelease,
         })
       );
     } else {

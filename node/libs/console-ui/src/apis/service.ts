@@ -43,11 +43,14 @@ export interface ServiceConfigData {
   // 声明依赖资源 先跳过
 }
 
-export interface LastReleaseDeploymentSummary {
+export interface EnvRelatedServiceResource {
   imageRepository: string;
   imageTag?: string;
   pullSecretName?: string[];
 }
+
+export interface LastReleaseDeploymentSummary
+  extends EnvRelatedServiceResource {}
 
 export const serviceApi = createApi({
   reducerPath: 'serviceApi',
