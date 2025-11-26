@@ -1,0 +1,201 @@
+package io.santorini.schema
+
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.ktor.resources.*
+import io.santorini.model.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonIgnoreUnknownKeys
+import org.jetbrains.exposed.dao.id.IdTable
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.kotlin.datetime.timestampWithTimeZone
+import org.jetbrains.exposed.sql.statements.InsertStatement
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.sql.transactions.transaction
+import java.time.OffsetDateTime
+
+// 这里有部分的数据是我们认为业务上服务端并不关心,只是帮忙存取而已
+// 技术细节
+// 读取时,我们准备向客户端渲染某段 json 内容时,对 2 个 string 进行合并(json方式)
+// 写入时,各管各的
+
+@Suppress("OPT_IN_USAGE")
+@Serializable
+@JsonIgnoreUnknownKeys
+data class ServiceMetaData(
+    val id: String,
+    val name: String,
+    val type: ServiceType,
+)
+
+inline fun <reified T> mergeJson(jsonData: T, otherJson: String?): String {
+    val jsonText = Json.encodeToString(jsonData)
+    val other = otherJson?.let { jacksonObjectMapper().readTree(it) } ?: return jsonText
+    val root = jacksonObjectMapper().readTree(jsonText) as? ObjectNode
+        ?: throw IllegalArgumentException("jsonData:${jsonData} 必须是可以被序列化成 JSON Object的")
+    if (!other.isObject)
+        throw IllegalArgumentException("otherJson:$otherJson 必须是一个 JSON Object")
+    other.fieldNames().forEach { fieldName ->
+        if (root[fieldName] != null)
+            throw IllegalStateException("存在重复的健名:$fieldName")
+
+        root.putIfAbsent(fieldName, other[fieldName])
+    }
+    return root.toPrettyString()
+}
+
+inline fun <reified T> receiveFromJson(jsonText: String): Pair<T, JsonNode> {
+    val data = Json.decodeFromString<T>(jsonText)
+    val root = jacksonObjectMapper().readTree(jsonText) as? ObjectNode
+        ?: throw IllegalArgumentException("jsonText:${jsonText} 必须是可以被序列化成 JSON Object的")
+    val dataJson = jacksonObjectMapper().readTree(Json.encodeToString(data)) as? ObjectNode
+        ?: throw IllegalArgumentException("核心对象必须是一个对象:$data")
+    dataJson.fieldNames().forEach { fieldName ->
+        root.remove(fieldName)
+    }
+    return data to root
+}
+
+@Resource("/services")
+@Serializable
+data class ServiceMetaResource(
+    override val limit: Int? = null,
+    override val offset: Int? = null,
+) : Pageable {
+
+    @Resource("{id}")
+    @Serializable
+    data class Id(val parent: ServiceMetaResource = ServiceMetaResource(), val id: String)
+
+    @Resource("{id}/lastRelease/{env}")
+    @Serializable
+    data class LastRelease(val parent: ServiceMetaResource = ServiceMetaResource(), val id: String, val env: String)
+}
+
+class ServiceMetaService(database: Database) {
+    object ServiceMetas : IdTable<String>() {
+        override val id = varchar("id", 63).entityId()
+        val name = varchar("name", length = 50)
+        val type = enumerationByName("type", 10, ServiceType::class)
+        val createTime = timestampWithTimeZone("createTime")
+        override val primaryKey = PrimaryKey(id)
+    }
+
+    //        override val id = reference("id", ServiceMetas)
+
+    object ServiceMetaOthers : Table() {
+        val id = reference("id", ServiceMetas).uniqueIndex()
+        val data = text("data")
+        override val primaryKey = PrimaryKey(id)
+    }
+
+    init {
+        transaction(database) {
+            SchemaUtils.create(ServiceMetas)
+            SchemaUtils.create(ServiceMetaOthers)
+        }
+    }
+
+    private suspend fun <T> dbQuery(block: suspend () -> T): T =
+        newSuspendedTransaction(Dispatchers.IO) { block() }
+
+    @Suppress("unused")
+    suspend fun createOrUpdate(context: Pair<ServiceMetaData, JsonNode>) {
+        dbQuery {
+            val (serviceMetaData, other) = context
+            val now = ServiceMetas.select(ServiceMetas.id)
+                .where { ServiceMetas.id eq serviceMetaData.id }
+                .map { it[ServiceMetas.id] }
+            if (now.isEmpty()) {
+                doCreate(serviceMetaData, other)
+            } else {
+                ServiceMetas.update({ ServiceMetas.id eq serviceMetaData.id }) {
+                    it[name] = serviceMetaData.name
+                }
+                ServiceMetaOthers.update({ ServiceMetas.id eq serviceMetaData.id }) {
+                    it[data] = other.toPrettyString()
+                }
+            }
+        }
+    }
+
+    suspend fun create(context: Pair<ServiceMetaData, JsonNode>) {
+        dbQuery {
+            val (serviceMetaData, other) = context
+            doCreate(serviceMetaData, other)
+        }
+    }
+
+    private fun doCreate(
+        serviceMetaData: ServiceMetaData,
+        other: JsonNode
+    ): InsertStatement<Number> {
+        ServiceMetas.insert {
+            it[id] = serviceMetaData.id
+            it[createTime] = OffsetDateTime.now()
+            it[type] = serviceMetaData.type
+            it[name] = serviceMetaData.name
+        }
+        return ServiceMetaOthers.insert {
+            it[id] = serviceMetaData.id
+            it[data] = other.toPrettyString()
+        }
+    }
+
+    private fun selectAll(@Suppress("UNUSED_PARAMETER") resource: ServiceMetaResource): Query {
+        return ServiceMetas.selectAll()
+    }
+
+    suspend fun readAsPage(resource: ServiceMetaResource, request: PageRequest): PageResult<ServiceMetaData> {
+        return dbQuery {
+            selectAll(resource)
+                .mapToPage(request) {
+                    ServiceMetaData(
+                        id = it[ServiceMetas.id].value,
+                        name = it[ServiceMetas.name],
+                        type = it[ServiceMetas.type],
+                    )
+                }
+        }
+    }
+
+    suspend fun read(resource: ServiceMetaResource): List<ServiceMetaData> {
+        return dbQuery {
+            selectAll(resource)
+                .map {
+                    ServiceMetaData(
+                        id = it[ServiceMetas.id].value,
+                        name = it[ServiceMetas.name],
+                        type = it[ServiceMetas.type],
+                    )
+                }
+        }
+    }
+
+    suspend fun read(id: String): Pair<ServiceMetaData, String>? {
+        return dbQuery {
+            ServiceMetas.selectAll()
+                .where {
+                    ServiceMetas.id eq id
+                }
+                .map {
+                    ServiceMetaData(
+                        id = it[ServiceMetas.id].value,
+                        name = it[ServiceMetas.name],
+                        type = it[ServiceMetas.type],
+                    )
+                }.firstOrNull()?.let { data ->
+                    data to ServiceMetaOthers.selectAll()
+                        .where {
+                            ServiceMetaOthers.id eq data.id
+                        }.map { it[ServiceMetaOthers.data] }
+                        .first()
+                }
+        }
+    }
+}
+
+

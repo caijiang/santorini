@@ -8,7 +8,7 @@ import io.ktor.client.engine.apache.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
-import io.santorini.console.configureConsoleEnv
+import io.santorini.console.configureConsole
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
 
@@ -78,5 +78,5 @@ private fun Application.consoleModuleEntry(
     configureHTTP()
     configureRouting()
     configureKubernetes(kubernetesClient)
-    configureConsoleEnv(database)
+    configureConsole(database)
 }

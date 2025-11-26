@@ -7,3 +7,6 @@ workspace.xml
 ApifoxUploaderProjectSetting.xml
 nx-angular-config.xml
 artifacts
+dataSources.local.xml
+dataSources.xml
+dataSources

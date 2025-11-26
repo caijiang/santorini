@@ -54,6 +54,7 @@ ktor {
 dependencies {
     implementation("io.github.caijiang.everest.share:common:1.0-SNAPSHOT")
     implementation(project(":utils"))
+    implementation(project(":share:santorini-model"))
     //    https://github.com/fabric8io/kubernetes-client
     implementation("io.fabric8:kubernetes-client:7.4.0")
     implementation(libs.ktor.serialization.kotlinx.json)
@@ -73,8 +74,11 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:3.3.2")
     implementation("io.ktor:ktor-serialization-jackson:3.3.2")
     implementation("io.github.oshai:kotlin-logging:7.0.13")
+//    https://www.jetbrains.com/help/exposed/exposed-modules.html#extension-modules
     implementation("org.jetbrains.exposed:exposed-core:0.61.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.61.0")
+    implementation("org.jetbrains.exposed:exposed-json:0.61.0")
+    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.61.0")
     implementation("com.h2database:h2:2.3.232")
     implementation("io.ktor:ktor-client-logging:3.3.2")
     testImplementation(libs.ktor.server.test.host)
