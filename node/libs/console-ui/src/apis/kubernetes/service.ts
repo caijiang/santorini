@@ -1,12 +1,10 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { kubeBaseApi } from './kubernetes';
-import {
-  KubeDeploymentListProps,
-  KubeDeploymentProps,
-} from 'cdk8s-plus-33/lib/imports/k8s';
+import { IDeploymentList } from 'kubernetes-models/apps/v1/DeploymentList';
+import { IDeployment } from 'kubernetes-models/apps/v1/Deployment';
 
 interface NamespaceWithLabelSelectors {
-  namespace: string;
+  namespace?: string;
   /**
    * 默认 santorini.io/manageable=true
    */
@@ -21,10 +19,25 @@ interface ObjectContainer {
 export const kubeServiceApi = createApi({
   reducerPath: 'kubeService',
   baseQuery: kubeBaseApi,
-  // tagTypes: ['kubernetesJWTToken'],
+  tagTypes: ['deployments'],
   endpoints: (build) => {
     return {
+      updateDeployment: build.mutation<
+        undefined,
+        ObjectContainer & { name: string }
+      >({
+        invalidatesTags: ['deployments'],
+        query: ({ namespace, yaml, name }) => ({
+          url: `/apis/apps/v1/namespaces/${namespace}/deployments/${name}`,
+          method: 'PUT',
+          body: yaml,
+          headers: {
+            'Content-Type': 'application/yaml',
+          },
+        }),
+      }),
       createDeployment: build.mutation<undefined, ObjectContainer>({
+        invalidatesTags: ['deployments'],
         query: ({ namespace, yaml }) => ({
           url: `/apis/apps/v1/namespaces/${namespace}/deployments`,
           method: 'POST',
@@ -35,15 +48,18 @@ export const kubeServiceApi = createApi({
         }),
       }),
       deployments: build.query<
-        KubeDeploymentProps[],
+        IDeployment[],
         NamespaceWithLabelSelectors,
-        KubeDeploymentListProps
+        IDeploymentList
       >({
         transformResponse: (baseQueryReturnValue) => {
           return baseQueryReturnValue?.items ?? [];
         },
+        providesTags: ['deployments'],
         query: ({ namespace, labelSelectors }) => ({
-          url: `/apis/apps/v1/namespaces/${namespace}/deployments`,
+          url: namespace
+            ? `/apis/apps/v1/namespaces/${namespace}/deployments`
+            : '/apis/apps/v1/deployments',
           params: {
             labelSelector:
               labelSelectors?.join(',') ?? 'santorini.io/manageable=true',
@@ -54,5 +70,4 @@ export const kubeServiceApi = createApi({
   },
 });
 
-export const { useDeploymentsQuery, useCreateDeploymentMutation } =
-  kubeServiceApi;
+export const { useDeploymentsQuery } = kubeServiceApi;

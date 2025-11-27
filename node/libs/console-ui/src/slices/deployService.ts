@@ -2,8 +2,8 @@ import { createAsyncThunk, GetThunkAPI } from '@reduxjs/toolkit';
 import { EnvRelatedServiceResource, ServiceConfigData } from '../apis/service';
 import { CUEnv } from '../apis/env';
 import { kubeServiceApi } from '../apis/kubernetes/service';
-import { KubeDeploymentProps } from 'cdk8s-plus-33/lib/imports/k8s';
 import yamlGenerator from '../apis/kubernetes/yamlGenerator';
+import { IDeployment } from 'kubernetes-models/apps/v1/Deployment';
 
 export interface ServiceDeployToKubernetesProps {
   service: ServiceConfigData;
@@ -15,7 +15,7 @@ export interface ServiceDeployToKubernetesProps {
  * 我们的服务实例在 kubernetes 的表述，有可能是 deployment 也有可能是其他
  */
 interface ServiceInstanceInKubernetes {
-  deployment?: KubeDeploymentProps;
+  deployment?: IDeployment;
 }
 
 async function findServiceInstanceInKubernetes(
@@ -54,12 +54,19 @@ export const deployToKubernetes = createAsyncThunk(
       dispatch
     );
     console.debug('current service instance: ', current);
+    const yaml = yamlGenerator.serviceInstance(input);
+    console.debug('yaml:', yaml);
     if (current) {
       // 更新
+      await dispatch(
+        kubeServiceApi.endpoints.updateDeployment.initiate({
+          namespace: env.id,
+          yaml: yaml.deployment,
+          name: service.id,
+        })
+      ).unwrap();
     } else {
       // 部署
-      const yaml = yamlGenerator.serviceInstance(input);
-      console.log('yaml:', yaml);
       await dispatch(
         kubeServiceApi.endpoints.createDeployment.initiate({
           namespace: env.id,

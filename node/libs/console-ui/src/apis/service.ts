@@ -109,4 +109,8 @@ export const serviceApi = createApi({
   },
 });
 
-export const { useServiceByIdQuery, useCreateServiceMutation } = serviceApi;
+export const {
+  useServiceByIdQuery,
+  useCreateServiceMutation,
+  useLastReleaseQuery,
+} = serviceApi;

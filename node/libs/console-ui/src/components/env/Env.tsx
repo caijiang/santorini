@@ -4,6 +4,7 @@ import * as React from 'react';
 
 interface EnvProps {
   data: CUEnv;
+  brief?: boolean;
 }
 
 const EnvSubTitle: React.FC<EnvProps> = ({ data: e }) => {
@@ -16,7 +17,10 @@ const EnvSubTitle: React.FC<EnvProps> = ({ data: e }) => {
 
 const Env: React.FC<EnvProps> & {
   SubTitle: typeof EnvSubTitle;
-} = ({ data }) => {
+} = ({ data, brief }) => {
+  if (brief) {
+    return data.name;
+  }
   return (
     <Space>
       {data.name}

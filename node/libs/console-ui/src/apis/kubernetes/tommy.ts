@@ -65,8 +65,8 @@ export default {
                 securityContext: {
                   allowPrivilegeEscalation: false,
                   privileged: false,
-                  readOnlyRootFilesystem: true,
-                  runAsNonRoot: true,
+                  // readOnlyRootFilesystem: true,
+                  // runAsNonRoot: true,
                 },
                 // dnsPolicy: ClusterFirst
                 // hostNetwork: false
