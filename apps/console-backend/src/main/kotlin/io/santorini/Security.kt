@@ -70,7 +70,7 @@ fun Application.configureSecurity(
             if (user == null) {
                 call.respond(HttpStatusCode.Unauthorized)
             } else {
-                call.respond(LoginUserData(user.name, user.avatarUrl, arrayOf()))
+                call.respond(LoginUserData(user.name, user.avatarUrl, user.audit.toGrantAuthorities()))
             }
         }
         authenticate("auth-oauth-feishu") {
