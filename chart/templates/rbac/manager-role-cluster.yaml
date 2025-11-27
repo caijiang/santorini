@@ -7,4 +7,8 @@ metadata:
   labels:
     santorini.io/role: manager
     {{- include "common.labels.withoutName" . | nindent 4 }}
-rules: [ ]
+rules:
+  - apiGroups: [ "apps" ]
+    resources: [ "deployments" ]
+    resourceNames: [ ]
+    verbs: [ "create" ]
