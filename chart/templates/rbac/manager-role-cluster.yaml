@@ -11,4 +11,4 @@ rules:
   - apiGroups: [ "apps" ]
     resources: [ "deployments" ]
     resourceNames: [ ]
-    verbs: [ "create" ]
+    verbs: [ "create","update" ]
