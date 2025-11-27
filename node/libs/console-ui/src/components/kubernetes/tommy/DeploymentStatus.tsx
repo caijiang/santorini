@@ -1,5 +1,6 @@
 import { IDeploymentStatus } from 'kubernetes-models/apps/v1/DeploymentStatus';
 import { Badge, theme } from 'antd';
+import { RefreshAbleProps, wrapperForRefresh } from '../share';
 
 function toStatus(availableReplicas: number, unavailableReplicas: number) {
   if (unavailableReplicas == 0 && availableReplicas > 0) return 'success';
@@ -8,7 +9,8 @@ function toStatus(availableReplicas: number, unavailableReplicas: number) {
   return 'processing';
 }
 
-export default ({ data }: { data?: IDeploymentStatus }) => {
+type DeploymentStatusProps = { data?: IDeploymentStatus } & RefreshAbleProps;
+export default ({ data, ...props }: DeploymentStatusProps) => {
   const { token } = theme.useToken();
   // <div>
   //   <div style={{ color: token.colorSuccess }}>Success 状态</div>
@@ -24,12 +26,14 @@ export default ({ data }: { data?: IDeploymentStatus }) => {
   if (!data) {
     return undefined;
   }
-  return (
+
+  return wrapperForRefresh(
     <Badge dot status={toStatus(availableReplicas, unavailableReplicas)}>
       <span style={{ color: token.colorSuccess }}>{availableReplicas}</span>-
       <span style={{ color: token.colorError }}>{unavailableReplicas}</span>
       &nbsp;&nbsp;/&nbsp;&nbsp;
       <span style={{ color: token.colorInfo }}>{replicas}</span>
-    </Badge>
+    </Badge>,
+    props
   );
 };

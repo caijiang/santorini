@@ -18,7 +18,7 @@ const ServiceDeployedStatus: React.FC<ServiceDeployedStatusProps> = ({
   service: { id },
 }) => {
   const envs = useEnvs();
-  const { data, isLoading } = useDeploymentsQuery({
+  const { data, isLoading, refetch } = useDeploymentsQuery({
     labelSelectors: ['santorini.io/service-type', `santorini.io/id=${id}`],
   });
   const x =
@@ -57,7 +57,7 @@ const ServiceDeployedStatus: React.FC<ServiceDeployedStatusProps> = ({
       {x.map((xx) => (
         <Space key={xx.env.id}>
           <Env data={xx.env} brief />
-          <DeploymentStatus data={xx.deployment.status} />
+          <DeploymentStatus refresh={refetch} data={xx.deployment.status} />
         </Space>
       ))}
     </Space>
