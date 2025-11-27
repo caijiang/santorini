@@ -1,20 +1,24 @@
-import { PageContainer, ProList } from '@ant-design/pro-components';
-import { useKubernetesJWTTokenQuery } from '../apis/token';
-import { useNamespacesQuery } from '../apis/common';
+import { PageContainer, ProList, ProTable } from '@ant-design/pro-components';
 import { useEnvs } from '../hooks/common';
 import { CUEnv } from '../apis/env';
-import { Space, Tag } from 'antd';
+import { Button } from 'antd';
 import EnvEditor from '../components/EnvEditor';
+import { toKtorRequest } from '../common/ktor';
+import { ServiceConfigData } from '../apis/service';
+import {
+  serviceIdColumn,
+  serviceNameColumn,
+  serviceTypeColumn,
+} from '../columns/service';
+import { DeploymentUnitOutlined } from '@ant-design/icons';
+import Env from '../components/env/Env';
+import EnvChooserModal from '../components/EnvChooserModal';
+import { useNavigate } from 'react-router-dom';
 
 export default () => {
-  // const { data:now } = useCurrentLoginUserQuery(undefined);
-  const { data: token } = useKubernetesJWTTokenQuery(undefined);
-  const { data } = useNamespacesQuery(undefined, {
-    refetchOnFocus: true,
-  });
   const envs = useEnvs();
-  console.log('token:', token, ',data:', data);
   // KubeNamespaceListProps
+  const nf = useNavigate();
   return (
     <PageContainer title={'首页'}>
       {/*https://codesandbox.io/p/sandbox/6chd58?file=%2FApp.tsx%3A43%2C8*/}
@@ -24,23 +28,54 @@ export default () => {
         dataSource={envs}
         loading={!envs}
         showActions="hover"
+        style={{ marginBottom: 10 }}
         metas={{
           title: {
             dataIndex: 'name',
           },
           subTitle: {
-            render: (_, e) => (
-              <Space size={0}>
-                <Tag>{e.id}</Tag>{' '}
-                {e.production && <Tag color={'red'}>生产</Tag>}
-              </Space>
-            ),
+            render: (_, e) => <Env.SubTitle data={e} />,
           },
           actions: {
             render: (_, e) => <EnvEditor data={e} />,
           },
         }}
       ></ProList>
+      <ProTable<ServiceConfigData>
+        headerTitle={'服务配置'}
+        rowKey={'id'}
+        search={false}
+        request={toKtorRequest<ServiceConfigData>('/services')}
+        columns={[
+          serviceIdColumn,
+          serviceTypeColumn,
+          serviceNameColumn,
+          {
+            valueType: 'option',
+            title: '操作',
+            render: (_, entity) => [
+              <EnvChooserModal
+                key={'deploy'}
+                trigger={
+                  <Button title={'部署'} type={'primary'}>
+                    <DeploymentUnitOutlined />
+                  </Button>
+                }
+                onChooseEnv={(e) => {
+                  nf(`/deploy/${e.id}/${entity.id}`);
+                  // dispatch(
+                  //   startDeployServiceToEnv({
+                  //     service: entity.id,
+                  //     env: e,
+                  //   }) as unknown as UnknownAction
+                  // );
+                  return true;
+                }}
+              />,
+            ],
+          },
+        ]}
+      />
     </PageContainer>
   );
 };

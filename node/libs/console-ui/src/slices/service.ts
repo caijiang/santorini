@@ -11,10 +11,11 @@ import {
   ServiceConfigData,
 } from '../apis/service';
 import _ from 'lodash';
-import { commonApi } from '../apis/common';
+import { commonApi } from '../apis/kubernetes/common';
 import { App } from 'cdk8s';
-import { ServiceChart, ServiceCreatorProps } from './ServiceChart';
+import { ServiceChart } from './ServiceChart';
 import { listenerMiddleware } from '../module-private';
+import { ServiceDeployToKubernetesProps } from './deployService';
 
 interface DeployHelpState {
   image?: string;
@@ -73,7 +74,7 @@ export const deployServiceSlice = createSlice({
     builder.addMatcher(
       commonApi.endpoints.secretByNamespace.matchFulfilled,
       (state, action) => {
-        state.secretNames = action.payload.items
+        state.secretNames = action.payload
           .filter((it) => it.metadata?.name)
           .map((it) => it.metadata!!.name!!);
       }
@@ -129,7 +130,7 @@ listenerMiddleware.startListening({
  */
 const deployServiceToEnvP2 = createAsyncThunk(
   'service/deploy/p2',
-  async (input: ServiceCreatorProps) => {
+  async (input: ServiceDeployToKubernetesProps) => {
     // 要注意 id 部署物或者其他什么 都有个名字 比如 a-deployment 但我们的 id 是其中的 a
     const app = new App({});
     new ServiceChart(

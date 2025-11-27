@@ -1,5 +1,5 @@
 import { fetchBaseQuery, retry } from '@reduxjs/toolkit/query/react';
-import { tokenApi } from './token';
+import { tokenApi } from '../token';
 
 // 调用 kubernetes 的 api
 // 有几个特点，都依赖 useKubernetesJWTTokenQuery 但是也有其他入参
@@ -8,6 +8,7 @@ import { tokenApi } from './token';
 export const kubeBaseApi = retry(
   async (apiArg, api, extraOptions) => {
     // 从缓存读取 token，而不触发请求
+    api.dispatch(tokenApi.endpoints.kubernetesJWTToken.initiate(undefined));
     const jwtToken = tokenApi.endpoints.kubernetesJWTToken.select(undefined)(
       // @ts-ignore
       api.getState()

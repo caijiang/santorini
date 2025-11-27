@@ -3,6 +3,31 @@ import { apiBase } from '@private-everest/app-support';
 
 type ServiceType = 'JVM';
 
+export function generateDemoService(): ServiceConfigData {
+  const rand = Math.ceil(Math.random() * 1000);
+  return {
+    id: `demo-service-${rand}`,
+    name: '样例服务',
+    type: 'JVM',
+    resources: {
+      cpu: {
+        requestMillis: 100,
+        limitMillis: 500,
+      },
+      memory: {
+        requestMiB: 32,
+        limitMiB: 64,
+      },
+    },
+    ports: [
+      {
+        number: 80,
+        name: 'http',
+      },
+    ],
+  };
+}
+
 export interface ServiceConfigData {
   /**
    * https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/names/#dns-label-names
@@ -57,6 +82,13 @@ export const serviceApi = createApi({
   baseQuery: apiBase,
   endpoints: (build) => {
     return {
+      createService: build.mutation<undefined, ServiceConfigData>({
+        query: (body) => ({
+          url: '/services',
+          body: body,
+          method: 'POST',
+        }),
+      }),
       serviceById: build.query<ServiceConfigData | undefined, string>({
         query: (arg) => `/services/${arg}`,
       }),
@@ -77,4 +109,4 @@ export const serviceApi = createApi({
   },
 });
 
-export const { useServiceByIdQuery } = serviceApi;
+export const { useServiceByIdQuery, useCreateServiceMutation } = serviceApi;

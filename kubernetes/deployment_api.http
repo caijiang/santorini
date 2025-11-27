@@ -1,7 +1,7 @@
 ### token 问题应该查看 kube-apiserver@kube-system 的日志
 ### 查看
 GET {{url}}/apis/apps/v1/namespaces/{{namespace}}/deployments?
-    labelSelector=app.kubernetes.io/name=release-name-common-required-santorini-console-backend1
+    labelSelector=app.kubernetes.io/component=controller,app.kubernetes.io/instance=ingress-nginx
 Authorization: Bearer {{JWT}}
 
 ### 查看 deployment

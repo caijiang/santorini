@@ -3,6 +3,7 @@ import { kubeBaseApi } from './kubernetes';
 import {
   KubeNamespaceListProps,
   KubeSecretListProps,
+  KubeSecretProps,
 } from 'cdk8s-plus-33/lib/imports/k8s';
 
 export const commonApi = createApi({
@@ -11,7 +12,14 @@ export const commonApi = createApi({
   // tagTypes: ['kubernetesJWTToken'],
   endpoints: (build) => {
     return {
-      secretByNamespace: build.query<KubeSecretListProps, string>({
+      secretByNamespace: build.query<
+        KubeSecretProps[],
+        string,
+        KubeSecretListProps
+      >({
+        transformResponse: (baseQueryReturnValue) => {
+          return baseQueryReturnValue?.items ?? [];
+        },
         query: (arg) => ({
           url: `/api/v1/namespaces/${arg}/secrets`,
           params: {
@@ -32,4 +40,4 @@ export const commonApi = createApi({
   },
 });
 
-export const { useNamespacesQuery } = commonApi;
+export const { useNamespacesQuery, useSecretByNamespaceQuery } = commonApi;

@@ -1,4 +1,4 @@
-import { useNamespacesQuery } from '../apis/common';
+import { useNamespacesQuery } from '../apis/kubernetes/common';
 import { useEnvsQuery } from '../apis/env';
 
 export function useEnvs() {
@@ -13,4 +13,9 @@ export function useEnvs() {
     skip: !ids || ids.length == 0,
   });
   return ee;
+}
+
+export function useEnv(envId: string | undefined) {
+  const envs = useEnvs();
+  return envs?.find((it) => it.id == envId);
 }
