@@ -14,6 +14,7 @@ import { DeploymentUnitOutlined } from '@ant-design/icons';
 import Env from '../components/env/Env';
 import EnvChooserModal from '../components/EnvChooserModal';
 import { useNavigate } from 'react-router-dom';
+import ServiceDeployedStatus from '../components/ServiceDeployedStatus';
 
 export default () => {
   const envs = useEnvs();
@@ -50,6 +51,11 @@ export default () => {
           serviceIdColumn,
           serviceTypeColumn,
           serviceNameColumn,
+          {
+            valueType: 'option',
+            title: '已部署',
+            render: (_, entity) => <ServiceDeployedStatus service={entity} />,
+          },
           {
             valueType: 'option',
             title: '操作',
