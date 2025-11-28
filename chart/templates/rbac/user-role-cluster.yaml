@@ -19,3 +19,7 @@ rules:
     resources: [ "secrets" ]
     resourceNames: [ ]
     verbs: [ "list" ]
+  - apiGroups: [ "networking.k8s.io" ]
+    resources: [ "ingresses" ]
+    resourceNames: [ ]
+    verbs: [ "get","list" ]
