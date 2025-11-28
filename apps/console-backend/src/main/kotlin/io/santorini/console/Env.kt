@@ -22,8 +22,7 @@ private val logger = KotlinLogging.logger {}
  * 环境，也就是 kubernetes 的 namespace
  * @author CJ
  */
-fun Application.configureConsole(database: Database) {
-    install(Resources)
+internal fun Application.configureConsoleEnv(database: Database) {
     val service = EnvService(database)
     // 一般人员可以读取 env
     routing {
@@ -56,5 +55,4 @@ fun Application.configureConsole(database: Database) {
             }
         }
     }
-    configureConsoleService(database)
 }
