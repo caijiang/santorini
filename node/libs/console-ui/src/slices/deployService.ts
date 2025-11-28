@@ -4,6 +4,7 @@ import { CUEnv } from '../apis/env';
 import { kubeServiceApi } from '../apis/kubernetes/service';
 import yamlGenerator from '../apis/kubernetes/yamlGenerator';
 import { IDeployment } from 'kubernetes-models/apps/v1/Deployment';
+import { IService } from 'kubernetes-models/v1';
 
 export interface ServiceDeployToKubernetesProps {
   service: ServiceConfigData;
@@ -16,6 +17,10 @@ export interface ServiceDeployToKubernetesProps {
  */
 interface ServiceInstanceInKubernetes {
   deployment?: IDeployment;
+  /**
+   * 是指 kubernetes 的服务
+   */
+  service?: IService;
 }
 
 async function findServiceInstanceInKubernetes(
@@ -33,12 +38,20 @@ async function findServiceInstanceInKubernetes(
       ],
     })
   ).unwrap();
-  if (rs.length > 0) {
-    return {
-      deployment: rs[0],
-    };
+  const ss = await dispatch(
+    kubeServiceApi.endpoints.serviceByName.initiate({
+      namespace: envId,
+      name: serviceId,
+    })
+  ).unwrap();
+  const rs0 = rs?.find(() => true);
+  if (!ss && !rs0) {
+    return undefined;
   }
-  return undefined;
+  return {
+    deployment: rs0,
+    service: ss,
+  };
 }
 
 /**
@@ -58,13 +71,54 @@ export const deployToKubernetes = createAsyncThunk(
     console.debug('yaml:', yaml);
     if (current) {
       // 更新
-      await dispatch(
-        kubeServiceApi.endpoints.updateDeployment.initiate({
-          namespace: env.id,
-          yaml: yaml.deployment,
-          name: service.id,
-        })
-      ).unwrap();
+      if (yaml.deployment) {
+        if (current.deployment) {
+          await dispatch(
+            kubeServiceApi.endpoints.updateDeployment.initiate({
+              namespace: env.id,
+              yaml: yaml.deployment,
+              name: service.id,
+            })
+          ).unwrap();
+        } else {
+          await dispatch(
+            kubeServiceApi.endpoints.createDeployment.initiate({
+              namespace: env.id,
+              yaml: yaml.deployment,
+            })
+          ).unwrap();
+        }
+      } else {
+        // TODO never
+      }
+
+      if (yaml.service) {
+        if (!current.service) {
+          await dispatch(
+            kubeServiceApi.endpoints.createService.initiate({
+              namespace: env.id,
+              yaml: yaml.service,
+            })
+          ).unwrap();
+        } else {
+          await dispatch(
+            kubeServiceApi.endpoints.updateService.initiate({
+              namespace: env.id,
+              yaml: yaml.service,
+              name: service.id,
+            })
+          ).unwrap();
+        }
+      } else {
+        if (current.service) {
+          await dispatch(
+            kubeServiceApi.endpoints.deleteService.initiate({
+              namespace: env.id,
+              name: service.id,
+            })
+          ).unwrap();
+        }
+      }
     } else {
       // 部署
       await dispatch(
@@ -73,6 +127,14 @@ export const deployToKubernetes = createAsyncThunk(
           yaml: yaml.deployment,
         })
       ).unwrap();
+      if (yaml.service) {
+        await dispatch(
+          kubeServiceApi.endpoints.createService.initiate({
+            namespace: env.id,
+            yaml: yaml.service,
+          })
+        ).unwrap();
+      }
     }
   }
 );

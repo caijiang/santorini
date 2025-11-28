@@ -84,28 +84,31 @@ export default {
         // terminationGracePeriodSeconds: 30
       },
     });
-    const s = new Service({
-      metadata: {
-        name: service.id,
-        namespace: env.id,
-      },
-      spec: {
-        ports: service.ports.map((it) => ({
-          name: it.name,
-          port: it.number,
-          targetPort: it.number,
-        })),
-        selector: {
-          'app.kubernetes.io/name': service.id,
-        },
-      },
-    });
+    const s =
+      service.ports && service.ports.length > 0
+        ? new Service({
+            metadata: {
+              name: service.id,
+              namespace: env.id,
+            },
+            spec: {
+              ports: service.ports.map((it) => ({
+                name: it.name,
+                port: it.number,
+                targetPort: it.number,
+              })),
+              selector: {
+                'app.kubernetes.io/name': service.id,
+              },
+            },
+          })
+        : undefined;
     const deploymentJson = deployment.toJSON();
-    const serviceJson = s.toJSON();
+    const serviceJson = s?.toJSON();
     console.log('json:', deploymentJson, ',type:', typeof deploymentJson);
     return {
       deployment: YAML.stringify(deploymentJson),
-      service: YAML.stringify(serviceJson),
+      service: serviceJson ? YAML.stringify(serviceJson) : undefined,
     };
   },
 } as KubernetesYamlGenerator;

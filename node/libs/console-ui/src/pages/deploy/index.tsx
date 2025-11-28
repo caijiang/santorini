@@ -11,8 +11,8 @@ import { useSecretByNamespaceQuery } from '../../apis/kubernetes/common';
 import { arrayToProSchemaValueEnumMap } from '../../common/ktor';
 import { useDispatch } from 'react-redux';
 import { deployToKubernetes } from '../../slices/deployService';
-import { UnknownAction } from '@reduxjs/toolkit';
 import { App } from 'antd';
+import { dispatchActionThrowIfError } from '../../common/rtk';
 
 export default () => {
   // 作为一个部署服务的专用页面
@@ -49,7 +49,6 @@ export default () => {
             }
           }
           onFinish={async ({ pullSecretName, image }) => {
-            // console.log(input);
             const st = (image as string).split(':', 2);
             const action = deployToKubernetes({
               service: service!!,
@@ -60,10 +59,15 @@ export default () => {
                 imageTag: st.length > 1 ? st[1] : undefined,
               },
             });
-            await dispatch(action as unknown as UnknownAction);
-            message.success('已成功部署该服务资源');
-            nf('/');
-            return true;
+            try {
+              await dispatchActionThrowIfError(dispatch, action);
+              message.success('已成功部署该服务资源');
+              nf('/');
+              return true;
+            } catch (e) {
+              message.error(`操作失败:${e}`);
+              return false;
+            }
           }}
         >
           <ProFormText
