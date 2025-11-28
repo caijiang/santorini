@@ -12,3 +12,7 @@ rules:
     resources: [ "deployments" ]
     resourceNames: [ ]
     verbs: [ "create","update" ]
+  - apiGroups: [ "" ]
+    resources: [ "services" ]
+    resourceNames: [ ]
+    verbs: [ "create","update","get","delete" ]
