@@ -19,6 +19,18 @@ export const hostApi = createApi({
           }
         },
       }),
+      hosts: build.query<HostSummary[], undefined>({
+        providesTags: ['Hosts'],
+        query: () => '/hosts',
+      }),
+      createHost: build.mutation({
+        invalidatesTags: ['Hosts'],
+        query: (arg) => ({
+          url: '/hosts',
+          method: 'POST',
+          body: arg,
+        }),
+      }),
     };
   },
 });
@@ -29,4 +41,5 @@ export interface HostSummary {
   secretName?: string;
 }
 
-export const { useSyncHostMutation } = hostApi;
+export const { useSyncHostMutation, useHostsQuery, useCreateHostMutation } =
+  hostApi;

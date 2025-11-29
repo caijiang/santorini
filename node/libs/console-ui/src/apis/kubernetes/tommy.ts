@@ -2,8 +2,70 @@ import { KubernetesYamlGenerator } from './yamlGenerator';
 import { Deployment } from 'kubernetes-models/apps/v1';
 import YAML from 'yaml';
 import { Service } from 'kubernetes-models/v1';
+import { Ingress } from 'kubernetes-models/networking.k8s.io/v1';
+import _ from 'lodash';
 
 export default {
+  createIngress: (env, instance, hosts) => {
+    const host = hosts.find((it) => it.hostname == instance.host)!!;
+    const ingress = new Ingress({
+      metadata: {
+        labels: {
+          'santorini.io/manageable': 'true',
+        },
+        annotations: {
+          ..._.transform(
+            instance.annotations ?? [],
+            (obj, it) => {
+              obj[`nginx.ingress.kubernetes.io/${it.name}`] = it.value;
+            },
+            {} as {
+              [key: string]: string;
+            }
+          ),
+          'cert-manager.io/cluster-issuer': host.issuerName!!,
+        },
+        generateName: 'santorini-ingress',
+        namespace: env.id,
+      },
+      spec: {
+        ingressClassName: 'nginx',
+        tls: [
+          {
+            hosts: [instance.host],
+            secretName: host.secretName,
+          },
+        ],
+        rules: [
+          {
+            host: instance.host,
+            http: {
+              paths: [
+                {
+                  path: instance.path,
+                  pathType: instance.pathType,
+                  backend: {
+                    service: {
+                      name: instance.backend[0],
+                      port: {
+                        number: _.isNumber(instance.backend[1])
+                          ? instance.backend[1]
+                          : undefined,
+                        name: _.isString(instance.backend[1])
+                          ? instance.backend[1]
+                          : undefined,
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    });
+    return YAML.stringify(ingress.toJSON());
+  },
   serviceInstance: ({ service, env, envRelated }) => {
     const deployment = new Deployment({
       metadata: {

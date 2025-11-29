@@ -51,7 +51,12 @@ const Backend: React.FC<BackendProps> = ({
   return (
     <Space>
       <ArrowRightOutlined />
-      {data.name}:{data.ports.find((it) => it.number == port?.number)?.name}
+      {data.name}:
+      {
+        data.ports.find(
+          (it) => it.number == port?.number || it.name == port?.name
+        )?.name
+      }
     </Space>
   );
 };

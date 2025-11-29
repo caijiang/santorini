@@ -5,10 +5,13 @@ import { useIngressesQuery } from '../../../apis/kubernetes/ingress';
 import { useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
 import { useEnvContext } from '../../../layouts/EnvLayout';
-import { Alert, Collapse, Empty, Skeleton } from 'antd';
+import { Alert, Button, Collapse, Empty, Skeleton } from 'antd';
 import { ProCard, ProList } from '@ant-design/pro-components';
 import { IngressPath, ingressPathKey, toHttpPaths } from './df';
 import Backend from './Backend';
+import IngressAnnotation from './IngressAnnotation';
+import PathEditor from './PathEditor';
+import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 
 function toHostSummary(ingress: IIngress): HostSummary {
   const name = ingress.spec?.rules!![0].host!!;
@@ -86,7 +89,21 @@ export default () => {
   return (
     <>
       {reason && <Alert type={'error'} message={reason} />}
-      <ProCard title={'Ingress'} loading={!ingresses}>
+      <ProCard
+        title={'Ingress'}
+        loading={!ingresses}
+        extra={
+          <PathEditor
+            key={'create'}
+            title={'新增路径'}
+            trigger={
+              <Button title={'点击新增路径'}>
+                <PlusOutlined />
+              </Button>
+            }
+          />
+        }
+      >
         {(!ingresses || !hostList) && <Skeleton />}
         {ingresses && hostList && hostList.length == 0 && <Empty />}
         {ingresses && hostList && hostList.length > 0 && (
@@ -105,6 +122,9 @@ export default () => {
                   <ProList<IngressPath>
                     dataSource={listData}
                     rowKey={ingressPathKey}
+                    // expandable={{
+                    //   rowExpandable: () => true,
+                    // }}
                     metas={{
                       title: {
                         dataIndex: ['path', 'path'],
@@ -113,12 +133,25 @@ export default () => {
                         dataIndex: ['path', 'pathType'],
                       },
                       description: {
-                        render: () => 'desc',
-                        // dataIndex:
+                        render: (_, e) => (
+                          <IngressAnnotation data={e.instance} />
+                        ),
                       },
                       content: {
                         render: (_, e) => <Backend data={e} />,
-                        // dataIndex:
+                      },
+                      actions: {
+                        render: (_, e) => (
+                          <PathEditor
+                            data={e}
+                            title={'编辑路径'}
+                            trigger={
+                              <Button>
+                                <EditOutlined />
+                              </Button>
+                            }
+                          />
+                        ),
                       },
                     }}
                   ></ProList>
