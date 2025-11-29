@@ -17,6 +17,7 @@ import {
   serviceApi,
   ServiceConfigData,
   useAllServiceQuery,
+  useServiceByIdQuery,
 } from '../../../apis/service';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
@@ -26,7 +27,11 @@ import { useEnvContext } from '../../../layouts/EnvLayout';
 import yamlGenerator, {
   CUEditableIngress,
 } from '../../../apis/kubernetes/yamlGenerator';
-import { useCreateIngressMutation } from '../../../apis/kubernetes/ingress';
+import {
+  useCreateIngressMutation,
+  useEditIngressMutation,
+} from '../../../apis/kubernetes/ingress';
+import { readNginxIngressAnnotations } from './IngressAnnotation';
 
 interface PathEditorProps {
   data?: IngressPath;
@@ -46,47 +51,83 @@ interface BackendOption {
   isLeaf?: boolean;
 }
 
-// const example = {
-//   "host": "demo.k8s.mingshz.com",
-//   "pathType": "Exact",
-//   "path": "/a",
-//   "backend": [
-//     "demo-service-537",
-//     "http"
-//   ]
-// }
-
 // 新增 用该 api 可以获取yaml
 // 编辑, 可将 IngressPath 转变成 这个玩意儿, 也可以生成编辑的 yaml
+
+function useResolveCUEditableIngress(data?: IngressPath | undefined):
+  | {
+      instance: CUEditableIngress;
+      service: ServiceConfigData;
+    }
+  | undefined {
+  const rule = data?.instance.spec?.rules?.[data?.ruleIndex];
+  const paths = rule?.http?.paths;
+  const path = paths?.[data?.pathIndex ?? 0];
+  const { data: service } = useServiceByIdQuery(
+    path?.backend?.service?.name ?? 'NEVER',
+    {
+      skip: !path?.backend?.service?.name,
+    }
+  );
+  if (!data) return undefined;
+  if (!service) return undefined;
+  return {
+    instance: {
+      host: rule!!.host!!,
+      pathType: path!!.pathType,
+      path: path!!.path,
+      annotations: readNginxIngressAnnotations(data.instance),
+      backend: [
+        service.id,
+        service.ports.find(
+          (it) =>
+            it.number == path?.backend?.service?.port?.number ||
+            it.name == path?.backend?.service?.port?.name
+        )?.name!!,
+      ],
+    },
+    service,
+  };
+}
 
 /**
  * 支持编辑也支持修改
  * @constructor
  */
 const PathEditor: React.FC<
-  PathEditorProps & Exclude<ModalFormProps, 'onFinish' | 'initialValues'>
+  PathEditorProps &
+    Exclude<ModalFormProps, 'onFinish' | 'initialValues' | 'clearOnDestroy'>
 > = ({ data, ...props }) => {
   const { data: env } = useEnvContext();
   const { message } = App.useApp();
   const [createApi] = useCreateIngressMutation();
+  const [editApi] = useEditIngressMutation();
   // host 是基于选择
   const dispatch = useDispatch();
   const { data: hosts } = useHostsQuery(undefined);
   const { data: services1 } = useAllServiceQuery(undefined);
   const [backendOptions, setBackendOptions] = useState<BackendOption[]>();
+  const currentResult = useResolveCUEditableIngress(data);
   useEffect(() => {
     if (services1) {
+      const currentService = currentResult?.service;
       setBackendOptions(
         services1.map((it) => ({
           value: it.id,
           label: it.name, // TODO full service ui?
           isLeaf: false,
+          children: currentService?.ports?.map((cp) => ({
+            value: cp.name,
+            label: cp.name,
+            isLeaf: true,
+          })),
         }))
       );
     }
-  }, [services1]);
+  }, [services1, currentResult?.service]);
+  // 我们不应该允许编辑 非托管的案例
 
-  const allReady = hosts && backendOptions;
+  const allReady = hosts && backendOptions && (!data || currentResult);
   if (!allReady) {
     return (
       <ModalForm {...props}>
@@ -96,9 +137,9 @@ const PathEditor: React.FC<
   }
   return (
     <ModalForm
-      initialValues={{}}
+      initialValues={currentResult?.instance}
+      clearOnDestroy
       onFinish={async (input) => {
-        console.warn('input:', input);
         const instance = input as CUEditableIngress;
         if (!data) {
           // 新增模式
@@ -113,8 +154,21 @@ const PathEditor: React.FC<
             message.error(`创建流量失败，原因:${e}`);
             return false;
           }
+        } else {
+          // 编辑模式
+          try {
+            const yaml = yamlGenerator.editIngress(data, env, instance, hosts);
+            await editApi({
+              namespace: env.id,
+              name: data.instance.metadata?.name,
+              yaml,
+            }).unwrap();
+            return true;
+          } catch (e) {
+            message.error(`更新流量失败，原因:${e}`);
+            return false;
+          }
         }
-        return false;
       }}
       {...props}
     >

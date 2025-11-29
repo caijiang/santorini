@@ -15,7 +15,9 @@ export interface NginxIngressAnnotation {
   value: string;
 }
 
-function toKV(data: IIngress): NginxIngressAnnotation[] {
+export function readNginxIngressAnnotations(
+  data: IIngress
+): NginxIngressAnnotation[] {
   const as = data.metadata?.annotations;
 
   if (!as) return [];
@@ -28,7 +30,7 @@ function toKV(data: IIngress): NginxIngressAnnotation[] {
 }
 
 const IngressAnnotation: React.FC<IngressAnnotationProps> = ({ data }) => {
-  const list = toKV(data);
+  const list = readNginxIngressAnnotations(data);
   if (list.length == 0) return undefined;
   return (
     <Space>

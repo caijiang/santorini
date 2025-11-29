@@ -3,6 +3,7 @@ import tommy from './tommy';
 import {NginxIngressAnnotation} from '../../components/EnvContext/Ingresses/IngressAnnotation';
 import {HostSummary} from '../host';
 import {CUEnv} from '../env';
+import {IngressPath} from '../../components/EnvContext/Ingresses/df';
 
 /**
  * 服务 yaml,一般分为 deployment 和 service
@@ -26,6 +27,15 @@ export interface CUEditableIngress {
 export interface KubernetesYamlGenerator {
   // 新增流量
   createIngress: (
+    env: CUEnv,
+    instance: CUEditableIngress,
+    hosts: HostSummary[]
+  ) => string;
+  /**
+   * 编辑流量
+   */
+  editIngress: (
+    current: IngressPath,
     env: CUEnv,
     instance: CUEditableIngress,
     hosts: HostSummary[]

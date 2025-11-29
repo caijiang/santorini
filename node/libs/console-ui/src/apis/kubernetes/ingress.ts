@@ -21,6 +21,17 @@ export const ingressApi = createApi({
           },
         }),
       }),
+      editIngress: build.mutation<undefined, ObjectContainer>({
+        invalidatesTags: ['Ingresses'],
+        query: ({ namespace, yaml, name }) => ({
+          url: `/apis/networking.k8s.io/v1/namespaces/${namespace}/ingresses/${name}`,
+          method: 'PUT',
+          body: yaml,
+          headers: {
+            'Content-Type': 'application/yaml',
+          },
+        }),
+      }),
       ingresses: build.query<IIngress[], CUEnv, IIngressList>({
         transformResponse(baseQueryReturnValue) {
           return baseQueryReturnValue.items;
@@ -40,4 +51,8 @@ export const ingressApi = createApi({
   },
 });
 
-export const { useIngressesQuery, useCreateIngressMutation } = ingressApi;
+export const {
+  useIngressesQuery,
+  useCreateIngressMutation,
+  useEditIngressMutation,
+} = ingressApi;
