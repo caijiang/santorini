@@ -1,17 +1,30 @@
 import { IIngress } from 'kubernetes-models/networking.k8s.io/v1';
 import { HostSummary, useSyncHostMutation } from '../../../apis/host';
 import { CUEnv } from '../../../apis/env';
-import { useIngressesQuery } from '../../../apis/kubernetes/ingress';
+import {
+  useEditIngressMutation,
+  useIngressesQuery,
+  useRemoveIngressMutation,
+} from '../../../apis/kubernetes/ingress';
 import { useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
 import { useEnvContext } from '../../../layouts/EnvLayout';
-import { Alert, Button, Collapse, Empty, Skeleton } from 'antd';
+import {
+  Alert,
+  App,
+  Button,
+  Collapse,
+  Empty,
+  Popconfirm,
+  Skeleton,
+} from 'antd';
 import { ProCard, ProList } from '@ant-design/pro-components';
 import { IngressPath, ingressPathKey, toHttpPaths } from './df';
 import Backend from './Backend';
 import IngressAnnotation from './IngressAnnotation';
 import PathEditor from './PathEditor';
-import { EditOutlined, PlusOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
+import yamlGenerator from '../../../apis/kubernetes/yamlGenerator';
 
 function toHostSummary(ingress: IIngress): HostSummary {
   const name = ingress.spec?.rules!![0].host!!;
@@ -85,6 +98,9 @@ function distinct(ingresses: IIngress[] | undefined) {
 
 export default () => {
   const { data } = useEnvContext();
+  const { message } = App.useApp();
+  const [editApi] = useEditIngressMutation();
+  const [removeApi] = useRemoveIngressMutation();
   const { ingresses, reason, hostList } = useIngresses(data);
   return (
     <>
@@ -141,8 +157,9 @@ export default () => {
                         render: (_, e) => <Backend data={e} />,
                       },
                       actions: {
-                        render: (_, e) => (
+                        render: (_, e) => [
                           <PathEditor
+                            key={'edit'}
                             data={e}
                             title={'编辑路径'}
                             trigger={
@@ -150,8 +167,35 @@ export default () => {
                                 <EditOutlined />
                               </Button>
                             }
-                          />
-                        ),
+                          />,
+                          <Popconfirm
+                            key={'delete2'}
+                            title={'确认要删除这条路由规则么'}
+                            onConfirm={async () => {
+                              const yaml = yamlGenerator.deleteIngress(e, data);
+                              try {
+                                if (yaml) {
+                                  await editApi({
+                                    namespace: data.id,
+                                    name: e.instance.metadata?.name,
+                                    yaml,
+                                  }).unwrap();
+                                } else {
+                                  await removeApi({
+                                    namespace: data.id,
+                                    name: e.instance.metadata?.name,
+                                  }).unwrap();
+                                }
+                              } catch (e) {
+                                message.error(`移除流量失败，原因:${e}`);
+                              }
+                            }}
+                          >
+                            <Button danger>
+                              <DeleteOutlined />
+                            </Button>
+                          </Popconfirm>,
+                        ],
                       },
                     }}
                   ></ProList>

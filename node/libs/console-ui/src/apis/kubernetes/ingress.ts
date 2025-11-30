@@ -21,6 +21,13 @@ export const ingressApi = createApi({
           },
         }),
       }),
+      removeIngress: build.mutation<undefined, ObjectContainer>({
+        invalidatesTags: ['Ingresses'],
+        query: ({ namespace, name }) => ({
+          url: `/apis/networking.k8s.io/v1/namespaces/${namespace}/ingresses/${name}`,
+          method: 'DELETE',
+        }),
+      }),
       editIngress: build.mutation<undefined, ObjectContainer>({
         invalidatesTags: ['Ingresses'],
         query: ({ namespace, yaml, name }) => ({
@@ -55,4 +62,5 @@ export const {
   useIngressesQuery,
   useCreateIngressMutation,
   useEditIngressMutation,
+  useRemoveIngressMutation,
 } = ingressApi;

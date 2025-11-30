@@ -132,6 +132,51 @@ export default {
     });
     return YAML.stringify(ingress.toJSON());
   },
+  deleteIngress: (current, env) => {
+    // 有其他 rule
+    const oldJson = current.instance;
+    const rules = oldJson.spec?.rules;
+    if (!rules) return undefined;
+    // 有其他 path
+    const targetRule = rules[current.ruleIndex];
+    const paths = targetRule.http?.paths;
+    if (!paths) return undefined;
+    const newPaths = [
+      ...paths.slice(0, current.pathIndex),
+      ...paths.slice(current.pathIndex + 1),
+    ];
+
+    const newRules =
+      newPaths.length > 0
+        ? replaceElement(rules, current.ruleIndex, {
+            ...targetRule,
+            http: {
+              ...targetRule.http,
+              paths: newPaths,
+            },
+          })
+        : [
+            ...rules.slice(0, current.ruleIndex),
+            ...rules.slice(current.ruleIndex + 1),
+          ];
+
+    if (newRules.length == 0) return undefined;
+
+    const ingress = new Ingress({
+      metadata: {
+        ...oldJson.metadata,
+        labels: makeSure(oldJson.metadata?.labels, {
+          'santorini.io/manageable': 'true',
+        }),
+        namespace: env.id,
+      },
+      spec: {
+        ...oldJson.spec,
+        rules: newRules,
+      },
+    });
+    return YAML.stringify(ingress.toJSON());
+  },
   editIngress: (current, env, instance, hosts) => {
     const host = hosts.find((it) => it.hostname == instance.host)!!;
     const oldJson = current.instance;

@@ -32,6 +32,10 @@ export interface KubernetesYamlGenerator {
     hosts: HostSummary[]
   ) => string;
   /**
+   * 删除流量
+   */
+  deleteIngress: (current: IngressPath, env: CUEnv) => string | undefined;
+  /**
    * 编辑流量
    */
   editIngress: (
