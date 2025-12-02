@@ -15,7 +15,14 @@ export function useEnvs() {
   return ee;
 }
 
+/**
+ * @param envId namespace
+ * @return CUEnv undefined 是还没查询完成,null 是查询完成了 但没找到
+ */
 export function useEnv(envId: string | undefined) {
   const envs = useEnvs();
-  return envs?.find((it) => it.id == envId);
+  if (!envs) return undefined;
+  const find = envs.find((it) => it.id == envId);
+  if (find) return find;
+  return null;
 }

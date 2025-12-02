@@ -80,16 +80,23 @@ export interface LastReleaseDeploymentSummary
 export const serviceApi = createApi({
   reducerPath: 'serviceApi',
   baseQuery: apiBase,
+  tagTypes: ['Services'],
   endpoints: (build) => {
     return {
       createService: build.mutation<undefined, ServiceConfigData>({
+        invalidatesTags: ['Services'],
         query: (body) => ({
           url: '/services',
           body: body,
           method: 'POST',
         }),
       }),
+      allService: build.query<ServiceConfigData[], undefined>({
+        providesTags: ['Services'],
+        query: () => `/services`,
+      }),
       serviceById: build.query<ServiceConfigData | undefined, string>({
+        providesTags: ['Services'],
         query: (arg) => `/services/${arg}`,
       }),
       /**
@@ -113,4 +120,5 @@ export const {
   useServiceByIdQuery,
   useCreateServiceMutation,
   useLastReleaseQuery,
+  useAllServiceQuery,
 } = serviceApi;

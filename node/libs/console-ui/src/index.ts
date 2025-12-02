@@ -7,22 +7,28 @@ import { useMainNav } from './menu';
 import { serviceApi } from './apis/service';
 import { listenerMiddleware } from './module-private';
 import { kubeServiceApi } from './apis/kubernetes/service';
+import { ingressApi } from './apis/kubernetes/ingress';
+import { hostApi } from './apis/host';
 
 export default {
   middlewares: [
     tokenApi.middleware,
     commonApi.middleware,
     kubeServiceApi.middleware,
+    ingressApi.middleware,
     envApi.middleware,
     serviceApi.middleware,
+    hostApi.middleware,
     listenerMiddleware.middleware,
   ],
   reducers: {
     [tokenApi.reducerPath]: tokenApi.reducer,
     [commonApi.reducerPath]: commonApi.reducer,
     [kubeServiceApi.reducerPath]: kubeServiceApi.reducer,
+    [ingressApi.reducerPath]: ingressApi.reducer,
     [envApi.reducerPath]: envApi.reducer,
     [serviceApi.reducerPath]: serviceApi.reducer,
+    [hostApi.reducerPath]: hostApi.reducer,
   },
   routesInMainNav: mainRoutes,
   mainMenuHookGenerator: () => useMainNav,

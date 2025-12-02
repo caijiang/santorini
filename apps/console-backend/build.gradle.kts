@@ -83,6 +83,7 @@ dependencies {
     implementation("io.ktor:ktor-client-logging:3.3.2")
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
+    testImplementation("io.mockk:mockk:1.14.6")
     testImplementation("io.kotest:kotest-assertions-core:6.0.5")
     runtimeOnly("com.mysql:mysql-connector-j:9.5.0")
 }

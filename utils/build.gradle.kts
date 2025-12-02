@@ -11,6 +11,7 @@ plugins {
 
 dependencies {
     api("io.fabric8:kubernetes-client:7.4.0")
+    api(project(":share:santorini-model"))
     // Apply the kotlinx bundle of dependencies from the version catalog (`gradle/libs.versions.toml`).
     implementation(libs.bundles.kotlinxEcosystem)
     testImplementation(kotlin("test"))

@@ -17,8 +17,9 @@ interface NamespacedNamedResource {
   name?: string;
 }
 
-interface ObjectContainer {
+export interface ObjectContainer {
   namespace?: string;
+  name?: string;
   yaml?: string;
 }
 

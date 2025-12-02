@@ -53,8 +53,7 @@ object EnvMysqlData {
     val jdbcPassword: String? get() = url?.let { password }
 }
 
-
-private fun Application.consoleModuleEntry(
+fun Application.consoleModuleEntry(
     httpClient: HttpClient = HttpClient(Apache) {
         install(ContentNegotiation) {
             json(Json)
@@ -78,5 +77,5 @@ private fun Application.consoleModuleEntry(
     configureHTTP()
     configureRouting()
     configureKubernetes(kubernetesClient)
-    configureConsole(database)
+    configureConsole(database, kubernetesClient)
 }
