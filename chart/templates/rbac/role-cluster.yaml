@@ -14,3 +14,7 @@ rules:
     resources: [ "clusterrolebindings" ]
     resourceNames: [ ]
     verbs: [ "get", "list", "watch", "create", "update", "delete" ]
+  - apiGroups: [ "" ]
+    resources: [ "secrets" ]
+    resourceNames: [ ]
+    verbs: [ "get","create","update","patch","delete","deletecollection" ]
