@@ -5,6 +5,7 @@ import io.fabric8.kubernetes.api.model.Pod
 import io.fabric8.kubernetes.api.model.rbac.Role
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.fabric8.kubernetes.client.KubernetesClientBuilder
+import io.santorini.model.ResourceType
 
 /**
  * @author CJ
@@ -39,4 +40,19 @@ object Utils {
         serviceAccountName: String,
         namespace: String
     ) = client.createTokenForServiceAccount(serviceAccountName, namespace)
+
+    @JvmStatic
+    fun findResourcesInNamespace(
+        client: KubernetesClient = KubernetesClientBuilder().build(),
+        namespace: String,
+        type: ResourceType? = null
+    ): List<SantoriniResource> = client.findResourcesInNamespace(namespace, type)
+
+    @JvmStatic
+    fun applyStringSecret(
+        client: KubernetesClient = KubernetesClientBuilder().build(),
+        namespace: String,
+        name: String,
+        data: Map<String, String>
+    ) = client.applyStringSecret(namespace, name, data)
 }

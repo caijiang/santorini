@@ -32,3 +32,7 @@ Authorization: Bearer {{JWT}}
 ### a
 GET {{url}}/api/v1/namespaces?labelSelector=santorini.io/manageable=true
 Authorization: Bearer {{JWT}}
+
+### 查询 config
+GET {{url}}/api/v1/namespaces/{{namespace}}/configmaps
+Authorization: Bearer {{JWT}}

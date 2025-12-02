@@ -50,7 +50,7 @@ class ServiceKtTest {
         }
 
         val demoService = ServiceMetaData(
-            id = "demo-service", name = "范例", type = ServiceType.JVM
+            id = "demo-service", name = "范例", type = ServiceType.JVM, requirements = null
         )
         c.post("https://localhost/services") {
             contentType(ContentType.Application.Json)
@@ -83,7 +83,7 @@ class ServiceKtTest {
                 .shouldNotBeNull()
                 .shouldContain(demoService)
         }
-        c.get("https://localhost/services?limit=1").apply {
+        c.get("https://localhost/services?keyword=${demoService.id}&limit=1").apply {
             status shouldBe HttpStatusCode.OK
             // 分页结果
             body<PageResult<ServiceMetaData>>().apply {

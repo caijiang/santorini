@@ -35,3 +35,5 @@
 
 - santorini.io/manageable=true 表示这个 kubernetes 资源由本系统委托管理。
 - santorini.io/service-type 表示具体的服务类型
+- santorini.io/resource-type 表示资源类型
+- santorini.io/id 表示 santorini 的一个唯一管理单元

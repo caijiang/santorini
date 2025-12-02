@@ -11,6 +11,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.kotlin.datetime.timestampWithTimeZone
 import org.jetbrains.exposed.sql.statements.InsertStatement
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
@@ -29,6 +30,7 @@ data class ServiceMetaData(
     val id: String,
     val name: String,
     val type: ServiceType,
+    val requirements: List<ResourceRequirement>?,
 )
 
 inline fun <reified T> mergeJson(jsonData: T, otherJson: String?): String {
@@ -64,6 +66,7 @@ inline fun <reified T> receiveFromJson(jsonText: String): Pair<T, JsonNode> {
 data class ServiceMetaResource(
     override val limit: Int? = null,
     override val offset: Int? = null,
+    val keyword: String? = null,
 ) : Pageable {
 
     @Resource("{id}")
@@ -80,6 +83,7 @@ class ServiceMetaService(database: Database) {
         override val id = varchar("id", 63).entityId()
         val name = varchar("name", length = 50)
         val type = enumerationByName("type", 10, ServiceType::class)
+        val requirements = jsonb<List<ResourceRequirement>>("requirements", Json).nullable()
         val createTime = timestampWithTimeZone("createTime")
         override val primaryKey = PrimaryKey(id)
     }
@@ -114,6 +118,7 @@ class ServiceMetaService(database: Database) {
             } else {
                 ServiceMetas.update({ ServiceMetas.id eq serviceMetaData.id }) {
                     it[name] = serviceMetaData.name
+                    it[requirements] = serviceMetaData.requirements
                 }
                 ServiceMetaOthers.update({ ServiceMetas.id eq serviceMetaData.id }) {
                     it[data] = other.toPrettyString()
@@ -138,6 +143,7 @@ class ServiceMetaService(database: Database) {
             it[createTime] = OffsetDateTime.now()
             it[type] = serviceMetaData.type
             it[name] = serviceMetaData.name
+            it[requirements] = serviceMetaData.requirements
         }
         return ServiceMetaOthers.insert {
             it[id] = serviceMetaData.id
@@ -145,8 +151,15 @@ class ServiceMetaService(database: Database) {
         }
     }
 
-    private fun selectAll(@Suppress("UNUSED_PARAMETER") resource: ServiceMetaResource): Query {
+    private fun selectAll(resource: ServiceMetaResource): Query {
         return ServiceMetas.selectAll()
+            .where {
+                resource.keyword?.let { keyword ->
+                    if (keyword.isNotBlank()) {
+                        ServiceMetas.id like "%$keyword%" or (ServiceMetas.name like "%$keyword%")
+                    } else null
+                } ?: Op.TRUE
+            }
     }
 
     suspend fun readAsPage(resource: ServiceMetaResource, request: PageRequest): PageResult<ServiceMetaData> {
@@ -157,6 +170,7 @@ class ServiceMetaService(database: Database) {
                         id = it[ServiceMetas.id].value,
                         name = it[ServiceMetas.name],
                         type = it[ServiceMetas.type],
+                        requirements = it[ServiceMetas.requirements],
                     )
                 }
         }
@@ -170,6 +184,7 @@ class ServiceMetaService(database: Database) {
                         id = it[ServiceMetas.id].value,
                         name = it[ServiceMetas.name],
                         type = it[ServiceMetas.type],
+                        requirements = it[ServiceMetas.requirements],
                     )
                 }
         }
@@ -186,6 +201,7 @@ class ServiceMetaService(database: Database) {
                         id = it[ServiceMetas.id].value,
                         name = it[ServiceMetas.name],
                         type = it[ServiceMetas.type],
+                        requirements = it[ServiceMetas.requirements],
                     )
                 }.firstOrNull()?.let { data ->
                     data to ServiceMetaOthers.selectAll()

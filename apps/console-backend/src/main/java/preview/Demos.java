@@ -46,4 +46,14 @@ public class Demos {
         Utils.createTokenForServiceAccount(client, "user-account79rx6", client.getNamespace())
                 .join();
     }
+
+    public static void case4() {
+        KubernetesClient client = new KubernetesClientBuilder().build();
+        Utils.findResourcesInNamespace(client, "test-ns", null);
+    }
+
+    public static void case5() {
+        KubernetesClient client = new KubernetesClientBuilder().build();
+        Utils.applyStringSecret(client, "test-ns", "test-secret", Map.of("foo", "bar", "foo2", "bar222"));
+    }
 }
