@@ -8,10 +8,23 @@ import kotlin.js.JsExport
  */
 @JsExport
 enum class ResourceType(val fields: List<ResourceFieldDefinition>) {
-    Mysql(listOf(ResourceFieldDefinition(""))),
+    Mysql(
+        listOf(
+            ResourceFieldDefinition("username", "用户名", true, false),
+            ResourceFieldDefinition("password", "密码", true, true),
+            ResourceFieldDefinition("host", "主机", true, false),
+            ResourceFieldDefinition("port", "port", true, false),
+            ResourceFieldDefinition("database", "数据库", true, false),
+        )
+    ),
 }
 
-
+/**
+ * 字段定义
+ */
 data class ResourceFieldDefinition(
     val name: String,
+    val label: String,
+    val required: Boolean,
+    val secret: Boolean
 )

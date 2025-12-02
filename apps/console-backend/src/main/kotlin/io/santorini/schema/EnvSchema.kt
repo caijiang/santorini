@@ -31,7 +31,11 @@ class EnvResource {
         val id: String,
         val type: ResourceType? = null,
         val name: String? = null
-    )
+    ) {
+        @Resource("{resourceName}")
+        @Serializable
+        data class One(val id: String, val parent: Resources = Resources(id = id), val resourceName: String)
+    }
 }
 
 class EnvService(database: Database) {

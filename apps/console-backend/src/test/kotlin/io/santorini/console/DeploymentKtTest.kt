@@ -152,7 +152,7 @@ class DeploymentKtTest {
             kubernetesClient.findResourcesInNamespace(deployTargetEnv.id!!, anyNullable())
         } returns listOf(
             SantoriniResourceKubernetesImpl(
-                ResourceType.Mysql, "never", null, mapOf(
+                ResourceType.Mysql, "never", null, mapOf(), mapOf(
                     "username" to "username",
                     "password" to "password",
                     "host" to "host",
