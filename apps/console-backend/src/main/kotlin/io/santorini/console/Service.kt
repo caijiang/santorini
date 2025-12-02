@@ -11,7 +11,7 @@ import io.ktor.server.routing.*
 import io.santorini.OAuthPlatformUserDataAuditResult
 import io.santorini.schema.*
 import io.santorini.withAuthorization
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.v1.jdbc.Database
 
 private val logger = KotlinLogging.logger {}
 

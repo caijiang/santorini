@@ -21,7 +21,7 @@ import io.santorini.schema.EnvResource
 import io.santorini.schema.EnvService
 import io.santorini.withAuthorization
 import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.v1.jdbc.Database
 
 private val logger = KotlinLogging.logger {}
 

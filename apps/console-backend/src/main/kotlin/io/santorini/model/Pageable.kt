@@ -1,7 +1,8 @@
 package io.santorini.model
 
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.jdbc.Query
+
 
 /**
  * @author CJ

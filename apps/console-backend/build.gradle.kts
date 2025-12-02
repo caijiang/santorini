@@ -67,7 +67,6 @@ dependencies {
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.apache)
     implementation(libs.ktor.server.cio)
-    @Suppress("VulnerableLibrariesLocal")
     implementation(libs.logback.classic)
     implementation(libs.ktor.server.config.yaml)
     implementation("io.ktor:ktor-client-encoding:3.3.2")
@@ -75,15 +74,20 @@ dependencies {
     implementation("io.ktor:ktor-serialization-jackson:3.3.2")
     implementation("io.github.oshai:kotlin-logging:7.0.13")
 //    https://www.jetbrains.com/help/exposed/exposed-modules.html#extension-modules
-    implementation("org.jetbrains.exposed:exposed-core:0.61.0")
-    implementation("org.jetbrains.exposed:exposed-jdbc:0.61.0")
-    implementation("org.jetbrains.exposed:exposed-json:0.61.0")
-    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.61.0")
+    implementation("org.jetbrains.exposed:exposed-core:1.0.0-rc-4")
+    implementation("org.jetbrains.exposed:exposed-jdbc:1.0.0-rc-4")
+    implementation("org.jetbrains.exposed:exposed-json:1.0.0-rc-4")
+    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:1.0.0-rc-4")
+    implementation("org.jetbrains.exposed:exposed-migration-jdbc:1.0.0-rc-4")
     implementation("com.h2database:h2:2.3.232")
     implementation("io.ktor:ktor-client-logging:3.3.2")
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
     testImplementation("io.mockk:mockk:1.14.6")
     testImplementation("io.kotest:kotest-assertions-core:6.0.5")
+    testImplementation("org.testcontainers:mysql:1.21.3") {
+        testImplementation("org.apache.commons:commons-compress:1.26.0")
+        testImplementation("org.apache.commons:commons-lang3:3.18.0")
+    }
     runtimeOnly("com.mysql:mysql-connector-j:9.5.0")
 }

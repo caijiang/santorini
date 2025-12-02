@@ -9,16 +9,19 @@ import io.santorini.model.ResourceRequirementTools
 import io.santorini.resources.GenerateContextHome
 import io.santorini.schema.ServiceMetaService.ServiceMetas
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.dao.id.UUIDTable
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.json.jsonb
-import org.jetbrains.exposed.sql.kotlin.datetime.timestampWithTimeZone
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.json.jsonb
 import java.time.OffsetDateTime
 
 
@@ -54,7 +57,7 @@ class DeploymentService(database: Database, private val kubernetesClient: Kubern
         val createTime = timestampWithTimeZone("createTime")
         val imageRepository = varchar("image_repository", 120)
         val imageTag = varchar("image_tag", 50).nullable()
-        val pullSecretName = array<String>("pull_secret_name").nullable()
+        val pullSecretName = jsonb<List<String>>("pull_secret_name", Json).nullable()
         val resourcesSupply = jsonb<Map<String, String>>("resources_supply", Json).nullable()
     }
 
@@ -65,7 +68,11 @@ class DeploymentService(database: Database, private val kubernetesClient: Kubern
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
-        newSuspendedTransaction(Dispatchers.IO) { block() }
+        suspendTransaction {
+            withContext(Dispatchers.IO) {
+                block()
+            }
+        }
 
     suspend fun deploy(deploy: DeploymentResource.Deploy, data: DeploymentDeployData) {
         dbQuery {

@@ -12,7 +12,7 @@ import io.santorini.schema.HostData
 import io.santorini.schema.HostResource
 import io.santorini.schema.HostService
 import io.santorini.withAuthorization
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.v1.jdbc.Database
 
 private val logger = KotlinLogging.logger {}
 
