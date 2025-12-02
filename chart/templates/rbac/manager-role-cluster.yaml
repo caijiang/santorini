@@ -20,3 +20,7 @@ rules:
     resources: [ "ingresses" ]
     resourceNames: [ ]
     verbs: [ "create","update","get","delete","list" ]
+  - apiGroups: [ "" ]
+    resources: [ "configmaps" ]
+    resourceNames: [ ]
+    verbs: [ "list" ]
