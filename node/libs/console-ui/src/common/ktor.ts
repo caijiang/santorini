@@ -68,6 +68,19 @@ export function toInnaNameRule(number: number = 15) {
 }
 
 /**
+ * //    有效标签值：
+ * //    必须为 63 个字符或更少（可以为空）
+ * //    除非标签值为空，必须以字母数字字符（[a-z0-9A-Z]）开头和结尾
+ * //    包含破折号（-）、下划线（_）、点（.）和字母或数字
+ */
+export function toLabelValueRule() {
+  return {
+    pattern: RegExp(`^[a-z0-9A-Z]([a-z0-9A-Z-_.]{0,61})[a-z0-9A-Z]$`),
+    message: `必须为 63 个字符或更少，必须以字母数字字符开头和结尾，只包含破折号（-）、下划线（_）、点（.）和字母或数字`,
+  };
+}
+
+/**
  * 将 kotlin 原生枚举处理成  ProSchemaValueEnumType
  * @param input 枚举数组
  * @param toEnum 可选的额外处理函数

@@ -22,6 +22,7 @@ enum class ResourceType(val fields: List<ResourceFieldDefinition>) {
 /**
  * 字段定义
  */
+@JsExport
 data class ResourceFieldDefinition(
     val name: String,
     val label: String,
