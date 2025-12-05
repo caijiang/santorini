@@ -3,6 +3,7 @@ package io.santorini.console
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
+import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.logging.*
@@ -181,6 +182,15 @@ class DeploymentKtTest {
             withClue("正常工作了") {
                 status shouldBe HttpStatusCode.OK
             }
+        }
+
+        c.get("https://localhost/services/${deployDemoService.id}/lastRelease/${deployTargetEnv.id}").apply {
+            status shouldBe HttpStatusCode.OK
+            body<DeploymentDeployData>() shouldBe deployData.copy(
+                resourcesSupply = mapOf(
+                    ResourceRequirement(ResourceType.Mysql).toString() to "never"
+                )
+            )
         }
 
     }

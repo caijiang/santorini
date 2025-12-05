@@ -17,6 +17,18 @@ enum class ResourceType(val fields: List<ResourceFieldDefinition>) {
             ResourceFieldDefinition("database", "数据库", true, false),
         )
     ),
+    NacosAuth(
+        listOf(
+            ResourceFieldDefinition("server-addr", "服务地址", true, false, "host:ip 的形式"),
+            ResourceFieldDefinition("username", "用户名", false, false),
+            ResourceFieldDefinition("password", "密码", false, true),
+            ResourceFieldDefinition("access-key", "access-key", false, false),
+            ResourceFieldDefinition("secret-key", "secret-key", false, true),
+        )
+    ),
+    NacosNamespace(
+        listOf(ResourceFieldDefinition("namespace", "命名空间", true, false, "是 命名空间ID")),
+    )
 }
 
 /**
@@ -27,5 +39,6 @@ data class ResourceFieldDefinition(
     val name: String,
     val label: String,
     val required: Boolean,
-    val secret: Boolean
+    val secret: Boolean,
+    val tooltip: String? = null,
 )

@@ -1,5 +1,6 @@
 package io.santorini.console
 
+import io.fabric8.kubernetes.client.KubernetesClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -15,8 +16,9 @@ import org.jetbrains.exposed.v1.jdbc.Database
 
 private val logger = KotlinLogging.logger {}
 
-internal fun Application.configureConsoleService(database: Database) {
+internal fun Application.configureConsoleService(database: Database, kubernetesClient: KubernetesClient) {
     val service = ServiceMetaService(database)
+    val deploymentService = DeploymentService(database, kubernetesClient)
     // 一般人员可以读取 env
     routing {
         post<ServiceMetaResource> {
@@ -50,10 +52,16 @@ internal fun Application.configureConsoleService(database: Database) {
             }
         }
         get<ServiceMetaResource.LastRelease> {
+            // 可以通过传递参数，获取更强的能力，比如当前版本的发布记录
             logger.info {
                 "LastRelease for $it"
             }
-            call.respond(HttpStatusCode.OK)
+            val data = deploymentService.lastRelease(it.env, it.id)
+            if (data != null) {
+                call.respond(data)
+            } else {
+                call.respond(HttpStatusCode.OK)
+            }
         }
     }
 }

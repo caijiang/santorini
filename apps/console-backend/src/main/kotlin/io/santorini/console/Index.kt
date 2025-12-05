@@ -8,7 +8,7 @@ import org.jetbrains.exposed.v1.jdbc.Database
 fun Application.configureConsole(database: Database, kubernetesClient: KubernetesClient) {
     install(Resources)
     configureConsoleEnv(database, kubernetesClient)
-    configureConsoleService(database)
+    configureConsoleService(database, kubernetesClient)
     configureConsoleHost(database)
     configureConsoleDeployment(database, kubernetesClient)
 }

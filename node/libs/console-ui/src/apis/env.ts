@@ -35,6 +35,12 @@ export const envApi = createApi({
   tagTypes: ['env', 'resources'],
   endpoints: (build) => {
     return {
+      embedNacosServerAddr: build.query<string | undefined, undefined>({
+        query: () => ({
+          url: '/embedNacosServerAddr',
+          responseHandler: 'text',
+        }),
+      }),
       resources: build.query<
         SantoriniResourceData[],
         { envId: string; params?: any }
@@ -114,4 +120,5 @@ export const {
   useResourcesQuery,
   useCreateResourceMutation,
   useDeleteResourceMutation,
+  useEmbedNacosServerAddrQuery,
 } = envApi;
