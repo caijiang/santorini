@@ -18,3 +18,7 @@ rules:
     resources: [ "secrets" ]
     resourceNames: [ ]
     verbs: [ "get","create","update","patch","delete","deletecollection" ]
+  - apiGroups: [ "" ]
+    resources: [ "configmaps" ]
+    resourceNames: [ ]
+    verbs: [ "get","create","update","patch","delete","deletecollection" ]

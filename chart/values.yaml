@@ -7,6 +7,122 @@ domain: ""
 #namespace: "kube-santorini"
 
 santorini:
+  nacos:
+    # 如果想自行定义host
+    host: ""
+    # 证书颁发者
+    issuerName: ""
+    # 单独安装 nacos, 前提是 mysql 是内置的
+    enabled: true
+    image:
+      registry: docker.io
+      repository: nacos/nacos-server
+      tag: v3.0.2
+      ## Specify a imagePullPolicy
+      ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+      ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+      ##
+      pullPolicy: IfNotPresent
+      ## Optionally specify an array of imagePullSecrets.
+      ## Secrets must be manually created in the namespace.
+      ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+      ## Example:
+      ## pullSecrets:
+      ##   - myRegistryKeySecretName
+      ##
+      pullSecrets: [ ]
+    replicaCount: 1
+    # https://github.com/nacos-group/nacos-docker?tab=readme-ov-file#common-property-configuration
+    extraEnvVars:
+      - name: PREFER_HOST_MODE
+        value: "hostname"
+      - name: TZ
+        value: "Asia/Shanghai"
+      - name: SPRING_DATASOURCE_PLATFORM
+        value: "mysql"
+      - name: NACOS_AUTH_USER_AGENT_AUTH_WHITE_ENABLE
+        value: "false"
+      - name: NACOS_AUTH_ENABLE
+        value: "true"
+      - name: NACOS_AUTH_TOKEN
+        value: "SecretKey012345678901234567890123456789012345678901234567890123456789"
+      - name: NACOS_AUTH_IDENTITY_KEY
+        value: "example"
+      - name: NACOS_AUTH_IDENTITY_VALUE
+        value: "example"
+    ## @param extraEnvVarsCM ConfigMap with extra environment variables
+    ##
+    extraEnvVarsCM: ""
+    ## @param extraEnvVarsSecret Secret with extra environment variables
+    ##
+    extraEnvVarsSecret: ""
+
+    ## liveness and readiness
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+    healthCheck:
+      type: http  # http/tcp
+      port: http  # 上面的端口名或端口
+      # 3分钟启动;150+60; 确保 6 分钟也行
+      livenessProbe:
+        enabled: true
+        httpPath: '/'  # http时必须设置
+        initialDelaySeconds: 120   # 初始延迟秒数, k8s默认值为0，最小为0
+        periodSeconds: 30  # 检测周期，k8s默认值10，最小为1
+        timeoutSeconds: 3  # 检测超时，k8s默认值1，最小为1
+        successThreshold: 1  # 失败后成功次数，k8s默认值1，最小为1，只能设置为1
+        failureThreshold: 8  # 失败后重试次数，k8s默认值3，最小为1
+      readinessProbe:
+        enabled: true
+        httpPath: '/'  # http时必须设置
+        initialDelaySeconds: 120   # 初始延迟秒数, k8s默认值为0，最小为0
+        periodSeconds: 30  # 检测周期，k8s默认值10，最小为1
+        timeoutSeconds: 3  # 检测超时，k8s默认值1，最小为1
+        successThreshold: 1  # 失败后成功次数，k8s默认值1，最小为1，只能设置为1
+        failureThreshold: 8  # 失败后重试次数，k8s默认值3，最小为1
+
+    resources:
+      limits:
+        cpu: "250m"
+        memory: 1024Mi
+      requests:
+        cpu: 125m
+        memory: 512Mi
+
+    service:
+      ## 支持ClusterIP修改为LoadBalancer，反之不允许。可手动修改svc,并将nodePort去掉
+      type: ClusterIP  # 一般不用修改, 支持ClusterIP/LoadBalancer/NodePort
+      loadBalancerIP: ""
+      ## Enable client source IP preservation
+      ## @param service.externalTrafficPolicy External traffic policy, configure to Local to preserve client source IP when using an external loadBalancer
+      ## ref http://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+      ##
+      externalTrafficPolicy: Cluster  # 支持Cluster/Local
+      ports:
+        ## 多端口暴露时，复制一段
+        http:
+          port: 8080  # Service port number for client-a port.
+          protocol: TCP  # Service port protocol for client-a port.
+          ## Use nodePorts to requets some specific ports when usin NodePort
+          # nodePort: 30020  # <to set explicitly, choose port between 30000-32767> 默认会自动生成
+        server:
+          port: 8848
+          protocol: TCP
+      ## @param service.loadBalancerSourceRanges Addresses that are allowed when service is LoadBalancer
+      ## https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+      ## e.g:
+      ## loadBalancerSourceRanges:
+      ## - 10.10.10.0/24
+      ##
+      loadBalancerSourceRanges: [ ]
+      ## @param service.clusterIP Static clusterIP or None for headless services
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address
+      ## e.g:
+      ## clusterIP: None
+      ##
+      clusterIP: ""
+      ## @param service.annotations Annotations for Logstash service
+      ##
+      annotations: { }
   mysql:
     # 只有声明了 false 才表示使用自配 mysql
     enable: true

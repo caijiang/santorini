@@ -1,0 +1,19 @@
+{{- if .Values.santorini.nacos.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "common.santoriniNacosName" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "common.santoriniNacosName" . }}
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+spec:
+  ports:
+  {{- range $key, $value := .Values.santorini.nacos.service.ports }}
+    - name: {{ $key }}
+      targetPort: {{ $key }}
+      {{- toYaml $value | nindent 6 }}
+    {{- end }}
+  selector:
+    app.kubernetes.io/name: {{ include "common.santoriniNacosName" . }}
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+{{- end }}

@@ -1,0 +1,191 @@
+{{- if .Values.santorini.nacos.enabled }}
+{{- $root := . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.santoriniNacosName" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "common.santoriniNacosName" . }}
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "common.santoriniNacosName" . }}
+      {{- include "common.matchLabels.withoutName" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "common.santoriniNacosName" . }}
+        {{- include "common.labels.withoutName" . | nindent 8 }}
+    spec:
+{{/*      serviceAccountName: {{ include "common.santoriniName" . }}*/}}
+      volumes:
+        - name: shared-data
+          emptyDir: { }
+        - name: sql
+          secret:
+            secretName: {{ include "common.santoriniNacosName" . }}
+            items:
+              - key: sql
+                path: sql.sql
+      initContainers:
+        - name: init-db # 负责执行，创建数据库，创建用户，创建
+          image: mysql:8.0.27
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - mountPath: /san
+              name: sql
+          env:
+            - name: MYSQL_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-host
+            - name: MYSQL_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-port
+            - name: MYSQL_ROOT_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-root-username
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.mysqlName" . }}
+                  key: mysql-root-password
+                  optional: true
+            - name: MYSQL_CREATE_USERNAME
+              value: "true"
+            - name: MYSQL_CREATE_DATABASE
+              value: "true"
+            - name: MYSQL_USER
+              value: "nacos"
+            - name: MYSQL_DATABASE
+              value: "nacos"
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.santoriniNacosName" . }}
+                  key: password
+                  optional: false
+          command:
+            - sh
+            - -c
+            - |
+              echo "Running init SQL...MYSQL_CREATE_USERNAME:${MYSQL_CREATE_USERNAME},MYSQL_CREATE_DATABASE:${MYSQL_CREATE_DATABASE}"
+              export SQL_C="CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+              export SQL_G="GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';"
+              if [ ${MYSQL_CREATE_DATABASE} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;"; fi
+              if [ ${MYSQL_CREATE_USERNAME} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "$SQL_C"; fi
+              if [ ${MYSQL_CREATE_USERNAME} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "$SQL_G"; fi
+              mysql --force -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} $MYSQL_DATABASE < /san/sql.sql
+      containers:
+        - name: main
+          image: {{ template "nacos.image" . }}
+          imagePullPolicy: {{ .Values.santorini.nacos.image.pullPolicy | quote }}
+          env:
+            - name: MYSQL_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-host
+            - name: MYSQL_SERVICE_DB_NAME
+              value: "nacos"
+            - name: MYSQL_SERVICE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: mysql-port
+            - name: MYSQL_SERVICE_USER
+              value: "nacos"
+            - name: MYSQL_SERVICE_DB_PARAM
+              value: "characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true"
+            - name: MYSQL_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.santoriniNacosName" . }}
+                  key: password
+                  optional: false
+{{/*            - name: NACOS_REPLICAS*/}}
+{{/*              value: "{{ .Values.santorini.nacos.replicaCount }}"*/}}
+{{/*            - name: NACOS_SERVERS*/}}
+{{/*              value: {{ range $i, $e := until (int $.Values.santorini.nacos.replicaCount) -}}*/}}
+{{/*                     {{- $nacosPodName := (printf "%s-%d.%s-headless" (include "common.santoriniNacosName" $root) $i (include "common.santoriniNacosName" $root)) -}}*/}}
+{{/*                     {{- $nacosPodName -}}:8848{{ printf " " }}*/}}
+{{/*                     {{- end }}*/}}
+{{/*            - name: DOMAIN_NAME*/}}
+{{/*              value: {{ .Values.domain | quote }}*/}}
+{{/*            - name: SERVICE_NAME*/}}
+{{/*              value: {{ include "common.santoriniNacosName" . }}-headless*/}}
+{{/*            - name: POD_NAMESPACE*/}}
+{{/*              valueFrom:*/}}
+{{/*                fieldRef:*/}}
+{{/*                  apiVersion: v1*/}}
+{{/*                  fieldPath: metadata.namespace*/}}
+            - name: NACOS_SERVER_PORT
+              value: {{ .Values.santorini.nacos.service.ports.http.port | quote }}
+            - name: NACOS_APPLICATION_PORT
+              value: {{ .Values.santorini.nacos.service.ports.server.port | quote }}
+            - name: MODE
+              value: standalone
+            {{- if .Values.santorini.nacos.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.santorini.nacos.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.santorini.nacos.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.santorini.nacos.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.santorini.nacos.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.santorini.nacos.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          ports:
+            {{- range $key, $value := .Values.santorini.nacos.service.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $value.port }}
+              protocol: {{ $value.protocol }}
+            {{- end }}
+          {{- if .Values.santorini.nacos.resources }}
+          resources: {{- toYaml .Values.santorini.nacos.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.santorini.nacos.healthCheck.livenessProbe.enabled }}
+          livenessProbe:
+            {{- if eq .Values.santorini.nacos.healthCheck.type "http" }}
+            httpGet:
+              path: {{ .Values.santorini.nacos.healthCheck.livenessProbe.httpPath }}
+              port: {{ .Values.santorini.nacos.healthCheck.port }}
+            {{- else }}
+            tcpSocket:
+              port: {{ .Values.santorini.nacos.healthCheck.port }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.santorini.nacos.healthCheck.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.santorini.nacos.healthCheck.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.santorini.nacos.healthCheck.livenessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.santorini.nacos.healthCheck.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.santorini.nacos.healthCheck.livenessProbe.failureThreshold }}
+          {{- else if .Values.santorini.nacos.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customLivenessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.santorini.nacos.healthCheck.readinessProbe.enabled }}
+          readinessProbe:
+            {{- if eq .Values.santorini.nacos.healthCheck.type "http" }}
+            httpGet:
+              path: {{ .Values.santorini.nacos.healthCheck.readinessProbe.httpPath }}
+              port: {{ .Values.santorini.nacos.healthCheck.port }}
+            {{- else }}
+            tcpSocket:
+              port: {{ .Values.santorini.nacos.healthCheck.port }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.santorini.nacos.healthCheck.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.santorini.nacos.healthCheck.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.santorini.nacos.healthCheck.readinessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.santorini.nacos.healthCheck.readinessProbe.successThreshold }}
+            failureThreshold: {{ .Values.santorini.nacos.healthCheck.readinessProbe.failureThreshold }}
+          {{- else if .Values.santorini.nacos.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.santorini.nacos.customReadinessProbe "context" $) | nindent 12 }}
+          {{- end }}
+{{- end -}}

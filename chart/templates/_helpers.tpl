@@ -13,6 +13,11 @@
 {{- printf "%s-console-backend" (include "common.santoriniName" .) }}
 {{- end }}
 
+{{/*定义一个变量表示 santorini nacos 名称*/}}
+{{- define "common.santoriniNacosName" -}}
+{{- printf "%s-nacos" (include "common.santoriniName" .) }}
+{{- end }}
+
 {{/*定义一个变量表示 santorini 人类角色中的管理员*/}}
 {{- define "common.santoriniManager" -}}
 {{- printf "%s-manager" (include "common.santoriniName" .) }}
@@ -66,3 +71,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "manager@%s" (required "domain 必须填写/ domain is required." .Values.domain) }}
 {{- end -}}
 {{- end }}
+
+{{/*
+Return the proper Nacos image name
+*/}}
+{{- define "nacos.image" -}}
+{{- include "common.images.image" (dict "imageRoot" .Values.santorini.nacos.image "global" .Values.global) -}}
+{{- end -}}
