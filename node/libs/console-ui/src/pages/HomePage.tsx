@@ -10,10 +10,10 @@ import {
   serviceNameColumn,
   serviceTypeColumn,
 } from '../columns/service';
-import { DeploymentUnitOutlined } from '@ant-design/icons';
+import { DeploymentUnitOutlined, EditOutlined } from '@ant-design/icons';
 import Env from '../components/env/Env';
 import EnvChooserModal from '../components/EnvChooserModal';
-import { useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import ServiceDeployedStatus from '../components/ServiceDeployedStatus';
 
 export default () => {
@@ -60,6 +60,11 @@ export default () => {
             valueType: 'option',
             title: '操作',
             render: (_, entity) => [
+              <NavLink to={`/services/${entity.id}`}>
+                <Button>
+                  <EditOutlined />
+                </Button>
+              </NavLink>,
               <EnvChooserModal
                 key={'deploy'}
                 trigger={

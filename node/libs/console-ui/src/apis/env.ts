@@ -17,12 +17,52 @@ interface Env {
   production: boolean;
 }
 
+interface X {
+  name: string;
+  description?: string;
+  properties: Record<string, string>;
+}
+
+// val type: ResourceType,
+export interface SantoriniResourceData extends X {
+  // type: io.santorini.model.ResourceType;
+  type: string;
+}
+
 export const envApi = createApi({
   reducerPath: 'consoleEnvApi',
   baseQuery: apiBase,
-  tagTypes: ['env'],
+  tagTypes: ['env', 'resources'],
   endpoints: (build) => {
     return {
+      resources: build.query<
+        SantoriniResourceData[],
+        { envId: string; params?: any }
+      >({
+        providesTags: ['resources'],
+        query: ({ envId, params }) => ({
+          url: `/envs/${envId}/resources`,
+          params,
+        }),
+      }),
+      createResource: build.mutation<undefined, { envId: string; data: any }>({
+        invalidatesTags: ['resources'],
+        query: ({ envId, data }) => ({
+          url: `/envs/${envId}/resources`,
+          method: 'POST',
+          body: data,
+        }),
+      }),
+      deleteResource: build.mutation<
+        undefined,
+        { envId: string; name: string }
+      >({
+        invalidatesTags: ['resources'],
+        query: ({ envId, name }) => ({
+          url: `/envs/${envId}/resources/${name}`,
+          method: 'DELETE',
+        }),
+      }),
       updateEnv: build.mutation<undefined, any>({
         invalidatesTags: ['env'],
         query: (arg) => ({ url: '/envs', method: 'POST', body: arg }),
@@ -68,4 +108,10 @@ export const envApi = createApi({
   },
 });
 
-export const { useEnvsQuery, useUpdateEnvMutation } = envApi;
+export const {
+  useEnvsQuery,
+  useUpdateEnvMutation,
+  useResourcesQuery,
+  useCreateResourceMutation,
+  useDeleteResourceMutation,
+} = envApi;

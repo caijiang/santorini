@@ -3,25 +3,30 @@ package io.santorini.schema
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.resources.*
 import io.santorini.model.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonIgnoreUnknownKeys
-import org.jetbrains.exposed.dao.id.IdTable
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.json.jsonb
-import org.jetbrains.exposed.sql.kotlin.datetime.timestampWithTimeZone
-import org.jetbrains.exposed.sql.statements.InsertStatement
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.core.dao.id.IdTable
+import org.jetbrains.exposed.v1.core.statements.InsertStatement
+import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
+import org.jetbrains.exposed.v1.jdbc.*
+import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.json.jsonb
 import java.time.OffsetDateTime
 
 // 这里有部分的数据是我们认为业务上服务端并不关心,只是帮忙存取而已
 // 技术细节
 // 读取时,我们准备向客户端渲染某段 json 内容时,对 2 个 string 进行合并(json方式)
 // 写入时,各管各的
+
+private val logger = KotlinLogging.logger {}
 
 @Suppress("OPT_IN_USAGE")
 @Serializable
@@ -100,11 +105,21 @@ class ServiceMetaService(database: Database) {
         transaction(database) {
             SchemaUtils.create(ServiceMetas)
             SchemaUtils.create(ServiceMetaOthers)
+            val sqls = SchemaUtils.addMissingColumnsStatements(ServiceMetas)
+            sqls.forEach {
+                logger.info { "Executing for missing columns:$it" }
+                exec(it)
+            }
+
         }
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
-        newSuspendedTransaction(Dispatchers.IO) { block() }
+        suspendTransaction {
+            withContext(Dispatchers.IO) {
+                block()
+            }
+        }
 
     @Suppress("unused")
     suspend fun createOrUpdate(context: Pair<ServiceMetaData, JsonNode>) {

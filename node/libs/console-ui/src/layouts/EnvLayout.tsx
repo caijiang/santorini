@@ -1,13 +1,27 @@
 import { PageContainer } from '@ant-design/pro-components';
-import { NavLink, Outlet, useOutletContext, useParams } from 'react-router-dom';
+import {
+  NavLink,
+  Outlet,
+  useLocation,
+  useOutletContext,
+  useParams,
+} from 'react-router-dom';
 import { CUEnv } from '../apis/env';
 import { useEnv } from '../hooks/common';
 import { Button, Result, Skeleton } from 'antd';
-import { Suspense } from 'react';
+import * as React from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { PageContainerProps } from '@ant-design/pro-layout/es/components/PageContainer';
 
 export default () => {
   const { env } = useParams();
   const data = useEnv(env);
+  const [sharePageContainerProps, setSharePageContainerProps] =
+    useState<PageContainerProps>();
+  const location = useLocation();
+  useEffect(() => {
+    setSharePageContainerProps(undefined);
+  }, [location]);
   if (data === undefined) {
     return (
       <PageContainer>
@@ -33,9 +47,17 @@ export default () => {
     );
   }
   return (
-    <PageContainer>
+    <PageContainer {...sharePageContainerProps}>
       <Suspense fallback={<Skeleton />}>
-        <Outlet context={{ data } satisfies EnvContext} />
+        <Outlet
+          context={
+            {
+              data,
+              sharePageContainerProps,
+              setSharePageContainerProps,
+            } satisfies EnvContext
+          }
+        />
       </Suspense>
     </PageContainer>
   );
@@ -49,6 +71,10 @@ interface EnvContext {
    * 基本环境数据
    */
   data: CUEnv;
+  sharePageContainerProps?: PageContainerProps;
+  setSharePageContainerProps: React.Dispatch<
+    React.SetStateAction<PageContainerProps | undefined>
+  >;
 }
 
 export function useEnvContext() {

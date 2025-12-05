@@ -4,12 +4,15 @@ import io.ktor.resources.*
 import io.santorini.model.Pageable
 import io.santorini.schema.ServiceMetaService.ServiceMetas
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.dao.id.IdTable
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.kotlin.datetime.timestampWithTimeZone
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.dao.id.IdTable
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
+import org.jetbrains.exposed.v1.jdbc.*
+import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.time.OffsetDateTime
 
 @Serializable
@@ -36,10 +39,6 @@ data class HostResource(
  */
 class HostService(database: Database) {
     // 基本信息是可以从 ingress 读取的,所以必须一一对应
-//    有效标签值：
-//    必须为 63 个字符或更少（可以为空）
-//    除非标签值为空，必须以字母数字字符（[a-z0-9A-Z]）开头和结尾
-//    包含破折号（-）、下划线（_）、点（.）和字母或数字
     object Hosts : IdTable<String>() {
         /**
          * 并非域名，而是一个可以
@@ -58,7 +57,11 @@ class HostService(database: Database) {
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
-        newSuspendedTransaction(Dispatchers.IO) { block() }
+        suspendTransaction {
+            withContext(Dispatchers.IO) {
+                block()
+            }
+        }
 
     suspend fun sync(data: List<HostData>): Int {
         return dbQuery {

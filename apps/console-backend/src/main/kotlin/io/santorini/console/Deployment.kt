@@ -12,7 +12,7 @@ import io.santorini.schema.DeploymentDeployData
 import io.santorini.schema.DeploymentResource
 import io.santorini.schema.DeploymentService
 import io.santorini.withAuthorization
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.v1.jdbc.Database
 
 
 private val logger = KotlinLogging.logger {}
