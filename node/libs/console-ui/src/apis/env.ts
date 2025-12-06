@@ -56,7 +56,7 @@ export const envApi = createApi({
         query: ({ envId, data }) => ({
           url: `/envs/${envId}/resources`,
           method: 'POST',
-          body: data,
+          body: { description: null, ...data },
         }),
       }),
       deleteResource: build.mutation<

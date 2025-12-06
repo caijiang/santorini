@@ -3,6 +3,20 @@ import { apiBase } from '@private-everest/app-support';
 
 type ServiceType = 'JVM';
 
+export interface ResourceRequirement {
+  type: string;
+  name?: string;
+}
+
+export function keyOfResourceRequirement(rr: ResourceRequirement) {
+  return rr.type + '-' + (rr.name ?? '');
+}
+
+export function nameOfResourceRequirement({ name, type }: ResourceRequirement) {
+  if (!name) return type + '资源';
+  return `${type}资源(${name})`;
+}
+
 export function generateDemoService(): ServiceConfigData {
   const rand = Math.ceil(Math.random() * 1000);
   return {
@@ -66,21 +80,22 @@ export interface ServiceConfigData {
     name: string;
   }[];
   // 声明依赖资源 先跳过
+  requirements?: ResourceRequirement[];
 }
 
-export interface EnvRelatedServiceResource {
+export interface DeploymentDeployData {
   imageRepository: string;
   imageTag?: string;
   pullSecretName?: string[];
+  resourcesSupply?: Record<string, string>;
 }
 
-export interface LastReleaseDeploymentSummary
-  extends EnvRelatedServiceResource {}
+export interface LastReleaseDeploymentSummary extends DeploymentDeployData {}
 
 export const serviceApi = createApi({
   reducerPath: 'serviceApi',
   baseQuery: apiBase,
-  tagTypes: ['Services'],
+  tagTypes: ['Services', 'Deployments'],
   endpoints: (build) => {
     return {
       createService: build.mutation<undefined, ServiceConfigData>({
@@ -99,6 +114,28 @@ export const serviceApi = createApi({
         providesTags: ['Services'],
         query: (arg) => `/services/${arg}`,
       }),
+      updateService: build.mutation<
+        undefined,
+        { id: string; data: ServiceConfigData }
+      >({
+        invalidatesTags: ['Services'],
+        query: ({ id, data }) => ({
+          url: `/services/${id}`,
+          body: data,
+          method: 'PUT',
+        }),
+      }),
+      deploy: build.mutation<
+        undefined,
+        { envId: string; serviceId: string; data: DeploymentDeployData }
+      >({
+        invalidatesTags: ['Deployments'],
+        query: ({ envId, serviceId, data }) => ({
+          method: 'POST',
+          url: `/deployments/deploy/${envId}/${serviceId}`,
+          body: data,
+        }),
+      }),
       /**
        * 获取最后一次发布的记录
        */
@@ -109,6 +146,7 @@ export const serviceApi = createApi({
           envId: string;
         }
       >({
+        providesTags: ['Deployments'],
         query: ({ serviceId, envId }) =>
           `/services/${serviceId}/lastRelease/${envId}`,
       }),
@@ -121,4 +159,5 @@ export const {
   useCreateServiceMutation,
   useLastReleaseQuery,
   useAllServiceQuery,
+  useUpdateServiceMutation,
 } = serviceApi;

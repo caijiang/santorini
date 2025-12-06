@@ -253,6 +253,9 @@ export default {
           },
           spec: {
             automountServiceAccountToken: false,
+            imagePullSecrets: envRelated.pullSecretName?.map((it) => ({
+              name: it,
+            })),
             containers: [
               {
                 name: 'main',
@@ -264,6 +267,26 @@ export default {
                   containerPort: it.number,
                   name: it.name,
                 })),
+                envFrom: [
+                  {
+                    configMapRef: {
+                      name: 'santorini-env-share',
+                      optional: true,
+                    },
+                  },
+                  {
+                    secretRef: {
+                      name: 'santorini-env-share',
+                      optional: true,
+                    },
+                  },
+                  {
+                    secretRef: {
+                      name: `${service.id}-env`,
+                      optional: true,
+                    },
+                  },
+                ],
                 resources: {
                   requests: {
                     cpu: service.resources.cpu.requestMillis + 'm',

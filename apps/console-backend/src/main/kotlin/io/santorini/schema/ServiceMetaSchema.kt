@@ -121,6 +121,19 @@ class ServiceMetaService(database: Database) {
             }
         }
 
+    suspend fun update(id: String, context: Pair<ServiceMetaData, JsonNode>) {
+        dbQuery {
+            val (serviceMetaData, other) = context
+            ServiceMetas.update({ ServiceMetas.id eq id }) {
+                it[name] = serviceMetaData.name
+                it[requirements] = serviceMetaData.requirements
+            }
+            ServiceMetaOthers.update({ ServiceMetaOthers.id eq id }) {
+                it[data] = other.toPrettyString()
+            }
+        }
+    }
+
     @Suppress("unused")
     suspend fun createOrUpdate(context: Pair<ServiceMetaData, JsonNode>) {
         dbQuery {

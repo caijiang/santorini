@@ -18,7 +18,11 @@ export const commonApi = createApi({
         KubeSecretListProps
       >({
         transformResponse: (baseQueryReturnValue) => {
-          return baseQueryReturnValue?.items ?? [];
+          return (
+            baseQueryReturnValue?.items?.filter(
+              (it) => !it?.metadata?.labels?.['santorini.io/resource-type']
+            ) ?? []
+          );
         },
         query: (arg) => ({
           url: `/api/v1/namespaces/${arg}/secrets`,

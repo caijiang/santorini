@@ -106,7 +106,7 @@ export function toProSchemaValueEnumMap<
  */
 export function arrayToProSchemaValueEnumMap<T>(
   toName: (input: T) => string,
-  input: Array<T>,
+  input: Array<T> | T[],
   toEnum: (input: T) => ProSchemaValueEnumType | undefined = (it) => ({
     text: toName(it),
   })

@@ -7,6 +7,7 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.resources.post
+import io.ktor.server.resources.put
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.santorini.OAuthPlatformUserDataAuditResult
@@ -27,6 +28,15 @@ internal fun Application.configureConsoleService(database: Database, kubernetesC
                 val context = receiveFromJson<ServiceMetaData>(text)
                 logger.info { "准备新增服务:$context" }
                 service.create(context)
+                call.respond(HttpStatusCode.OK)
+            }
+        }
+        put<ServiceMetaResource.Id> {
+            withAuthorization(OAuthPlatformUserDataAuditResult.Manager) {
+                val text = call.receiveText()
+                val context = receiveFromJson<ServiceMetaData>(text)
+                logger.info { "准备更新服务:$context" }
+                service.update(it.id, context)
                 call.respond(HttpStatusCode.OK)
             }
         }

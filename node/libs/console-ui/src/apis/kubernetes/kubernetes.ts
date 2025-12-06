@@ -35,7 +35,13 @@ export const kubeBaseApi = retry(
         return headers;
       },
     });
-    return baseApi(apiArg, api, extraOptions);
+    const result = await baseApi(apiArg, api, extraOptions);
+    if (result.error && result.error.status == 404) {
+      return {
+        data: undefined,
+      };
+    }
+    return result;
   },
   {
     //  暂定 1, 回头提供 api 允许定制

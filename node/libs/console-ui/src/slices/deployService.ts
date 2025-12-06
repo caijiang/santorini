@@ -1,5 +1,9 @@
 import { createAsyncThunk, GetThunkAPI } from '@reduxjs/toolkit';
-import { EnvRelatedServiceResource, ServiceConfigData } from '../apis/service';
+import {
+  DeploymentDeployData,
+  serviceApi,
+  ServiceConfigData,
+} from '../apis/service';
 import { CUEnv } from '../apis/env';
 import { kubeServiceApi } from '../apis/kubernetes/service';
 import yamlGenerator from '../apis/kubernetes/yamlGenerator';
@@ -9,7 +13,7 @@ import { IService } from 'kubernetes-models/v1';
 export interface ServiceDeployToKubernetesProps {
   service: ServiceConfigData;
   env: CUEnv;
-  envRelated: EnvRelatedServiceResource;
+  envRelated: DeploymentDeployData;
 }
 
 /**
@@ -61,6 +65,20 @@ export const deployToKubernetes = createAsyncThunk(
   'service/deployToKubernetes',
   async (input: ServiceDeployToKubernetesProps, { dispatch }) => {
     const { service, env } = input;
+
+    // 先跟服务器交互
+    // 最好是可以获取到一个 id; 然后拿到新部署后的 id 映射过去
+    // 如果失败，则直接删除
+    const result = await dispatch(
+      serviceApi.endpoints.deploy.initiate({
+        envId: env.id,
+        serviceId: service.id,
+        data: input.envRelated,
+      })
+    ).unwrap();
+
+    console.debug('服务端部署结果:', result);
+
     const current = await findServiceInstanceInKubernetes(
       service.id,
       env.id,
@@ -69,11 +87,12 @@ export const deployToKubernetes = createAsyncThunk(
     console.debug('current service instance: ', current);
     const yaml = yamlGenerator.serviceInstance(input);
     console.debug('yaml:', yaml);
+    let deploymentResult: IDeployment | undefined = undefined;
     if (current) {
       // 更新
       if (yaml.deployment) {
         if (current.deployment) {
-          await dispatch(
+          deploymentResult = await dispatch(
             kubeServiceApi.endpoints.updateDeployment.initiate({
               namespace: env.id,
               yaml: yaml.deployment,
@@ -81,7 +100,7 @@ export const deployToKubernetes = createAsyncThunk(
             })
           ).unwrap();
         } else {
-          await dispatch(
+          deploymentResult = await dispatch(
             kubeServiceApi.endpoints.createDeployment.initiate({
               namespace: env.id,
               yaml: yaml.deployment,
@@ -121,7 +140,7 @@ export const deployToKubernetes = createAsyncThunk(
       }
     } else {
       // 部署
-      await dispatch(
+      deploymentResult = await dispatch(
         kubeServiceApi.endpoints.createDeployment.initiate({
           namespace: env.id,
           yaml: yaml.deployment,
@@ -136,5 +155,6 @@ export const deployToKubernetes = createAsyncThunk(
         ).unwrap();
       }
     }
+    console.debug('kubernetes 部署结果:', deploymentResult);
   }
 );

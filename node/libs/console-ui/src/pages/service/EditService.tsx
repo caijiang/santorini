@@ -1,12 +1,19 @@
 import { PageContainer } from '@ant-design/pro-components';
 import { NavLink, useParams } from 'react-router-dom';
-import { useServiceByIdQuery } from '../../apis/service';
-import { Button, Result, Skeleton } from 'antd';
+import {
+  ServiceConfigData,
+  useServiceByIdQuery,
+  useUpdateServiceMutation,
+} from '../../apis/service';
+import { App, Button, Result, Skeleton } from 'antd';
 import ServiceForm from './components/ServiceForm';
 
 export default () => {
   const { id } = useParams();
   const { data, isLoading } = useServiceByIdQuery(id!!);
+  const [api] = useUpdateServiceMutation();
+  const { message } = App.useApp();
+
   if (isLoading) {
     return (
       <PageContainer title={'编辑服务'} loading>
@@ -32,7 +39,15 @@ export default () => {
   }
   return (
     <PageContainer title={'编辑服务'}>
-      <ServiceForm initialValues={data} />
+      <ServiceForm
+        initialValues={data}
+        onFinish={async (input) => {
+          const inputData = input as ServiceConfigData;
+          await api({ id: id!!, data: inputData }).unwrap();
+          message.success(`成功编辑服务-${inputData.name}`);
+          return true;
+        }}
+      />
     </PageContainer>
   );
 };

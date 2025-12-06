@@ -66,7 +66,7 @@ export const resourceTypeToColumns = (
     'oe:',
     options?.embedNacosServerAddr,
     'RA:',
-    rt === io.santorini.model.ResourceType.RedisAuth,
+    rt === io.santorini.model.ResourceType.NacosAuth,
     ',fields:',
     fields.map((it) => it.name)
   );
@@ -74,7 +74,7 @@ export const resourceTypeToColumns = (
     dataIndex: ['properties', field.name],
     // initialValue:"所以都一样",
     initialValue:
-      rt === io.santorini.model.ResourceType.RedisAuth &&
+      rt === io.santorini.model.ResourceType.NacosAuth &&
       field.name == 'server-addr'
         ? options?.embedNacosServerAddr
         : undefined,
