@@ -72,6 +72,10 @@ data class ServiceMetaResource(
     override val limit: Int? = null,
     override val offset: Int? = null,
     val keyword: String? = null,
+    /**
+     * 如果传入，则表示只要已部署在某环境的服务
+     */
+    val envId: String? = null,
 ) : Pageable {
 
     @Resource("{id}")
@@ -180,6 +184,20 @@ class ServiceMetaService(database: Database) {
     }
 
     private fun selectAll(resource: ServiceMetaResource): Query {
+        if (resource.envId != null) {
+            return (ServiceMetas rightJoin DeploymentService.Deployments)
+                .select(ServiceMetas.columns)
+                .groupBy(ServiceMetas.id)
+                .where {
+                    resource.keyword?.let { keyword ->
+                        if (keyword.isNotBlank()) {
+                            ServiceMetas.id like "%$keyword%" or (ServiceMetas.name like "%$keyword%")
+                        } else null
+                    } ?: Op.TRUE
+                }
+                .andWhere { DeploymentService.Deployments.env eq resource.envId }
+        }
+
         return ServiceMetas.selectAll()
             .where {
                 resource.keyword?.let { keyword ->

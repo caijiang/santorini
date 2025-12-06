@@ -2,6 +2,7 @@ package io.santorini.console
 
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.kotest.assertions.withClue
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -83,8 +84,19 @@ class DeploymentKtTest {
         }.apply {
             status shouldBe HttpStatusCode.OK
         }
-
         val deployTargetEnv = EnvData(id = "deploy", name = "test", production = true)
+
+        withClue("一开始可以查得出来，但是带上 env就查不出来了。") {
+            c.get("https://localhost/services?keyword=${deployDemoService.id}").apply {
+                status shouldBe HttpStatusCode.OK
+                body<List<ServiceMetaData>>() shouldHaveSize 1
+            }
+            c.get("https://localhost/services?keyword=${deployDemoService.id}&envId=${deployTargetEnv.id}").apply {
+                status shouldBe HttpStatusCode.OK
+                body<List<ServiceMetaData>>() shouldHaveSize 0
+            }
+        }
+
         c.post("https://localhost/envs") {
             contentType(ContentType.Application.Json)
             setBody(deployTargetEnv)
@@ -191,6 +203,17 @@ class DeploymentKtTest {
                     ResourceRequirement(ResourceType.Mysql).toString() to "never"
                 )
             )
+        }
+
+        withClue("部署完成了，就可以查出来了。") {
+            c.get("https://localhost/services?keyword=${deployDemoService.id}").apply {
+                status shouldBe HttpStatusCode.OK
+                body<List<ServiceMetaData>>() shouldHaveSize 1
+            }
+            c.get("https://localhost/services?keyword=${deployDemoService.id}&envId=${deployTargetEnv.id}").apply {
+                status shouldBe HttpStatusCode.OK
+                body<List<ServiceMetaData>>() shouldHaveSize 1
+            }
         }
 
     }
