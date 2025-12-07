@@ -73,6 +73,7 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:3.3.2")
     implementation("io.ktor:ktor-serialization-jackson:3.3.2")
     implementation("io.github.oshai:kotlin-logging:7.0.13")
+    implementation("io.ktor:ktor-server-call-logging:3.3.2")
 //    https://www.jetbrains.com/help/exposed/exposed-modules.html#extension-modules
     implementation("org.jetbrains.exposed:exposed-core:1.0.0-rc-4")
     implementation("org.jetbrains.exposed:exposed-jdbc:1.0.0-rc-4")
@@ -80,7 +81,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:1.0.0-rc-4")
     implementation("org.jetbrains.exposed:exposed-migration-jdbc:1.0.0-rc-4")
     implementation("com.h2database:h2:2.3.232")
-    implementation("io.ktor:ktor-client-logging:3.3.2")
+    testImplementation("io.ktor:ktor-client-logging:3.3.2")
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
     testImplementation("io.mockk:mockk:1.14.6")

@@ -7,8 +7,8 @@ import {
   resourceTypeColumn,
   resourceTypeToColumns,
 } from '../../../columns/env_resource';
-import { useEmbedNacosServerAddrQuery } from '../../../apis/env';
 import { Skeleton } from 'antd';
+import { useEmbedNacosServerAddrQuery } from '../../../apis/misc';
 
 const ResourceForm: React.FC<Pick<FormSchema, 'initialValues' | 'onFinish'>> = (
   props

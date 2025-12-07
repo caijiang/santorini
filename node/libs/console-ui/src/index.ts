@@ -9,6 +9,7 @@ import { listenerMiddleware } from './module-private';
 import { kubeServiceApi } from './apis/kubernetes/service';
 import { ingressApi } from './apis/kubernetes/ingress';
 import { hostApi } from './apis/host';
+import { miscApi } from './apis/misc';
 
 export default {
   middlewares: [
@@ -19,6 +20,7 @@ export default {
     envApi.middleware,
     serviceApi.middleware,
     hostApi.middleware,
+    miscApi.middleware,
     listenerMiddleware.middleware,
   ],
   reducers: {
@@ -29,6 +31,7 @@ export default {
     [envApi.reducerPath]: envApi.reducer,
     [serviceApi.reducerPath]: serviceApi.reducer,
     [hostApi.reducerPath]: hostApi.reducer,
+    [miscApi.reducerPath]: miscApi.reducer,
   },
   routesInMainNav: mainRoutes,
   mainMenuHookGenerator: () => useMainNav,

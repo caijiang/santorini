@@ -11,4 +11,5 @@ fun Application.configureConsole(database: Database, kubernetesClient: Kubernete
     configureConsoleService(database, kubernetesClient)
     configureConsoleHost(database)
     configureConsoleDeployment(database, kubernetesClient)
+    configureConsoleMisc(kubernetesClient)
 }

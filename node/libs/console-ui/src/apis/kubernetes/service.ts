@@ -100,6 +100,7 @@ export const kubeServiceApi = createApi({
           },
         }),
       }),
+      // TODO: 暂时部署只以 deployment 进行
       deployments: build.query<
         IDeployment[],
         NamespaceWithLabelSelectors,

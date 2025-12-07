@@ -8,11 +8,13 @@ import io.ktor.client.engine.apache.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.calllogging.*
 import io.santorini.console.configureConsole
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.jdbc.Database
+import org.slf4j.event.Level
 
-private val logger = KotlinLogging.logger {}
+private val ktLogger = KotlinLogging.logger {}
 fun main(args: Array<String>) {
     // 它的存在主要是保护 api server
     io.ktor.server.cio.EngineMain.main(args)
@@ -37,7 +39,7 @@ object EnvMysqlData {
     val url: String?
         get() {
             if (host == null || port == null || user == null || password == null || database == null) {
-                logger.warn {
+                ktLogger.warn {
                     "环境没有设置 MYSQL 信息"
                 }
                 return null
@@ -71,6 +73,10 @@ fun Application.consoleModuleEntry(
 ) {
     install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) {
         json(Json)
+    }
+    install(CallLogging) {
+        level = Level.INFO
+//        logger = ktLogger
     }
     //    configureSerialization()
     configureSecurity(httpClient, kubernetesClient, audit)
