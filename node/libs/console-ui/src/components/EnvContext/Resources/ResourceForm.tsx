@@ -7,10 +7,18 @@ import {
   resourceTypeColumn,
   resourceTypeToColumns,
 } from '../../../columns/env_resource';
+import { useEmbedNacosServerAddrQuery } from '../../../apis/env';
+import { Skeleton } from 'antd';
 
 const ResourceForm: React.FC<Pick<FormSchema, 'initialValues' | 'onFinish'>> = (
   props
 ) => {
+  const { data: embedNacosServerAddr, isLoading } =
+    useEmbedNacosServerAddrQuery(undefined);
+
+  if (isLoading) {
+    return <Skeleton />;
+  }
   return (
     <BetaSchemaForm
       layoutType={'Form'}
@@ -24,7 +32,7 @@ const ResourceForm: React.FC<Pick<FormSchema, 'initialValues' | 'onFinish'>> = (
           valueType: 'dependency',
           name: ['type'],
           columns: ({ type }) => {
-            return resourceTypeToColumns(type);
+            return resourceTypeToColumns(type, { embedNacosServerAddr });
           },
         },
       ]}

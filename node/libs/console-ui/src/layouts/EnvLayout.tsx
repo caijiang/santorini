@@ -53,7 +53,7 @@ export default () => {
           context={
             {
               data,
-              sharePageContainerProps,
+              // sharePageContainerProps,
               setSharePageContainerProps,
             } satisfies EnvContext
           }
@@ -71,7 +71,7 @@ interface EnvContext {
    * 基本环境数据
    */
   data: CUEnv;
-  sharePageContainerProps?: PageContainerProps;
+  // sharePageContainerProps?: PageContainerProps;
   setSharePageContainerProps: React.Dispatch<
     React.SetStateAction<PageContainerProps | undefined>
   >;

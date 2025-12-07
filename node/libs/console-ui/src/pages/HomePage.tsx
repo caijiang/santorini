@@ -60,7 +60,7 @@ export default () => {
             valueType: 'option',
             title: '操作',
             render: (_, entity) => [
-              <NavLink to={`/services/${entity.id}`}>
+              <NavLink key={'edit'} to={`/services/${entity.id}`}>
                 <Button>
                   <EditOutlined />
                 </Button>

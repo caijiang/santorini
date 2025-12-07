@@ -76,7 +76,7 @@ export const kubeServiceApi = createApi({
         }
       ),
       updateDeployment: build.mutation<
-        undefined,
+        IDeployment,
         ObjectContainer & { name: string }
       >({
         invalidatesTags: ['deployments'],
@@ -89,7 +89,7 @@ export const kubeServiceApi = createApi({
           },
         }),
       }),
-      createDeployment: build.mutation<undefined, ObjectContainer>({
+      createDeployment: build.mutation<IDeployment, ObjectContainer>({
         invalidatesTags: ['deployments'],
         query: ({ namespace, yaml }) => ({
           url: `/apis/apps/v1/namespaces/${namespace}/deployments`,

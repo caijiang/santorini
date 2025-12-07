@@ -12,13 +12,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
-import org.jetbrains.exposed.v1.jdbc.Database
-import org.jetbrains.exposed.v1.jdbc.SchemaUtils
-import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.jsonb
@@ -117,6 +116,26 @@ class DeploymentService(database: Database, private val kubernetesClient: Kubern
                 it[resourcesSupply] = data.resourcesSupply
             }
 
+        }
+    }
+
+    suspend fun lastRelease(env: String, service: String): DeploymentDeployData? {
+        return dbQuery {
+            Deployments.selectAll()
+                .where {
+                    (Deployments.env eq env).and {
+                        Deployments.service eq service
+                    }
+                }.orderBy(Deployments.createTime to SortOrder.DESC)
+                .limit(1)
+                .map {
+                    DeploymentDeployData(
+                        it[Deployments.imageRepository],
+                        it[Deployments.imageTag],
+                        it[Deployments.pullSecretName],
+                        it[Deployments.resourcesSupply]
+                    )
+                }.firstOrNull()
         }
     }
 }

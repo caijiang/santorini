@@ -52,15 +52,32 @@ export const resourceDescriptionColumn = {
   },
 };
 
-export const resourceTypeToColumns = (type?: string) => {
+export const resourceTypeToColumns = (
+  type: string | undefined,
+  options?: { embedNacosServerAddr?: string }
+) => {
   if (!type) {
     return [];
   }
   const rt = io.santorini.model.ResourceType.valueOf(type);
   const fields: readonly io.santorini.model.ResourceFieldDefinition[] =
     rt.fields.asJsReadonlyArrayView();
+  console.debug(
+    'oe:',
+    options?.embedNacosServerAddr,
+    'RA:',
+    rt === io.santorini.model.ResourceType.NacosAuth,
+    ',fields:',
+    fields.map((it) => it.name)
+  );
   return fields.map((field) => ({
     dataIndex: ['properties', field.name],
+    // initialValue:"所以都一样",
+    initialValue:
+      rt === io.santorini.model.ResourceType.NacosAuth &&
+      field.name == 'server-addr'
+        ? options?.embedNacosServerAddr
+        : undefined,
     title: field.label,
     formItemProps: field.required
       ? {
@@ -68,5 +85,6 @@ export const resourceTypeToColumns = (type?: string) => {
         }
       : undefined,
     valueType: !field.secret ? 'text' : 'password',
+    tooltip: field.tooltip,
   }));
 };

@@ -6,13 +6,18 @@ import {
 } from '@ant-design/pro-components';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEnv } from '../../hooks/common';
-import { useLastReleaseQuery, useServiceByIdQuery } from '../../apis/service';
+import {
+  keyOfResourceRequirement,
+  useLastReleaseQuery,
+  useServiceByIdQuery,
+} from '../../apis/service';
 import { useSecretByNamespaceQuery } from '../../apis/kubernetes/common';
 import { arrayToProSchemaValueEnumMap } from '../../common/ktor';
 import { useDispatch } from 'react-redux';
 import { deployToKubernetes } from '../../slices/deployService';
 import { App } from 'antd';
 import { dispatchActionThrowIfError } from '../../common/rtk';
+import ResourceRequirementFormField from '../../components/deploy/ResourceRequirementFormField';
 
 export default () => {
   // 作为一个部署服务的专用页面
@@ -31,11 +36,9 @@ export default () => {
   const dispatch = useDispatch();
   const { message } = App.useApp();
   const nf = useNavigate();
+  const allReady = !lastReleaseLoading && !isLoading && service && secrets;
   return (
-    <PageContainer
-      title={'部署'}
-      loading={!env || isLoading || !service || lastReleaseLoading}
-    >
+    <PageContainer title={'部署'} loading={!allReady}>
       {!lastReleaseLoading && (
         <ProForm
           initialValues={
@@ -48,13 +51,13 @@ export default () => {
                   : ''),
             }
           }
-          onFinish={async ({ pullSecretName, image }) => {
+          onFinish={async ({ image, ...other }) => {
             const st = (image as string).split(':', 2);
             const action = deployToKubernetes({
               service: service!!,
               env: env!!,
               envRelated: {
-                pullSecretName,
+                ...other,
                 imageRepository: st[0],
                 imageTag: st.length > 1 ? st[1] : undefined,
               },
@@ -86,6 +89,13 @@ export default () => {
               arrayToProSchemaValueEnumMap((it) => it.metadata?.name!!, secrets)
             }
           />
+          {service?.requirements?.map((rr) => (
+            <ResourceRequirementFormField
+              key={keyOfResourceRequirement(rr)}
+              rr={rr}
+              envId={envId!!}
+            />
+          ))}
         </ProForm>
       )}
     </PageContainer>

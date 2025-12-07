@@ -8,7 +8,7 @@ function generateDemoService() {
   return {
     name: `demo-resource-${rand}`,
     type: 'Mysql',
-    description: 'this-only-test-resource',
+    // description: 'this-only-test-resource',
     properties: {
       host: 'localhost',
       port: '3306',

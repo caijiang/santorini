@@ -6,7 +6,7 @@ import {
 } from '@reduxjs/toolkit';
 import { CUEnv } from '../apis/env';
 import {
-  EnvRelatedServiceResource,
+  DeploymentDeployData,
   serviceApi,
   ServiceConfigData,
 } from '../apis/service';
@@ -26,7 +26,7 @@ interface DeployHelpState {
 
 function toLastReleaseDeploymentSummary(
   state: DeployHelpState
-): EnvRelatedServiceResource | undefined {
+): DeploymentDeployData | undefined {
   if (state.image && state.secretNames) {
     const st = state.image.split(':', 2);
     if (st.length == 1) {
