@@ -1,0 +1,32 @@
+{{ $defaultIssuerName := (include "santorini.issuer" .) }}
+{{ if .Values.dashboard.expose }}
+{{- $hostName := include "santorini.host.dashboard" . -}}
+{{- $issuerName := default $defaultIssuerName .Values.dashboard.entrances.one.issuerName -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+{{/*    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"*/}}
+    # add an annotation indicating the issuer to use.
+    cert-manager.io/cluster-issuer: {{ $issuerName }}
+  name: "{{ include "common.names.fullname" . }}-dashboard-cross"
+  labels:
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ $hostName }}
+      secretName: "{{ include "common.names.fullname" . }}-dashboard-expose-0-tls"
+  rules:
+    - host: {{ $hostName }}
+      http:
+        paths:
+          - path: /tokenForKubernetesDashboard
+            pathType: Exact
+            backend:
+              service:
+                name: {{ include "common.santoriniConsoleBackendName" . }}
+                port:
+                  number: 8080
+{{ end }}
