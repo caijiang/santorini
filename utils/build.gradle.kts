@@ -15,6 +15,7 @@ dependencies {
     // Apply the kotlinx bundle of dependencies from the version catalog (`gradle/libs.versions.toml`).
     implementation(libs.bundles.kotlinxEcosystem)
     testImplementation(kotlin("test"))
+    testImplementation("io.kotest:kotest-assertions-core:6.0.5")
 }
 
 tasks.register<UploadAndExecuteSshTask>("uploadJar") {

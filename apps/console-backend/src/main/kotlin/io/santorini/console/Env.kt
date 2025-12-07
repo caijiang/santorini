@@ -11,7 +11,10 @@ import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.santorini.OAuthPlatformUserDataAuditResult
-import io.santorini.kubernetes.*
+import io.santorini.kubernetes.applyStringConfig
+import io.santorini.kubernetes.applyStringSecret
+import io.santorini.kubernetes.deleteConfigMapAndSecret
+import io.santorini.kubernetes.findResourcesInNamespace
 import io.santorini.model.ResourceType
 import io.santorini.schema.EnvData
 import io.santorini.schema.EnvResource
@@ -38,27 +41,6 @@ internal fun Application.configureConsoleEnv(database: Database, kubernetesClien
     val service = EnvService(database)
     // 一般人员可以读取 env
     routing {
-        // 获取内置的 nacos 地址
-        get("/embedNacosServerAddr") {
-            val root = kubernetesClient.currentPod().rootOwner(kubernetesClient)
-            val instance =
-                root.metadata.labels["app.kubernetes.io/instance"] ?: throw Exception("顶级元素不包含实例信息")
-            val add = kubernetesClient.services()
-                .inNamespace(kubernetesClient.namespace)
-                .withName("$instance-santorini-santorini-nacos")
-                .get()
-                ?.let {
-                    it.spec.ports.firstOrNull { port -> port.name == "server" }
-                        ?.let { port ->
-                            "${it.metadata.name}.${kubernetesClient.namespace}:${port.port}"
-                        }
-                }
-            if (add != null) {
-                call.respond(add)
-            } else {
-                call.respond(HttpStatusCode.OK)
-            }
-        }
         get<EnvResource.Batch> {
             withAuthorization {
                 logger.info {
