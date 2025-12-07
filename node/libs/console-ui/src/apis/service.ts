@@ -102,7 +102,10 @@ export const serviceApi = createApi({
         invalidatesTags: ['Services'],
         query: (body) => ({
           url: '/services',
-          body: body,
+          body: {
+            requirements: [],
+            ...body,
+          },
           method: 'POST',
         }),
       }),
@@ -121,7 +124,10 @@ export const serviceApi = createApi({
         invalidatesTags: ['Services'],
         query: ({ id, data }) => ({
           url: `/services/${id}`,
-          body: data,
+          body: {
+            requirements: [],
+            ...data,
+          },
           method: 'PUT',
         }),
       }),

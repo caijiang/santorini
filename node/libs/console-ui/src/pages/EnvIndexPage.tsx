@@ -4,8 +4,8 @@ import {Button, Divider} from 'antd';
 import {ServiceConfigData} from '../apis/service';
 import {toKtorRequest} from '../common/ktor';
 import {serviceIdColumn, serviceNameColumn, serviceTypeColumn,} from '../columns/service';
-import {NavLink, useNavigate} from 'react-router-dom';
-import {DeploymentUnitOutlined, EditOutlined} from '@ant-design/icons';
+import {useNavigate} from 'react-router-dom';
+import {DeploymentUnitOutlined} from '@ant-design/icons';
 import EnvChooserModal from '../components/EnvChooserModal';
 import {ProTable} from '@ant-design/pro-components';
 import {useEnvContext} from '../layouts/EnvLayout';
@@ -49,12 +49,13 @@ export default () => {
             title: '操作',
             render: (_, entity) => [
               // 非生产，发布新版, 生产滚动升级 ？
-              <DashboardLink key={'dashboard'}>查看</DashboardLink>,
-              <NavLink key={'edit'} to={`/services/${entity.id}`}>
-                <Button>
-                  <EditOutlined />
-                </Button>
-              </NavLink>,
+              // /#/deployment/test-ns/demo-service?namespace=test-ns
+              <DashboardLink
+                path={`/#/deployment/${id}/${entity.id}?namespace=${id}`}
+                key={'dashboard'}
+              >
+                查看
+              </DashboardLink>,
               <EnvChooserModal
                 key={'deploy'}
                 trigger={
