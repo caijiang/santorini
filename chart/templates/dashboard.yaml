@@ -33,9 +33,7 @@
 # ---
 {{ $defaultIssuerName := (include "santorini.issuer" .) }}
 {{ if .Values.dashboard.expose }}
-{{- $defaultHost := printf "dashboard.%s" .Values.domain -}}
-{{/*# 定义 host 名字*/}}
-{{- $hostName := default $defaultHost .Values.dashboard.entrances.one.domain -}}
+{{- $hostName := include "santorini.host.dashboard" . -}}
 {{- $issuerName := default $defaultIssuerName .Values.dashboard.entrances.one.issuerName -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress

@@ -103,6 +103,11 @@ spec:
           image: santorini-console-backend:latest
           imagePullPolicy: IfNotPresent
           env:
+            - name: DASHBOARD_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.santoriniName" . }}
+                  key: dashboard-host
             - name: MANAGER_NAME
               valueFrom:
                 secretKeyRef:

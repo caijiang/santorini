@@ -72,6 +72,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end }}
 
+{{/*定义一个模板，可以获取 dashboard 的地址*/}}
+{{- define "santorini.host.dashboard" -}}
+{{- .Values.dashboard.entrances.one.domain | default (printf "dashboard.%s" .Values.domain) }}
+{{- end -}}
+
 {{/*
 Return the proper Nacos image name
 */}}
