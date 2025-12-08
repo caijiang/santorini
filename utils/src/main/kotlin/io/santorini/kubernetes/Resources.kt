@@ -19,6 +19,7 @@ interface SantoriniResource {
 
     // 作为列表以上的足够了
     fun <T> readResource(serializer: KSerializer<T>): T
+    fun readAllProperties(): Map<String, String>
 }
 
 class SantoriniResourceKubernetesImpl(
@@ -31,6 +32,8 @@ class SantoriniResourceKubernetesImpl(
     override fun <T> readResource(serializer: KSerializer<T>): T {
         return Json.decodeFromString(serializer, Json.encodeToString(properties))
     }
+
+    override fun readAllProperties(): Map<String, String> = properties
 }
 
 /**
