@@ -2,10 +2,13 @@ import { useNamespacesQuery } from '../apis/kubernetes/common';
 import { useEnvsQuery } from '../apis/env';
 
 export function useEnvs() {
-  const { data } = useNamespacesQuery(undefined, {
-    refetchOnFocus: true,
-  });
-  const ids = data?.items
+  const { data } = useNamespacesQuery(
+    {},
+    {
+      refetchOnFocus: true,
+    }
+  );
+  const ids = data
     ?.filter((it) => !!it?.metadata?.name)
     ?.map((it) => it.metadata!!);
   // ?.map(it=>it)

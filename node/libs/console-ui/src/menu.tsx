@@ -13,5 +13,10 @@ export function useMainNav() {
       name: it.name,
       path: `/envFor/${it.id}`,
     })),
+    // {
+    //   name: 'LoongCollector',
+    //   icon: <SwapOutlined />,
+    //   path: '/loongCollector',
+    // },
   ];
 }

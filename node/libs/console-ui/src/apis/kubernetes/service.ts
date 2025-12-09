@@ -3,30 +3,23 @@ import { kubeBaseApi } from './kubernetes';
 import { IDeploymentList } from 'kubernetes-models/apps/v1/DeploymentList';
 import { IDeployment } from 'kubernetes-models/apps/v1/Deployment';
 import { IService } from 'kubernetes-models/v1';
-
-interface NamespaceWithLabelSelectors {
-  namespace?: string;
-  /**
-   * 默认 santorini.io/manageable=true
-   */
-  labelSelectors?: string[];
-}
-
-interface NamespacedNamedResource {
-  namespace?: string;
-  name?: string;
-}
-
-export interface ObjectContainer {
-  namespace?: string;
-  name?: string;
-  yaml?: string;
-}
+import {
+  NamespacedNamedResource,
+  NamespaceWithLabelSelectors,
+  ObjectContainer,
+  TypedObjectContainer,
+} from './type';
+import {
+  DaemonSet,
+  IDaemonSet,
+  IDaemonSetList,
+} from 'kubernetes-models/apps/v1';
+import YAML from 'yaml';
 
 export const kubeServiceApi = createApi({
   reducerPath: 'kubeService',
   baseQuery: kubeBaseApi,
-  tagTypes: ['deployments', 'services'],
+  tagTypes: ['deployments', 'services', 'DaemonSets'],
   endpoints: (build) => {
     return {
       updateService: build.mutation<
@@ -75,6 +68,45 @@ export const kubeServiceApi = createApi({
           }),
         }
       ),
+      createDaemonSet: build.mutation<
+        undefined,
+        TypedObjectContainer<IDaemonSet>
+      >({
+        invalidatesTags: ['DaemonSets'],
+        query: ({ data, namespace }) => ({
+          url: `/apis/apps/v1/namespaces/${namespace}/daemonsets`,
+          method: 'POST',
+          body: YAML.stringify(new DaemonSet(data).toJSON()),
+          headers: {
+            'Content-Type': 'application/yaml',
+          },
+        }),
+      }),
+      daemonSets: build.query<
+        IDaemonSet[],
+        NamespaceWithLabelSelectors,
+        IDaemonSetList
+      >({
+        providesTags: ['DaemonSets'],
+        transformResponse: (baseQueryReturnValue, _, { name }) => {
+          if (name) {
+            const x = baseQueryReturnValue as unknown as IDaemonSet | undefined;
+            return x ? [x] : [];
+          }
+          return baseQueryReturnValue?.items;
+        },
+        query: ({ namespace, labelSelectors, name }) => ({
+          url: name
+            ? `/apis/apps/v1/namespaces/${namespace}/daemonsets/${name}`
+            : namespace
+            ? `/apis/apps/v1/namespaces/${namespace}/daemonsets`
+            : '/apis/apps/v1/daemonsets',
+          params: {
+            labelSelector:
+              labelSelectors?.join(',') ?? 'santorini.io/manageable=true',
+          },
+        }),
+      }),
       updateDeployment: build.mutation<
         IDeployment,
         ObjectContainer & { name: string }
@@ -124,4 +156,8 @@ export const kubeServiceApi = createApi({
   },
 });
 
-export const { useDeploymentsQuery } = kubeServiceApi;
+export const {
+  useDeploymentsQuery,
+  useDaemonSetsQuery,
+  useCreateDaemonSetMutation,
+} = kubeServiceApi;

@@ -2,7 +2,8 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { kubeBaseApi } from './kubernetes';
 import { CUEnv } from '../env';
 import { IIngress, IIngressList } from 'kubernetes-models/networking.k8s.io/v1';
-import { ObjectContainer } from './service';
+
+import { ObjectContainer } from './type';
 
 export const ingressApi = createApi({
   reducerPath: 'kubeIngress',

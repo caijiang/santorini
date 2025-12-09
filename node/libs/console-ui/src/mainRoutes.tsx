@@ -10,6 +10,8 @@ const EnvIndex = lazy(() => import('./pages/EnvIndexPage'));
 const AddResource = lazy(() => import('./pages/envFor/AddResource'));
 const ResourceDetail = lazy(() => import('./pages/envFor/ResourceDetail'));
 
+const LoongCollector = lazy(() => import('./pages/support/LoongCollector'));
+
 export default [
   {
     path: 'home',
@@ -45,5 +47,9 @@ export default [
         element: <EnvIndex />,
       },
     ],
+  },
+  {
+    path: 'loongCollector',
+    element: <LoongCollector />,
   },
 ];

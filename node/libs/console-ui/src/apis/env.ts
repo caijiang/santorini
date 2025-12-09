@@ -1,11 +1,11 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { apiBase } from '@private-everest/app-support';
-import { ObjectMeta } from 'cdk8s-plus-33/lib/imports/k8s';
 import _ from 'lodash';
+import { IObjectMeta } from '@kubernetes-models/apimachinery/apis/meta/v1/ObjectMeta';
 
 // 应用中直接使用的 一律做 CU
 export interface CUEnv {
-  kubeMeta: ObjectMeta;
+  kubeMeta: IObjectMeta;
   id: string;
   name: string;
   production: boolean;
@@ -68,7 +68,7 @@ export const envApi = createApi({
         query: (arg) => ({ url: '/envs', method: 'POST', body: arg }),
       }),
       // queryFn
-      envs: build.query<CUEnv[] | undefined, ObjectMeta[] | undefined, Env[]>({
+      envs: build.query<CUEnv[] | undefined, IObjectMeta[] | undefined, Env[]>({
         providesTags: ['env'],
         query: (arg) => ({
           url: `/envs/batch/${
