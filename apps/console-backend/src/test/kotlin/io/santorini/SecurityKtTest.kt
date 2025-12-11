@@ -3,12 +3,11 @@
 package io.santorini
 
 import io.kotest.matchers.shouldBe
-import io.ktor.client.plugins.cookies.*
-import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import io.santorini.io.santorini.test.mockUserModule
+import io.santorini.test.mockUserModule
+import io.santorini.tools.createStandardClient
 import kotlin.test.Test
 
 /**
@@ -23,14 +22,7 @@ class SecurityKtTest {
                 mockUserModule()
             }
 
-            val client = createClient {
-                install(HttpCookies) {
-                    storage = AcceptAllCookiesStorage()
-                }
-                install(Logging) {
-                    level = LogLevel.ALL
-                }
-            }
+            val client = createStandardClient()
 
             client.get("/mockUser").apply {
                 status shouldBe HttpStatusCode.OK

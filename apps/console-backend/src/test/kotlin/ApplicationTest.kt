@@ -3,7 +3,8 @@ package io.santorini
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import org.jetbrains.exposed.v1.jdbc.Database
+import io.santorini.tools.database
+import org.junit.jupiter.api.AfterAll
 import org.testcontainers.containers.MySQLContainer
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,6 +13,12 @@ class ApplicationTest {
 
     companion object {
         private val mysql = MySQLContainer("mysql:8.0").apply { start() }
+
+        @JvmStatic
+        @AfterAll
+        fun shutdown() {
+            mysql.stop()
+        }
     }
 
     @Test
@@ -24,9 +31,7 @@ class ApplicationTest {
             }
         application {
             consoleModuleEntry(
-                database = Database.connect(
-                    mysql.jdbcUrl, mysql.driverClassName, mysql.username, mysql.password
-                )
+                database = mysql.database
             )
         }
         client.get("/").apply {

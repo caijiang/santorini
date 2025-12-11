@@ -4,10 +4,12 @@
             <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
     <!--    可调试路由-->
     <!--    <logger name="io.ktor.server.routing.Routing" level="trace"/>-->
-    <logger name="io.ktor.client.plugins" level="trace"/>
+    <!--    <logger name="io.ktor.client.plugins" level="trace"/>-->
+    <logger name="io.ktor.server.routing.Routing" level="trace"/>
+    <logger name="Exposed" level="trace"/>
 </configuration>

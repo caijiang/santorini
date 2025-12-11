@@ -23,7 +23,9 @@ internal fun Application.configureConsoleService(database: Database, kubernetesC
     // 一般人员可以读取 env
     routing {
         post<ServiceMetaResource> {
-            withAuthorization(OAuthPlatformUserDataAuditResult.Manager) {
+            withAuthorization({
+                it.audit == OAuthPlatformUserDataAuditResult.Manager
+            }) {
                 val text = call.receiveText()
                 val context = receiveFromJson<ServiceMetaData>(text)
                 logger.info { "准备新增服务:$context" }
@@ -32,7 +34,9 @@ internal fun Application.configureConsoleService(database: Database, kubernetesC
             }
         }
         put<ServiceMetaResource.Id> {
-            withAuthorization(OAuthPlatformUserDataAuditResult.Manager) {
+            withAuthorization({
+                it.audit == OAuthPlatformUserDataAuditResult.Manager
+            }) {
                 val text = call.receiveText()
                 val context = receiveFromJson<ServiceMetaData>(text)
                 logger.info { "准备更新服务:$context" }

@@ -38,7 +38,7 @@ data class SantoriniResourceData(
  * @author CJ
  */
 internal fun Application.configureConsoleEnv(database: Database, kubernetesClient: KubernetesClient) {
-    val service = EnvService(database)
+    val service = EnvService(database, kubernetesClient)
     // 一般人员可以读取 env
     routing {
         get<EnvResource.Batch> {
@@ -50,7 +50,9 @@ internal fun Application.configureConsoleEnv(database: Database, kubernetesClien
             }
         }
         patch<EnvResource.Id> {
-            withAuthorization(OAuthPlatformUserDataAuditResult.Manager) {
+            withAuthorization({
+                it.audit == OAuthPlatformUserDataAuditResult.Manager
+            }) {
                 val data = call.receive<EnvData>()
                 logger.info { "Patching envs...:$it,$data" }
                 service.update(it.id, data)
@@ -124,13 +126,17 @@ internal fun Application.configureConsoleEnv(database: Database, kubernetesClien
             }
         }
         delete<EnvResource.Resources.One> {
-            withAuthorization(OAuthPlatformUserDataAuditResult.Manager) {
+            withAuthorization({
+                it.audit == OAuthPlatformUserDataAuditResult.Manager
+            }) {
                 kubernetesClient.deleteConfigMapAndSecret(it.id, it.resourceName)
                 call.respond(HttpStatusCode.OK)
             }
         }
         post<EnvResource> {
-            withAuthorization(OAuthPlatformUserDataAuditResult.Manager) {
+            withAuthorization({
+                it.audit == OAuthPlatformUserDataAuditResult.Manager
+            }) {
                 val data = call.receive<EnvData>()
                 logger.info { "Posting envs...:$data" }
                 if (data.id.isNullOrBlank()) {

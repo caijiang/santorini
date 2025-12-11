@@ -29,19 +29,17 @@ fun RoutingCall.queryUserData(): InSiteUserData? {
  * 按授权
  */
 suspend fun RoutingContext.withAuthorization(
-    audit: OAuthPlatformUserDataAuditResult? = null,
+    audit: suspend (InSiteUserData) -> Boolean = { true },
     block: suspend RoutingContext.() -> Unit
 ) {
     val user = call.queryUserData()
     if (user == null) {
         call.respond(HttpStatusCode.Unauthorized)
     } else {
-        if (audit == null) {
+        if (audit(user)) {
             block()
-        } else if (user.audit != audit) {
-            call.respond(HttpStatusCode.Forbidden)
         } else {
-            block()
+            call.respond(HttpStatusCode.Forbidden)
         }
     }
 }

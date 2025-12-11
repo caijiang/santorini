@@ -37,3 +37,4 @@
 - santorini.io/service-type 表示具体的服务类型
 - santorini.io/resource-type 表示资源类型
 - santorini.io/id 表示 santorini 的一个唯一管理单元
+- santorini.io/version 表示资源版本

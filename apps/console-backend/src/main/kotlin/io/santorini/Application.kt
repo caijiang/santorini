@@ -79,7 +79,7 @@ fun Application.consoleModuleEntry(
 //        logger = ktLogger
     }
     //    configureSerialization()
-    configureSecurity(httpClient, kubernetesClient, audit)
+    configureSecurity(database, httpClient, kubernetesClient, audit)
     configureHTTP()
     configureRouting()
     configureKubernetes(kubernetesClient)

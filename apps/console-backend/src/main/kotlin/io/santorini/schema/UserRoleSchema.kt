@@ -1,0 +1,223 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
+package io.santorini.schema
+
+import io.fabric8.kubernetes.api.model.ServiceAccount
+import io.ktor.resources.*
+import io.santorini.*
+import io.santorini.model.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.datetime.FixedOffsetTimeZone
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
+import org.jetbrains.exposed.v1.jdbc.*
+import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.json.extract
+import org.jetbrains.exposed.v1.json.jsonb
+import java.time.OffsetDateTime
+import java.util.*
+import kotlin.time.ExperimentalTime
+import kotlin.time.toKotlinInstant
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlin.uuid.toKotlinUuid
+
+@Serializable
+data class UserData(
+    val id: String,
+    val name: String,
+    val avatarUrl: String,
+    val createTime: LocalDateTime,
+    val grantAuthorities: GrantAuthorities,
+    val serviceAccountName: String
+)
+
+@Resource("/users")
+@Serializable
+data class UserResource(
+    override val limit: Int? = null,
+    override val offset: Int? = null,
+    val keyword: String? = null,
+//    val timezone: FixedOffsetTimeZone = FixedOffsetTimeZone(
+//        UtcOffset(ZoneOffset.of("Asia/Shanghai")),
+//    ),
+) : Pageable {
+    @Resource("{id}")
+    @Serializable
+    data class Id(val parent: UserResource = UserResource(), val id: Uuid? = null) {
+        /**
+         * 获取可见的环境 id
+         */
+        @Resource("envs")
+        @Serializable
+        data class Envs(val id: Id = Id())
+    }
+
+//    /**
+//     * 获取可见的环境 id
+//     */
+//    @Resource("{id}/envs")
+//    @Serializable
+//    data class Envs(val parent: UserResource = UserResource(), val id: String? = null)
+}
+
+class UserRoleService(database: Database) {
+    object Users : UUIDTable() {
+        val thirdPlatform = enumerationByName("third-platform", 10, OAuthPlatform::class)
+        val thirdId = varchar("third-id", 100)
+
+        /**
+         * 这个属性被设定为只有 root 可以修改
+         */
+        val grantAuthorities = jsonb<GrantAuthorities>("grant_authorities", Json)
+        val name = varchar("name", 50)
+        val avatarUrl = varchar("avatar_url", 300)
+
+        /**
+         * 给邦定的 sa
+         */
+        val serviceAccountName = varchar("service_account_name", 100)
+        val createTime = timestampWithTimeZone("createTime")
+
+        init {
+            uniqueIndex(thirdPlatform, thirdId)
+        }
+    }
+
+    init {
+        transaction(database) {
+            SchemaUtils.create(Users)
+        }
+    }
+
+    private suspend fun <T> dbQuery(block: suspend () -> T): T =
+        suspendTransaction {
+            withContext(Dispatchers.IO) {
+                block()
+            }
+        }
+
+    /**
+     * @return 不会包含[InSiteUserData.platformAccessToken]
+     */
+    suspend fun oAuthPlatformUserDataToSiteUserData(
+        platformUserData: OAuthPlatformUserData,
+        result: OAuthPlatformUserDataAuditResult,
+        account: ServiceAccount
+    ): InSiteUserData {
+        return dbQuery {
+            val currentRow = Users.selectAll()
+                .where {
+                    (Users.thirdPlatform eq platformUserData.platform).and { Users.thirdId eq platformUserData.stablePk }
+                }.firstOrNull()
+            val data = InSiteUserData(
+                Uuid.random(),
+                null,
+                result,
+                platformUserData.platform,
+                platformUserData.stablePk,
+                platformUserData.name,
+                platformUserData.avatarUrl,
+                "",
+                account.metadata.name,
+            )
+            if (currentRow == null) {
+                val id = Users.insertAndGetId {
+                    it[thirdPlatform] = platformUserData.platform
+                    it[thirdId] = platformUserData.stablePk
+                    it[grantAuthorities] = defaultGrantAuthorities(result)
+                    it[name] = platformUserData.name
+                    it[avatarUrl] = platformUserData.avatarUrl
+                    it[serviceAccountName] = account.metadata.name
+                    it[createTime] = OffsetDateTime.now()
+                }
+                data.copy(grantAuthorities = defaultGrantAuthorities(result), id = id.value.toKotlinUuid())
+            } else {
+                Users.update({ Users.id eq currentRow[Users.id] }) {
+                    it[name] = platformUserData.name
+                    it[avatarUrl] = platformUserData.avatarUrl
+                }
+                data.copy(
+                    grantAuthorities = currentRow[Users.grantAuthorities],
+                    id = currentRow[Users.id].value.toKotlinUuid()
+                )
+            }
+        }
+    }
+
+    private fun defaultGrantAuthorities(result: OAuthPlatformUserDataAuditResult): GrantAuthorities {
+        if (result == OAuthPlatformUserDataAuditResult.Manager) {
+            return GrantAuthorities(root = true, users = true, envs = true, roles = true, assigns = true)
+        }
+        return GrantAuthorities(root = false, users = false, envs = false, roles = false, assigns = false)
+    }
+
+    suspend fun readUserAsPage(
+        resource: UserResource,
+        request: PageRequest,
+        timezone: FixedOffsetTimeZone = defaultFixedOffsetTimeZone()
+    ): PageResult<UserData> {
+        return dbQuery {
+            selectUsers(resource)
+                .mapToPage(request, { toUserData(it, timezone) })
+        }
+    }
+
+    suspend fun readUser(
+        resource: UserResource,
+        timezone: FixedOffsetTimeZone = defaultFixedOffsetTimeZone()
+    ): List<UserData> {
+        return dbQuery {
+            selectUsers(resource)
+                .map { toUserData(it, timezone) }
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun toUserData(
+        resultRow: ResultRow,
+        timezone: FixedOffsetTimeZone = defaultFixedOffsetTimeZone()
+    ): UserData {
+        val time = resultRow[Users.createTime]
+        return UserData(
+            resultRow[Users.id].value.toString(),
+            resultRow[Users.name],
+            resultRow[Users.avatarUrl],
+            time.toInstant().toKotlinInstant().toLocalDateTime(timezone),
+            resultRow[Users.grantAuthorities],
+            resultRow[Users.serviceAccountName],
+        )
+    }
+
+    suspend fun userById(fromString: UUID): UserData? {
+        return dbQuery {
+            Users.selectAll()
+                .where { Users.id eq fromString }
+                .map { toUserData(it) }
+                .firstOrNull()
+        }
+    }
+
+    private fun selectUsers(resource: UserResource): Query {
+        val q = Users.selectAll()
+            .where {
+                Users.grantAuthorities.extract<String>(".root") neq "true"
+            }
+        val keyword = resource.keyword
+        if (keyword.isNullOrBlank()) {
+            return q
+        }
+        return q
+            .andWhere {
+                Users.name like "%$keyword%"
+            }
+    }
+
+}

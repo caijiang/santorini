@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package io.santorini
 
 import common.LoginUser
@@ -10,16 +12,23 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.santorini.kubernetes.findOrCreateServiceAccount
+import io.santorini.model.GrantAuthorities
+import io.santorini.schema.UserRoleService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import org.jetbrains.exposed.v1.jdbc.Database
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 
 fun Application.configureSecurity(
+    database: Database,
     httpClient: HttpClient,
     kubernetesClient: KubernetesClient,
     audit: OAuthPlatformUserDataAudit
 ) {
+    val userService = UserRoleService(database)
     install(Sessions) {
 //        cookie<UserSession>("USER_SESSION") {
 //            cookie.extensions["SameSite"] = "lax"
@@ -70,7 +79,7 @@ fun Application.configureSecurity(
             if (user == null) {
                 call.respond(HttpStatusCode.Unauthorized)
             } else {
-                call.respond(LoginUserData(user.name, user.avatarUrl, user.audit.toGrantAuthorities()))
+                call.respond(LoginUserData(user.id, user.name, user.avatarUrl, user.audit.toGrantAuthorities()))
             }
         }
         authenticate("auth-oauth-feishu") {
@@ -100,15 +109,8 @@ fun Application.configureSecurity(
                 }
                 //
                 call.saveUserData(
-                    InSiteUserData(
-                        result,
-                        platformUserData.platform,
-                        platformUserData.stablePk,
-                        platformUserData.name,
-                        platformUserData.avatarUrl,
-                        principal.accessToken,
-                        account.metadata.name
-                    )
+                    userService.oAuthPlatformUserDataToSiteUserData(platformUserData, result, account)
+                        .copy(platformAccessToken = principal.accessToken)
                 )
                 call.respondRedirect("/")
             }
@@ -133,6 +135,8 @@ fun Application.configureSecurity(
  */
 @Serializable
 data class InSiteUserData(
+    val id: Uuid,
+    val grantAuthorities: GrantAuthorities?,
     val audit: OAuthPlatformUserDataAuditResult,
     val platform: OAuthPlatform,
     /**
@@ -151,6 +155,7 @@ data class InSiteUserData(
 
 @Serializable
 data class LoginUserData(
+    val id: Uuid,
     /**
      * 名称
      */
@@ -163,8 +168,8 @@ data class LoginUserData(
 
     override val grantAuthorities: Array<String>
 ) : LoginUser {
-    override val bytesId: ByteArray?
-        get() = null
+    override val bytesId: ByteArray
+        get() = id.toByteArray()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
