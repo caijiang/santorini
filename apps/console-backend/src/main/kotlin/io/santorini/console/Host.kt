@@ -12,12 +12,12 @@ import io.santorini.schema.HostData
 import io.santorini.schema.HostResource
 import io.santorini.schema.HostService
 import io.santorini.withAuthorization
-import org.jetbrains.exposed.v1.jdbc.Database
+import org.koin.ktor.ext.inject
 
 private val logger = KotlinLogging.logger {}
 
-internal fun Application.configureConsoleHost(database: Database) {
-    val service = HostService(database)
+internal fun Application.configureConsoleHost() {
+    val service = inject<HostService>().value
     // 一般人员可以读取 env
     routing {
         post<HostResource.Sync> {

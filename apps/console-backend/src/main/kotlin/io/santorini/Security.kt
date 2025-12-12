@@ -17,18 +17,17 @@ import io.santorini.schema.UserRoleService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.v1.jdbc.Database
+import org.koin.ktor.ext.get
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 
 fun Application.configureSecurity(
-    database: Database,
     httpClient: HttpClient,
     kubernetesClient: KubernetesClient,
     audit: OAuthPlatformUserDataAudit
 ) {
-    val userService = UserRoleService(database)
+    val userService = get<UserRoleService>()
     install(Sessions) {
 //        cookie<UserSession>("USER_SESSION") {
 //            cookie.extensions["SameSite"] = "lax"

@@ -81,6 +81,8 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:1.0.0-rc-4")
     implementation("org.jetbrains.exposed:exposed-migration-jdbc:1.0.0-rc-4")
     implementation("com.h2database:h2:2.3.232")
+    implementation("io.insert-koin:koin-ktor:4.2.0-beta2")
+    implementation("io.insert-koin:koin-logger-slf4j:4.2.0-beta2")
     testImplementation("io.ktor:ktor-client-logging:3.3.2")
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)

@@ -10,8 +10,12 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.calllogging.*
 import io.santorini.console.configureConsole
+import io.santorini.schema.*
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.jdbc.Database
+import org.koin.dsl.module
+import org.koin.ktor.plugin.Koin
+import org.koin.logger.slf4jLogger
 import org.slf4j.event.Level
 
 private val ktLogger = KotlinLogging.logger {}
@@ -71,6 +75,27 @@ fun Application.consoleModuleEntry(
 //        driver = "org.h2.Driver",
     )
 ) {
+    install(Koin) {
+        slf4jLogger()
+        modules(module {
+//            val serviceMetaService = ServiceMetaService(database)
+            single {
+                DeploymentService(database, kubernetesClient)
+            }
+            single {
+                EnvService(database)
+            }
+            single {
+                HostService(database)
+            }
+            single {
+                ServiceMetaService(database, lazy { get() })
+            }
+            single {
+                UserRoleService(database, get())
+            }
+        })
+    }
     install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) {
         json(Json)
     }
@@ -79,9 +104,9 @@ fun Application.consoleModuleEntry(
 //        logger = ktLogger
     }
     //    configureSerialization()
-    configureSecurity(database, httpClient, kubernetesClient, audit)
+    configureSecurity(httpClient, kubernetesClient, audit)
     configureHTTP()
     configureRouting()
     configureKubernetes(kubernetesClient)
-    configureConsole(database, kubernetesClient)
+    configureConsole(kubernetesClient)
 }

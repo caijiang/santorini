@@ -1,6 +1,5 @@
 package io.santorini.console
 
-import io.fabric8.kubernetes.client.KubernetesClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -12,13 +11,13 @@ import io.santorini.schema.DeploymentDeployData
 import io.santorini.schema.DeploymentResource
 import io.santorini.schema.DeploymentService
 import io.santorini.withAuthorization
-import org.jetbrains.exposed.v1.jdbc.Database
+import org.koin.ktor.ext.get
 
 
 private val logger = KotlinLogging.logger {}
 
-internal fun Application.configureConsoleDeployment(database: Database, kubernetesClient: KubernetesClient) {
-    val service = DeploymentService(database, kubernetesClient)
+internal fun Application.configureConsoleDeployment() {
+    val service = get<DeploymentService>()
     // 一般人员可以读取 env
     routing {
         post<DeploymentResource.Deploy> { deployData ->

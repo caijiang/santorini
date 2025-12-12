@@ -21,7 +21,7 @@ import io.santorini.schema.EnvResource
 import io.santorini.schema.EnvService
 import io.santorini.withAuthorization
 import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.v1.jdbc.Database
+import org.koin.ktor.ext.inject
 
 private val logger = KotlinLogging.logger {}
 
@@ -37,8 +37,8 @@ data class SantoriniResourceData(
  * 环境，也就是 kubernetes 的 namespace
  * @author CJ
  */
-internal fun Application.configureConsoleEnv(database: Database, kubernetesClient: KubernetesClient) {
-    val service = EnvService(database)
+internal fun Application.configureConsoleEnv(kubernetesClient: KubernetesClient) {
+    val service = inject<EnvService>().value
     // 一般人员可以读取 env
     routing {
         get<EnvResource.Batch> {

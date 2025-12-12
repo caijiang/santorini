@@ -8,22 +8,19 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.santorini.*
+import io.santorini.OAuthPlatform
+import io.santorini.OAuthPlatformUserData
+import io.santorini.OAuthPlatformUserDataAuditResult
+import io.santorini.saveUserData
 import io.santorini.schema.UserRoleService
-import org.jetbrains.exposed.v1.jdbc.Database
+import org.koin.ktor.ext.inject
 import java.util.*
 import kotlin.uuid.ExperimentalUuidApi
 
 
 private val logger = KotlinLogging.logger {}
-fun Application.mockUserModule(
-    database: Database = Database.connect(
-        url = EnvMysqlData.url ?: "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1",
-        user = EnvMysqlData.jdbcUser ?: "root",
-        password = EnvMysqlData.jdbcPassword ?: "",
-    )
-) {
-    val userService = UserRoleService(database)
+fun Application.mockUserModule() {
+    val userService = inject<UserRoleService>().value
     routing {
         get("/mockUser/{audit?}") {
             logger.info { "视图伪装成用户: ${call.pathParameters["audit"]}" }

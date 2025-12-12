@@ -93,7 +93,7 @@ data class ServiceMetaResource(
 }
 
 class ServiceMetaService(
-    database: Database, private val userRoleService: UserRoleService = UserRoleService(database)
+    database: Database, private val userRoleService: Lazy<UserRoleService>
 ) {
     object ServiceMetas : IdTable<String>() {
         override val id = varchar("id", 63).entityId()
@@ -193,7 +193,7 @@ class ServiceMetaService(
     private suspend fun selectAll(resource: ServiceMetaResource, userId: Uuid?): Query {
         // 没有就全给咯
         val filterUserId = userId?.let {
-            if (userRoleService.userById(it.toJavaUuid())?.grantAuthorities?.root == true)
+            if (userRoleService.value.userById(it.toJavaUuid())?.grantAuthorities?.root == true)
                 null
             else it.toJavaUuid()
         }

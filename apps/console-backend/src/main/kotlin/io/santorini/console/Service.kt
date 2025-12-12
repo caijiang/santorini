@@ -2,7 +2,6 @@
 
 package io.santorini.console
 
-import io.fabric8.kubernetes.client.KubernetesClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -15,14 +14,14 @@ import io.ktor.server.routing.*
 import io.santorini.OAuthPlatformUserDataAuditResult
 import io.santorini.schema.*
 import io.santorini.withAuthorization
-import org.jetbrains.exposed.v1.jdbc.Database
+import org.koin.ktor.ext.inject
 import kotlin.uuid.ExperimentalUuidApi
 
 private val logger = KotlinLogging.logger {}
 
-internal fun Application.configureConsoleService(database: Database, kubernetesClient: KubernetesClient) {
-    val service = ServiceMetaService(database)
-    val deploymentService = DeploymentService(database, kubernetesClient)
+internal fun Application.configureConsoleService() {
+    val service = inject<ServiceMetaService>().value
+    val deploymentService = inject<DeploymentService>().value
     // 一般人员可以读取 env
     routing {
         post<ServiceMetaResource> {

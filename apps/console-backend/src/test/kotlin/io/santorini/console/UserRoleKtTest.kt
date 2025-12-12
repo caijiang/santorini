@@ -57,7 +57,7 @@ class UserRoleKtTest {
 
         application {
             consoleModuleEntry(database = mysql.database, kubernetesClient = kubernetesClient)
-            mockUserModule(database = mysql.database)
+            mockUserModule()
         }
 
         val manager = createStandardClient()

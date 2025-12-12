@@ -79,7 +79,7 @@ data class UserResource(
 //    data class Envs(val parent: UserResource = UserResource(), val id: String? = null)
 }
 
-class UserRoleService(database: Database) {
+class UserRoleService(database: Database, private val serviceMetaService: ServiceMetaService) {
     object Users : UUIDTable() {
         val thirdPlatform = enumerationByName("third-platform", 10, OAuthPlatform::class)
         val thirdId = varchar("third-id", 100)

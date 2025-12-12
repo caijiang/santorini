@@ -12,7 +12,7 @@ import io.santorini.schema.EnvService
 import io.santorini.schema.UserResource
 import io.santorini.schema.UserRoleService
 import io.santorini.withAuthorization
-import org.jetbrains.exposed.v1.jdbc.Database
+import org.koin.ktor.ext.inject
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
@@ -28,9 +28,9 @@ import kotlin.uuid.toJavaUuid
 private val logger = KotlinLogging.logger {}
 
 @OptIn(ExperimentalUuidApi::class)
-internal fun Application.configureConsoleUser(database: Database) {
-    val service = UserRoleService(database)
-    val envService = EnvService(database)
+internal fun Application.configureConsoleUser() {
+    val service = inject<UserRoleService>().value
+    val envService = inject<EnvService>().value
 
     /**
      * @return [EnvService.Envs.id]
