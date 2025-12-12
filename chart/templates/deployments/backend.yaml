@@ -159,6 +159,9 @@ spec:
                   name: {{ include "common.santoriniName" . }}
                   key: mysql-password
                   optional: false
+            {{- if .Values.santorini.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.santorini.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
           ports:
             - containerPort: 8080
               name: http

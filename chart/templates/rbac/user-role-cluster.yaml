@@ -7,18 +7,18 @@ metadata:
     santorini.io/role: user
     {{- include "common.labels.withoutName" . | nindent 4 }}
 rules:
-  - apiGroups: [ "" ]
-    resources: [ "namespaces" ]
-    resourceNames: [ ]
-    verbs: [ "list" ]
-  - apiGroups: [ "apps" ]
-    resources: [ "deployments" ]
-    resourceNames: [ ]
-    verbs: [ "list" ]
-  - apiGroups: [ "*" ]
-    resources: [ "secrets" ]
-    resourceNames: [ ]
-    verbs: [ "list" ]
+{{/*  - apiGroups: [ "" ]*/}}
+{{/*    resources: [ "namespaces" ]*/}}
+{{/*    resourceNames: [ ]*/}}
+{{/*    verbs: [ "list" ]*/}}
+{{/*  - apiGroups: [ "apps" ]*/}}
+{{/*    resources: [ "deployments" ]*/}}
+{{/*    resourceNames: [ ]*/}}
+{{/*    verbs: [ "list" ]*/}}
+{{/*  - apiGroups: [ "*" ]*/}}
+{{/*    resources: [ "secrets" ]*/}}
+{{/*    resourceNames: [ ]*/}}
+{{/*    verbs: [ "list" ]*/}}
   - apiGroups: [ "networking.k8s.io" ]
     resources: [ "ingresses" ]
     resourceNames: [ ]
