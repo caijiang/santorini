@@ -42,7 +42,7 @@ internal fun Application.configureConsoleEnv(database: Database, kubernetesClien
     // 一般人员可以读取 env
     routing {
         get<EnvResource.Batch> {
-            withAuthorization {
+            withAuthorization { _ ->
                 logger.info {
                     "Fetching batches...:$it"
                 }
@@ -60,7 +60,7 @@ internal fun Application.configureConsoleEnv(database: Database, kubernetesClien
         patch<EnvResource.Id> {
             withAuthorization({
                 it.audit == OAuthPlatformUserDataAuditResult.Manager
-            }) {
+            }) { _ ->
                 val data = call.receive<EnvData>()
                 logger.info { "Patching envs...:$it,$data" }
                 service.update(it.id, data)
@@ -68,7 +68,7 @@ internal fun Application.configureConsoleEnv(database: Database, kubernetesClien
             }
         }
         get<EnvResource.Resources> {
-            withAuthorization {
+            withAuthorization { _ ->
                 val list = kubernetesClient.findResourcesInNamespace(it.id, it.type)
                     .filter { r -> it.name.isNullOrBlank() || it.name == r.name }
                     .map { SantoriniResourceData(it.type, it.name, it.description, it.publicProperties) }
@@ -76,7 +76,7 @@ internal fun Application.configureConsoleEnv(database: Database, kubernetesClien
             }
         }
         post<EnvResource.Resources> {
-            withAuthorization {
+            withAuthorization { _ ->
                 val data = call.receive<SantoriniResourceData>()
                 // 不支持修改
                 if (kubernetesClient.findResourcesInNamespace(it.id, data.type).any { it.name == data.name }) {
@@ -136,7 +136,7 @@ internal fun Application.configureConsoleEnv(database: Database, kubernetesClien
         delete<EnvResource.Resources.One> {
             withAuthorization({
                 it.audit == OAuthPlatformUserDataAuditResult.Manager
-            }) {
+            }) { _ ->
                 kubernetesClient.deleteConfigMapAndSecret(it.id, it.resourceName)
                 call.respond(HttpStatusCode.OK)
             }

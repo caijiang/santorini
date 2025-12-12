@@ -12,8 +12,8 @@ import io.santorini.consoleModule
 import io.santorini.model.PageResult
 import io.santorini.model.ServiceType
 import io.santorini.schema.ServiceMetaData
-import io.santorini.schema.mergeJson
 import io.santorini.test.mockUserModule
+import io.santorini.tools.addServiceMeta
 import io.santorini.tools.createStandardClient
 import kotlin.test.Test
 
@@ -37,27 +37,7 @@ class ServiceKtTest {
         val demoService = ServiceMetaData(
             id = "demo-service", name = "范例", type = ServiceType.JVM, requirements = null
         )
-        c.post("https://localhost/services") {
-            contentType(ContentType.Application.Json)
-            setBody(
-                mergeJson(
-                    demoService, """
-  {
-    "resources":{
-     "cpu": {
-      "requestMillis":100,
-      "limitMillis":1000
-     }
-    }
-  }
-"""
-                )
-            )
-//            setBody(EnvData(id = "id", name = "test", production = true))
-//            setBody("")
-        }.apply {
-            status shouldBe HttpStatusCode.OK
-        }
+        c.addServiceMeta(demoService)
         // 分页获取,
         c.get("https://localhost/services").apply {
             status shouldBe HttpStatusCode.OK

@@ -30,14 +30,14 @@ fun RoutingCall.queryUserData(): InSiteUserData? {
  */
 suspend fun RoutingContext.withAuthorization(
     audit: suspend (InSiteUserData) -> Boolean = { true },
-    block: suspend RoutingContext.() -> Unit
+    block: suspend RoutingContext.(InSiteUserData) -> Unit
 ) {
     val user = call.queryUserData()
     if (user == null) {
         call.respond(HttpStatusCode.Unauthorized)
     } else {
         if (audit(user)) {
-            block()
+            block(user)
         } else {
             call.respond(HttpStatusCode.Forbidden)
         }

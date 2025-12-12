@@ -21,7 +21,7 @@ internal fun Application.configureConsoleDeployment(database: Database, kubernet
     val service = DeploymentService(database, kubernetesClient)
     // 一般人员可以读取 env
     routing {
-        post<DeploymentResource.Deploy> {
+        post<DeploymentResource.Deploy> { deployData ->
             // 这个得检查权限
             withAuthorization {
                 val data = call.receive<DeploymentDeployData>()
@@ -31,7 +31,7 @@ internal fun Application.configureConsoleDeployment(database: Database, kubernet
 
                 // 因为这玩意儿是一成不变的，所以只能新增，无法修改
                 try {
-                    service.deploy(it, data)
+                    service.deploy(deployData, data)
                     // 然后操作 kubernetes
                     call.respond(HttpStatusCode.OK)
                 } catch (e: Exception) {

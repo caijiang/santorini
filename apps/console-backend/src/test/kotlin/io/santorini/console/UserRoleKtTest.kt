@@ -21,9 +21,12 @@ import io.santorini.LoginUserData
 import io.santorini.consoleModuleEntry
 import io.santorini.kubernetes.*
 import io.santorini.model.PageResult
+import io.santorini.model.ServiceType
 import io.santorini.schema.EnvData
+import io.santorini.schema.ServiceMetaData
 import io.santorini.schema.UserData
 import io.santorini.test.mockUserModule
+import io.santorini.tools.addServiceMeta
 import io.santorini.tools.createStandardClient
 import io.santorini.tools.database
 import org.junit.jupiter.api.AfterAll
@@ -150,14 +153,38 @@ class UserRoleKtTest {
             }
         }
 
-        manager.get("https://localhost/users").apply {
-            status shouldBe HttpStatusCode.OK
-            val list = body<List<UserData>>()
-            list shouldNotHaveSize 0
+        withClue("现在管理员可以看到普通用户") {
+            manager.get("https://localhost/users").apply {
+                status shouldBe HttpStatusCode.OK
+                val list = body<List<UserData>>()
+                list shouldNotHaveSize 0
+            }
+            manager.get("https://localhost/users?limit=10").apply {
+                status shouldBe HttpStatusCode.OK
+                body<PageResult<UserData>>().total shouldNotBe 0
+            }
         }
-        manager.get("https://localhost/users?limit=10").apply {
-            status shouldBe HttpStatusCode.OK
-            body<PageResult<UserData>>().total shouldNotBe 0
+
+        // 新增一个服务
+        val rolePlayService = ServiceMetaData(
+            id = "role-play-service", name = "UserRoleKtTest", type = ServiceType.JVM, requirements = null
+        )
+        manager.addServiceMeta(rolePlayService)
+
+        withClue("普通用户，没有服务可看") {
+            manager.get("https://localhost/services").apply {
+                status shouldBe HttpStatusCode.OK
+                body<List<ServiceMetaData>>() shouldNotHaveSize 0
+            }
+            user.get("https://localhost/services").apply {
+                status shouldBe HttpStatusCode.OK
+                body<List<ServiceMetaData>>() shouldHaveSize 0
+            }
+//            manager.get("https://localhost/users/${userData.id}/services").apply {
+//                status shouldBe HttpStatusCode.OK
+//                body<List<String>>() shouldBe listOf(envId)
+//            }
         }
+
     }
 }

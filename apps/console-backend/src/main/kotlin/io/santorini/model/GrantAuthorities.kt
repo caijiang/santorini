@@ -18,7 +18,7 @@ data class GrantAuthorities(
      */
     val envs: Boolean,
     /**
-     * 允许查看角色
+     * 允许查看服务角色
      */
     val roles: Boolean,
     /**

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package io.santorini.console
 
 import io.fabric8.kubernetes.client.KubernetesClient
@@ -14,6 +16,7 @@ import io.santorini.OAuthPlatformUserDataAuditResult
 import io.santorini.schema.*
 import io.santorini.withAuthorization
 import org.jetbrains.exposed.v1.jdbc.Database
+import kotlin.uuid.ExperimentalUuidApi
 
 private val logger = KotlinLogging.logger {}
 
@@ -36,7 +39,7 @@ internal fun Application.configureConsoleService(database: Database, kubernetesC
         put<ServiceMetaResource.Id> {
             withAuthorization({
                 it.audit == OAuthPlatformUserDataAuditResult.Manager
-            }) {
+            }) { _ ->
                 val text = call.receiveText()
                 val context = receiveFromJson<ServiceMetaData>(text)
                 logger.info { "准备更新服务:$context" }
@@ -45,17 +48,17 @@ internal fun Application.configureConsoleService(database: Database, kubernetesC
             }
         }
         get<ServiceMetaResource> {
-            withAuthorization {
+            withAuthorization { user ->
                 val pr = it.toPageRequest()
                 if (pr != null) {
-                    call.respond(service.readAsPage(it, pr))
+                    call.respond(service.readAsPage(it, user.id, pr))
                 } else {
-                    call.respond(service.read(it))
+                    call.respond(service.read(it, user.id))
                 }
             }
         }
         get<ServiceMetaResource.Id> {
-            withAuthorization {
+            withAuthorization { _ ->
                 val detail = service.read(it.id)
                 if (detail != null) {
                     val text = mergeJson(detail.first, detail.second)

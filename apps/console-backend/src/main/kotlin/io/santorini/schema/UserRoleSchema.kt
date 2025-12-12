@@ -62,6 +62,13 @@ data class UserResource(
         @Resource("envs")
         @Serializable
         data class Envs(val id: Id = Id())
+
+        /**
+         * 获取可见的服务
+         */
+        @Resource("services")
+        @Serializable
+        data class Services(val id: Id = Id())
     }
 
 //    /**
@@ -264,6 +271,17 @@ class UserRoleService(database: Database) {
                 it[createTime] = Clock.System.now()
             }
         }
+    }
+
+    /**
+     * @return 服务和角色
+     */
+    suspend fun readServiceRoleByUser(userId: Uuid): Map<String, List<ServiceRole>> {
+        val user = userById(userId.toJavaUuid()) ?: return emptyMap()
+//        if (user.grantAuthorities.root){
+//            return env
+//        }
+        TODO("Not yet implemented")
     }
 
 }

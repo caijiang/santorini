@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package io.santorini.schema
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -20,6 +22,9 @@ import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.jsonb
 import java.time.OffsetDateTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
 
 // 这里有部分的数据是我们认为业务上服务端并不关心,只是帮忙存取而已
 // 技术细节
@@ -87,7 +92,9 @@ data class ServiceMetaResource(
     data class LastRelease(val parent: ServiceMetaResource = ServiceMetaResource(), val id: String, val env: String)
 }
 
-class ServiceMetaService(database: Database) {
+class ServiceMetaService(
+    database: Database, private val userRoleService: UserRoleService = UserRoleService(database)
+) {
     object ServiceMetas : IdTable<String>() {
         override val id = varchar("id", 63).entityId()
         val name = varchar("name", length = 50)
@@ -183,34 +190,47 @@ class ServiceMetaService(database: Database) {
         }
     }
 
-    private fun selectAll(resource: ServiceMetaResource): Query {
-        if (resource.envId != null) {
-            return (ServiceMetas rightJoin DeploymentService.Deployments)
+    private suspend fun selectAll(resource: ServiceMetaResource, userId: Uuid?): Query {
+        // 没有就全给咯
+        val filterUserId = userId?.let {
+            if (userRoleService.userById(it.toJavaUuid())?.grantAuthorities?.root == true)
+                null
+            else it.toJavaUuid()
+        }
+
+        val query =
+            if (resource.envId != null && filterUserId != null) (ServiceMetas rightJoin DeploymentService.Deployments innerJoin UserRoleService.UserServiceRoles)
+                .select(ServiceMetas.columns)
+                .groupBy(ServiceMetas.id)
+                .where { DeploymentService.Deployments.env eq resource.envId and (UserRoleService.UserServiceRoles.user eq filterUserId) }
+            else if (resource.envId != null) (ServiceMetas rightJoin DeploymentService.Deployments)
+                .select(ServiceMetas.columns)
+                .groupBy(ServiceMetas.id)
+                .where { DeploymentService.Deployments.env eq resource.envId }
+            else if (filterUserId != null) (ServiceMetas innerJoin UserRoleService.UserServiceRoles)
                 .select(ServiceMetas.columns)
                 .groupBy(ServiceMetas.id)
                 .where {
-                    resource.keyword?.let { keyword ->
-                        if (keyword.isNotBlank()) {
-                            ServiceMetas.id like "%$keyword%" or (ServiceMetas.name like "%$keyword%")
-                        } else null
-                    } ?: Op.TRUE
+                    UserRoleService.UserServiceRoles.user eq filterUserId
                 }
-                .andWhere { DeploymentService.Deployments.env eq resource.envId }
+            else ServiceMetas.selectAll()
+        // 服务可见
+        return query.andWhere {
+            resource.keyword?.let { keyword ->
+                if (keyword.isNotBlank()) {
+                    ServiceMetas.id like "%$keyword%" or (ServiceMetas.name like "%$keyword%")
+                } else null
+            } ?: Op.TRUE
         }
-
-        return ServiceMetas.selectAll()
-            .where {
-                resource.keyword?.let { keyword ->
-                    if (keyword.isNotBlank()) {
-                        ServiceMetas.id like "%$keyword%" or (ServiceMetas.name like "%$keyword%")
-                    } else null
-                } ?: Op.TRUE
-            }
     }
 
-    suspend fun readAsPage(resource: ServiceMetaResource, request: PageRequest): PageResult<ServiceMetaData> {
+    suspend fun readAsPage(
+        resource: ServiceMetaResource,
+        userId: Uuid?,
+        request: PageRequest
+    ): PageResult<ServiceMetaData> {
         return dbQuery {
-            selectAll(resource)
+            selectAll(resource, userId)
                 .mapToPage(request) {
                     ServiceMetaData(
                         id = it[ServiceMetas.id].value,
@@ -222,9 +242,9 @@ class ServiceMetaService(database: Database) {
         }
     }
 
-    suspend fun read(resource: ServiceMetaResource): List<ServiceMetaData> {
+    suspend fun read(resource: ServiceMetaResource, userId: Uuid?): List<ServiceMetaData> {
         return dbQuery {
-            selectAll(resource)
+            selectAll(resource, userId)
                 .map {
                     ServiceMetaData(
                         id = it[ServiceMetas.id].value,

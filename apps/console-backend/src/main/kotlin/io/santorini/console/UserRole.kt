@@ -50,7 +50,7 @@ internal fun Application.configureConsoleUser(database: Database) {
             withAuthorization(
                 {
                     it.grantAuthorities?.users == true
-                }) {
+                }) { _ ->
                 val pr = it.toPageRequest()
                 if (pr != null) {
                     call.respond(service.readUserAsPage(it, pr))
@@ -70,7 +70,7 @@ internal fun Application.configureConsoleUser(database: Database) {
                     it.grantAuthorities?.users == true && it.grantAuthorities.envs && manageEnvs.contains(
                         targetEnvId
                     )
-                }) {
+                }) { _ ->
                 val current = toUserEnvs(it.id.id!!)
                 if (current.contains(targetEnvId)) {
                     call.respond(HttpStatusCode.NoContent)
@@ -84,9 +84,20 @@ internal fun Application.configureConsoleUser(database: Database) {
             withAuthorization(
                 {
                     it.grantAuthorities?.users == true && it.grantAuthorities.envs
-                }) {
+                }) { _ ->
                 // 环境的 搞一波环境自检
                 call.respond(toUserEnvs(it.id.id!!))
+            }
+        }
+        get<UserResource.Id.Services> {
+            withAuthorization(
+                {
+                    it.grantAuthorities?.users == true && it.grantAuthorities.roles
+                }) { user ->
+                // 环境的 搞一波环境自检
+                service.readServiceRoleByUser(user.id)
+//                call.respond(toUserEnvs(it.id.id!!))
+                TODO("Not yet implemented")
             }
         }
     }
