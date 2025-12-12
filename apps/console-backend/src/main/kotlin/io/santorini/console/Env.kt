@@ -38,7 +38,7 @@ data class SantoriniResourceData(
  * @author CJ
  */
 internal fun Application.configureConsoleEnv(database: Database, kubernetesClient: KubernetesClient) {
-    val service = EnvService(database, kubernetesClient)
+    val service = EnvService(database)
     // 一般人员可以读取 env
     routing {
         get<EnvResource.Batch> {
@@ -47,6 +47,14 @@ internal fun Application.configureConsoleEnv(database: Database, kubernetesClien
                     "Fetching batches...:$it"
                 }
                 call.respond(service.read(it.ids.split(",")))
+            }
+        }
+        get<EnvResource> {
+            withAuthorization {
+                logger.info {
+                    "Fetching batches...:$it"
+                }
+                call.respond(service.read(null))
             }
         }
         patch<EnvResource.Id> {

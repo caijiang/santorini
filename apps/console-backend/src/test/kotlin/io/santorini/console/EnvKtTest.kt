@@ -2,6 +2,7 @@ package io.santorini.console
 
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.kotest.assertions.withClue
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainOnly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -62,6 +63,12 @@ class EnvKtTest {
         c.get("https://localhost/envs/batch/$id,foo,bar").apply {
             assertEquals(HttpStatusCode.OK, status)
             body<List<EnvData>>().shouldContainOnly(
+                EnvData(id = id, name = "test", production = true),
+            )
+        }
+        c.get("https://localhost/envs").apply {
+            status shouldBe HttpStatusCode.OK
+            body<List<EnvData>>().shouldContain(
                 EnvData(id = id, name = "test", production = true),
             )
         }

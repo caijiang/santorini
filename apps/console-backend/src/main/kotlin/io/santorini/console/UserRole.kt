@@ -1,7 +1,5 @@
 package io.santorini.console
 
-import io.fabric8.kubernetes.api.model.rbac.SubjectBuilder
-import io.fabric8.kubernetes.client.KubernetesClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -10,8 +8,6 @@ import io.ktor.server.resources.*
 import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.santorini.kubernetes.assignClusterRole
-import io.santorini.kubernetes.clusterRoleBindingBySubject
 import io.santorini.schema.EnvService
 import io.santorini.schema.UserResource
 import io.santorini.schema.UserRoleService
@@ -32,23 +28,21 @@ import kotlin.uuid.toJavaUuid
 private val logger = KotlinLogging.logger {}
 
 @OptIn(ExperimentalUuidApi::class)
-internal fun Application.configureConsoleUser(database: Database, kubernetesClient: KubernetesClient) {
+internal fun Application.configureConsoleUser(database: Database) {
     val service = UserRoleService(database)
-    val envService = EnvService(database, kubernetesClient)
+    val envService = EnvService(database)
 
-    suspend fun toUserEnvs(userId: Uuid, envs: List<Pair<String, String>>): List<String> {
+    /**
+     * @return [EnvService.Envs.id]
+     */
+    suspend fun toUserEnvs(userId: Uuid): List<String> {
         val user = service.userById(userId.toJavaUuid())
         return if (user == null) {
             listOf()
         } else if (user.grantAuthorities.root) {
-            // 如果是超管,则拒绝被访问
-            envs.map { it.first }
+            envService.readId()
         } else {
-            val allRoles = kubernetesClient.clusterRoleBindingBySubject(
-                SubjectBuilder().withKind("ServiceAccount").withNamespace(kubernetesClient.namespace)
-                    .withName(user.serviceAccountName).build()
-            )
-            envs.filter { allRoles.contains(it.second) }.map { it.first }
+            service.envIdsByUserId(userId)
         }
     }
     routing {
@@ -66,34 +60,23 @@ internal fun Application.configureConsoleUser(database: Database, kubernetesClie
             }
         }
         post<UserResource.Id.Envs> {
-            val envs = envService.readIdAndVisitableRoleName()
             val targetEnvId = call.receive<String>()
             logger.info { "分配环境${targetEnvId}给${it.id.id}" }
             withAuthorization(
                 {
-                    val managerRoles = toUserEnvs(
-                        it.id, envs
+                    val manageEnvs = toUserEnvs(
+                        it.id
                     )
-                    it.grantAuthorities?.users == true && it.grantAuthorities.envs && managerRoles.contains(
+                    it.grantAuthorities?.users == true && it.grantAuthorities.envs && manageEnvs.contains(
                         targetEnvId
                     )
                 }) {
-                val current = toUserEnvs(it.id.id!!, envs)
+                val current = toUserEnvs(it.id.id!!)
                 if (current.contains(targetEnvId)) {
                     call.respond(HttpStatusCode.NoContent)
                 } else {
-                    val roleName = envs.firstOrNull { it.first == targetEnvId }?.second
-                    if (roleName != null) {
-                        val user = service.userById(it.id.id.toJavaUuid())
-                        kubernetesClient.assignClusterRole(
-                            roleName,
-                            SubjectBuilder().withKind("ServiceAccount").withNamespace(kubernetesClient.namespace)
-                                .withName(user?.serviceAccountName).build()
-                        )
-                        call.respond(HttpStatusCode.Created)
-                    } else {
-                        call.respond(HttpStatusCode.NoContent)
-                    }
+                    service.addUserEnv(it.id.id, targetEnvId)
+                    call.respond(HttpStatusCode.Created)
                 }
             }
         }
@@ -103,7 +86,7 @@ internal fun Application.configureConsoleUser(database: Database, kubernetesClie
                     it.grantAuthorities?.users == true && it.grantAuthorities.envs
                 }) {
                 // 环境的 搞一波环境自检
-                call.respond(toUserEnvs(it.id.id!!, envService.readIdAndVisitableRoleName()))
+                call.respond(toUserEnvs(it.id.id!!))
             }
         }
     }

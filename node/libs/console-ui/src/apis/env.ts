@@ -1,11 +1,10 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { apiBase } from '@private-everest/app-support';
-import _ from 'lodash';
 import { IObjectMeta } from '@kubernetes-models/apimachinery/apis/meta/v1/ObjectMeta';
 
 // 应用中直接使用的 一律做 CU
 export interface CUEnv {
-  kubeMeta: IObjectMeta;
+  // kubeMeta: IObjectMeta;
   id: string;
   name: string;
   production: boolean;
@@ -71,38 +70,38 @@ export const envApi = createApi({
       envs: build.query<CUEnv[] | undefined, IObjectMeta[] | undefined, Env[]>({
         providesTags: ['env'],
         query: (arg) => ({
-          url: `/envs/batch/${
-            arg?.map((it) => it.name!!)?.join(',') ?? '99999'
-          }`,
+          url: arg
+            ? `/envs/batch/${arg?.map((it) => it.name!!)?.join(',') ?? '99999'}`
+            : '/envs',
           method: 'GET',
         }),
-        transformResponse(baseQueryReturnValue, __, arg) {
-          if (!baseQueryReturnValue || !arg || arg.length == 0) {
-            return undefined;
-          }
-          if (!_.isArrayLike(baseQueryReturnValue)) {
-            return undefined;
-          }
-          return arg.map((meta) => {
-            const server = baseQueryReturnValue.find(
-              (it) => it.id == meta.name
-            );
-            if (!server) {
-              return {
-                kubeMeta: meta,
-                id: meta.name!!,
-                name: meta.name!!,
-                production: false,
-              };
-            }
-            return {
-              kubeMeta: meta,
-              id: meta.name!!,
-              name: server.name,
-              production: server.production,
-            };
-          });
-        },
+        // transformResponse(baseQueryReturnValue, __, arg) {
+        //   if (!baseQueryReturnValue || !arg || arg.length == 0) {
+        //     return undefined;
+        //   }
+        //   if (!_.isArrayLike(baseQueryReturnValue)) {
+        //     return undefined;
+        //   }
+        //   return arg.map((meta) => {
+        //     const server = baseQueryReturnValue.find(
+        //       (it) => it.id == meta.name
+        //     );
+        //     if (!server) {
+        //       return {
+        //         // kubeMeta: meta,
+        //         id: meta.name!!,
+        //         name: meta.name!!,
+        //         production: false,
+        //       };
+        //     }
+        //     return {
+        //       // kubeMeta: meta,
+        //       id: meta.name!!,
+        //       name: server.name,
+        //       production: server.production,
+        //     };
+        //   });
+        // },
       }),
     };
   },

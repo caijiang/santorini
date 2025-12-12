@@ -29,7 +29,7 @@ const demoServiceData = {
 } satisfies ServiceConfigData;
 
 const env = {
-  kubeMeta: {},
+  // kubeMeta: {},
   id: 'online',
   name: '',
   production: false,

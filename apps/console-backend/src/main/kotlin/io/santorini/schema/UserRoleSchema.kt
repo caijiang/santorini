@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalUuidApi::class)
+@file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 
 package io.santorini.schema
 
@@ -6,6 +6,7 @@ import io.fabric8.kubernetes.api.model.ServiceAccount
 import io.ktor.resources.*
 import io.santorini.*
 import io.santorini.model.*
+import io.santorini.schema.ServiceMetaService.ServiceMetas
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.FixedOffsetTimeZone
@@ -15,6 +16,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
+import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
@@ -23,10 +25,12 @@ import org.jetbrains.exposed.v1.json.extract
 import org.jetbrains.exposed.v1.json.jsonb
 import java.time.OffsetDateTime
 import java.util.*
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinInstant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
 
 @Serializable
@@ -91,9 +95,31 @@ class UserRoleService(database: Database) {
         }
     }
 
+    /**
+     * 用户，环境的可见关系
+     */
+    object UserEnvs : Table() {
+        val user = reference("user-id", Users)
+        val env = reference("env-id", EnvService.Envs)
+        val createTime = timestamp("create-time")
+
+        init {
+            UserEnvs.uniqueIndex(user, env)
+        }
+    }
+
+    object UserServiceRoles : Table() {
+        val user = reference("user-id", Users)
+        val service = reference("service-id", ServiceMetas)
+        val role = enumeration<ServiceRole>("role")
+        val createTime = timestamp("create-time")
+    }
+
     init {
         transaction(database) {
             SchemaUtils.create(Users)
+            SchemaUtils.create(UserEnvs)
+            SchemaUtils.create(UserServiceRoles)
         }
     }
 
@@ -218,6 +244,26 @@ class UserRoleService(database: Database) {
             .andWhere {
                 Users.name like "%$keyword%"
             }
+    }
+
+    suspend fun envIdsByUserId(userId: Uuid): List<String> {
+        return dbQuery {
+            UserEnvs.select(UserEnvs.env)
+                .where {
+                    UserEnvs.user eq userId.toJavaUuid()
+                }
+                .map { it[UserEnvs.env].value }
+        }
+    }
+
+    suspend fun addUserEnv(userId: Uuid, envId: String) {
+        dbQuery {
+            UserEnvs.insert {
+                it[user] = userId.toJavaUuid()
+                it[env] = envId
+                it[createTime] = Clock.System.now()
+            }
+        }
     }
 
 }

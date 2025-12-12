@@ -2,25 +2,19 @@
 
 package io.santorini.schema
 
-import io.fabric8.kubernetes.api.model.rbac.PolicyRuleBuilder
-import io.fabric8.kubernetes.client.KubernetesClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.resources.*
-import io.santorini.kubernetes.currentPod
-import io.santorini.kubernetes.findClusterRole
-import io.santorini.kubernetes.rootOwner
 import io.santorini.model.ResourceType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
-import org.jetbrains.exposed.v1.datetime.timestamp
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 
 private val logger = KotlinLogging.logger {}
@@ -53,7 +47,7 @@ class EnvResource {
     }
 }
 
-class EnvService(database: Database, private val kubernetesClient: KubernetesClient) {
+class EnvService(database: Database) {
     object Envs : IdTable<String>() {
         /**
          * 即 namespace [规则](https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/names/#names)
@@ -66,12 +60,6 @@ class EnvService(database: Database, private val kubernetesClient: KubernetesCli
          * 是否生产环境
          */
         val production = bool("production")
-
-        /**
-         * 分配环境; ClusterRole -> 生成的名字 -> santorini.io/role: env-id-visitable -> visitableClusterRoleName (每次都会检查,存在就行，没有就再度创建 )
-         */
-        val visitableRoleName = varchar("visitable-role-name", 63).nullable()
-        val lastCheckVisitableRoleTime = timestamp("last-check-visitable-role-time").nullable()
 
         override val primaryKey = PrimaryKey(id)
     }
@@ -127,68 +115,18 @@ class EnvService(database: Database, private val kubernetesClient: KubernetesCli
         }
     }
 
-    suspend fun read(ids: List<String>): List<EnvData> {
+    suspend fun read(ids: List<String>?): List<EnvData> {
         return dbQuery {
             Envs.selectAll()
-                .where { Envs.id inList ids }
+                .where { ids?.let { Envs.id inList it } ?: Op.TRUE }
                 .map { EnvData(id = it[Envs.id].value, name = it[Envs.name], production = it[Envs.production]) }
         }
     }
 
-    /**
-     * @return 环境以及可见权限名称
-     */
-    suspend fun readIdAndVisitableRoleName(): List<Pair<String, String>> {
-        val thatTime = Clock.System.now().minus(5.minutes)
+    suspend fun readId(): List<String> {
         return dbQuery {
-            val list1 = Envs.select(Envs.id, Envs.visitableRoleName)
-                .where {
-                    Envs.visitableRoleName.isNotNull()
-                }
-                .andWhere {
-                    Envs.lastCheckVisitableRoleTime.isNotNull()
-                }
-                .andWhere {
-                    Envs.lastCheckVisitableRoleTime.greater(thatTime)
-                }
-                .map { it[Envs.id].value to it[Envs.visitableRoleName]!! }
-                .toList()
-            val list = Envs.select(Envs.id, Envs.visitableRoleName, Envs.lastCheckVisitableRoleTime)
-                .where {
-                    Envs.visitableRoleName.isNullOrEmpty()
-                }
-                .orWhere {
-                    Envs.lastCheckVisitableRoleTime.isNull()
-                }
-                .orWhere {
-                    Envs.lastCheckVisitableRoleTime.lessEq(thatTime)
-                }
-                .map { it[Envs.id].value to it[Envs.visitableRoleName] }
-                .toList()
-
-            val root = kubernetesClient.currentPod().rootOwner()
-            val result = list.map {
-                it.first to kubernetesClient.findClusterRole(root, "env-${it.first}-visitable") {
-                    addToLabels("santorini.io/version", "1") // 如果版本不兼容 直接做掉
-                        .endMetadata()
-                        .addToRules(
-                            PolicyRuleBuilder()
-                                .withApiGroups("")
-                                .withResources("namespaces")
-                                .withResourceNames(it.first)
-                                .withVerbs("list")
-                                .build()
-                        )
-                        .build()
-                }.metadata.name
-            }
-            result.forEach { (id, name) ->
-                Envs.update({ Envs.id eq id }) {
-                    it[visitableRoleName] = name
-                    it[lastCheckVisitableRoleTime] = Clock.System.now()
-                }
-            }
-            result + list1
+            Envs.select(Envs.id)
+                .map { it[Envs.id].value }
         }
     }
 }
