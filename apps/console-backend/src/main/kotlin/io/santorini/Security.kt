@@ -79,14 +79,52 @@ fun Application.configureSecurity(
             if (user == null) {
                 call.respond(HttpStatusCode.Unauthorized)
             } else {
-                call.respond(LoginUserData(user.id, user.name, user.avatarUrl, user.audit.toGrantAuthorities()))
+                call.respond(
+                    LoginUserData(
+                        user.id,
+                        user.name,
+                        user.avatarUrl,
+                        user.audit.toGrantAuthorities(),
+                        user.grantAuthorities
+                    )
+                )
+            }
+        }
+
+        get("/callbackDemoUser") {
+            // 只有特定环境可以启动
+            if (System.getenv("TEST") != "true") {
+                call.respond(HttpStatusCode.NotFound)
+            } else {
+                val platformUserData = object : OAuthPlatformUserData {
+                    override val platform: OAuthPlatform
+                        get() = OAuthPlatform.Feishu
+                    override val stablePk: String
+                        get() = "demo-user"
+                    override val name: String
+                        get() = "临时普通用户"
+                    override val avatarUrl: String
+                        get() = "https://gw.alipayobjects.com/zos/rmsportal/BiazfanxmamNRoxxVxka.png"
+                }
+                val result = OAuthPlatformUserDataAuditResult.User
+                val account = withContext(Dispatchers.IO) {
+                    kubernetesClient.findOrCreateServiceAccount(
+                        platformUserData.platform.name,
+                        platformUserData.stablePk,
+                        false
+                    )
+                }
+                call.saveUserData(
+                    userService.oAuthPlatformUserDataToSiteUserData(platformUserData, result, account)
+                        .copy(platformAccessToken = "")
+                )
+                call.respondRedirect("/")
             }
         }
         authenticate("auth-oauth-feishu") {
             get("loginFeishu") {
                 call.respondRedirect("/callbackFeishu")
             }
-
             get("/callbackFeishu") {
                 val principal: OAuthAccessTokenResponse.OAuth2 = call.authentication.principal()!!
                 // 获取用户详情
@@ -103,9 +141,11 @@ fun Application.configureSecurity(
                 // 寻找用户 如果已经找到了 那就算了
                 // 不用担心异常  https://ktor.io/docs/server-status-pages.html 可以处理的
                 val account = withContext(Dispatchers.IO) {
-//                    async {
-                    kubernetesClient.findOrCreateServiceAccount(platformUserData, result)
-//                    }
+                    kubernetesClient.findOrCreateServiceAccount(
+                        platformUserData.platform.name,
+                        platformUserData.stablePk,
+                        result == OAuthPlatformUserDataAuditResult.Manager
+                    )
                 }
                 //
                 call.saveUserData(
@@ -166,7 +206,8 @@ data class LoginUserData(
      */
     override val avatarUrl: String?,
 
-    override val grantAuthorities: Array<String>
+    override val grantAuthorities: Array<String>,
+    val authorities: GrantAuthorities?,
 ) : LoginUser {
     override val bytesId: ByteArray
         get() = id.toByteArray()
