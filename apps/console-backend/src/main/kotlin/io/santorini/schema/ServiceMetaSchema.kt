@@ -278,6 +278,13 @@ class ServiceMetaService(
                 }
         }
     }
+
+    suspend fun readAllId(): List<String> {
+        return dbQuery {
+            ServiceMetas.select(ServiceMetas.id)
+                .map { it[ServiceMetas.id].value }
+        }
+    }
 }
 
 

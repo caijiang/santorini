@@ -7,6 +7,7 @@ import io.ktor.resources.*
 import io.santorini.*
 import io.santorini.model.*
 import io.santorini.schema.ServiceMetaService.ServiceMetas
+import io.santorini.schema.UserRoleService.UserEnvs.env
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.FixedOffsetTimeZone
@@ -108,6 +109,7 @@ class UserRoleService(database: Database, private val serviceMetaService: Servic
     object UserEnvs : Table() {
         val user = reference("user-id", Users)
         val env = reference("env-id", EnvService.Envs)
+        val createBy = reference("create-by", Users)
         val createTime = timestamp("create-time")
 
         init {
@@ -119,7 +121,12 @@ class UserRoleService(database: Database, private val serviceMetaService: Servic
         val user = reference("user-id", Users)
         val service = reference("service-id", ServiceMetas)
         val role = enumeration<ServiceRole>("role")
+        val createBy = reference("create-by", Users)
         val createTime = timestamp("create-time")
+
+        init {
+            UserServiceRoles.uniqueIndex(user, service, role)
+        }
     }
 
     init {
@@ -255,19 +262,20 @@ class UserRoleService(database: Database, private val serviceMetaService: Servic
 
     suspend fun envIdsByUserId(userId: Uuid): List<String> {
         return dbQuery {
-            UserEnvs.select(UserEnvs.env)
+            UserEnvs.select(env)
                 .where {
                     UserEnvs.user eq userId.toJavaUuid()
                 }
-                .map { it[UserEnvs.env].value }
+                .map { it[env].value }
         }
     }
 
-    suspend fun addUserEnv(userId: Uuid, envId: String) {
+    suspend fun addUserEnv(userId: Uuid, envId: String, byUser: Uuid) {
         dbQuery {
             UserEnvs.insert {
                 it[user] = userId.toJavaUuid()
                 it[env] = envId
+                it[createBy] = byUser.toJavaUuid()
                 it[createTime] = Clock.System.now()
             }
         }
@@ -278,10 +286,34 @@ class UserRoleService(database: Database, private val serviceMetaService: Servic
      */
     suspend fun readServiceRoleByUser(userId: Uuid): Map<String, List<ServiceRole>> {
         val user = userById(userId.toJavaUuid()) ?: return emptyMap()
-//        if (user.grantAuthorities.root){
-//            return env
-//        }
-        TODO("Not yet implemented")
+        if (user.grantAuthorities.root) {
+            return serviceMetaService.readAllId().associateWith { listOf(ServiceRole.Owner) }
+        }
+        return dbQuery {
+            UserServiceRoles.selectAll()
+                .where {
+                    UserServiceRoles.user eq userId.toJavaUuid()
+                }
+                .groupBy {
+                    it[UserServiceRoles.service].value
+                }.mapValues {
+                    it.value.map { resultRow ->
+                        resultRow[UserServiceRoles.role]
+                    }
+                }
+        }
+    }
+
+    suspend fun assignServiceRole(targetUser: Uuid, serviceId: String, roleId: ServiceRole, byUser: Uuid) {
+        dbQuery {
+            UserServiceRoles.insert {
+                it[user] = targetUser.toJavaUuid()
+                it[service] = serviceId
+                it[role] = roleId
+                it[createBy] = byUser.toJavaUuid()
+                it[createTime] = Clock.System.now()
+            }
+        }
     }
 
 }

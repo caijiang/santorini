@@ -8,6 +8,8 @@ import io.fabric8.kubernetes.client.KubernetesClient
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotHaveSize
+import io.kotest.matchers.maps.shouldContain
+import io.kotest.matchers.maps.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.ktor.client.call.*
@@ -21,6 +23,7 @@ import io.santorini.LoginUserData
 import io.santorini.consoleModuleEntry
 import io.santorini.kubernetes.*
 import io.santorini.model.PageResult
+import io.santorini.model.ServiceRole
 import io.santorini.model.ServiceType
 import io.santorini.schema.EnvData
 import io.santorini.schema.ServiceMetaData
@@ -180,10 +183,28 @@ class UserRoleKtTest {
                 status shouldBe HttpStatusCode.OK
                 body<List<ServiceMetaData>>() shouldHaveSize 0
             }
-//            manager.get("https://localhost/users/${userData.id}/services").apply {
-//                status shouldBe HttpStatusCode.OK
-//                body<List<String>>() shouldBe listOf(envId)
-//            }
+            manager.get("https://localhost/users/${userData.id}/services").apply {
+                status shouldBe HttpStatusCode.OK
+                body<Map<String, List<ServiceRole>>>() shouldHaveSize 0
+            }
+            manager.post("https://localhost/users/${userData.id}/services") {
+                contentType(ContentType.Application.Json)
+                setBody(rolePlayService.id to ServiceRole.Owner)
+            }.apply {
+                status shouldBe HttpStatusCode.NoContent
+            }
+
+            manager.get("https://localhost/users/${userData.id}/services").apply {
+                status shouldBe HttpStatusCode.OK
+                body<Map<String, List<ServiceRole>>>() shouldHaveSize 1 shouldContain (rolePlayService.id to listOf(
+                    ServiceRole.Owner
+                ))
+            }
+
+            user.get("https://localhost/services").apply {
+                status shouldBe HttpStatusCode.OK
+                body<List<ServiceMetaData>>() shouldHaveSize 1
+            }
         }
 
     }

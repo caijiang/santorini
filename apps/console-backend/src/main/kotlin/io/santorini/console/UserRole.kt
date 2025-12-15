@@ -8,6 +8,7 @@ import io.ktor.server.resources.*
 import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.santorini.model.ServiceRole
 import io.santorini.schema.EnvService
 import io.santorini.schema.UserResource
 import io.santorini.schema.UserRoleService
@@ -70,12 +71,12 @@ internal fun Application.configureConsoleUser() {
                     it.grantAuthorities?.users == true && it.grantAuthorities.envs && manageEnvs.contains(
                         targetEnvId
                     )
-                }) { _ ->
+                }) { cu ->
                 val current = toUserEnvs(it.id.id!!)
                 if (current.contains(targetEnvId)) {
                     call.respond(HttpStatusCode.NoContent)
                 } else {
-                    service.addUserEnv(it.id.id, targetEnvId)
+                    service.addUserEnv(it.id.id, targetEnvId, cu.id)
                     call.respond(HttpStatusCode.Created)
                 }
             }
@@ -95,9 +96,31 @@ internal fun Application.configureConsoleUser() {
                     it.grantAuthorities?.users == true && it.grantAuthorities.roles
                 }) { user ->
                 // 环境的 搞一波环境自检
-                service.readServiceRoleByUser(user.id)
-//                call.respond(toUserEnvs(it.id.id!!))
-                TODO("Not yet implemented")
+                val currentUserOwners = service.readServiceRoleByUser(user.id)
+                val target = service.readServiceRoleByUser(it.id.id!!)
+                call.respond(target.filterKeys {
+                    currentUserOwners.containsKey(it)
+                })
+            }
+        }
+        post<UserResource.Id.Services> {
+            withAuthorization(
+                {
+                    it.grantAuthorities?.users == true && it.grantAuthorities.roles && it.grantAuthorities.assigns
+                }) { user ->
+                // 环境的 搞一波环境自检
+                val currentUserOwners = service.readServiceRoleByUser(user.id)
+                val (serviceId, role) = call.receive<Pair<String, ServiceRole>>()
+                // 必须拥有该权限或者是 Owner
+                if (currentUserOwners[serviceId]?.contains(ServiceRole.Owner) != true && currentUserOwners[serviceId]?.contains(
+                        role
+                    ) != true
+                ) {
+                    call.respond(HttpStatusCode.Forbidden)
+                } else {
+                    service.assignServiceRole(it.id.id!!, serviceId, role, user.id)
+                    call.respond(HttpStatusCode.NoContent)
+                }
             }
         }
     }
