@@ -335,7 +335,7 @@ class UserRoleService(database: Database, private val serviceMetaService: Servic
     suspend fun removeUserServiceRole(id: Uuid, serviceId: String, roleId: ServiceRole) {
         dbQuery {
             UserServiceRoles.deleteWhere {
-                user eq id.toJavaUuid() and (env eq serviceId) and (role eq roleId)
+                user eq id.toJavaUuid() and (service eq serviceId) and (role eq roleId)
             }
         }
     }
