@@ -62,14 +62,22 @@ data class UserResource(
          */
         @Resource("envs")
         @Serializable
-        data class Envs(val id: Id = Id())
+        data class Envs(val id: Id = Id()) {
+            @Resource("{env}")
+            @Serializable
+            data class One(val parent: Envs = Envs(), val env: String)
+        }
 
         /**
          * 获取可见的服务
          */
         @Resource("services")
         @Serializable
-        data class Services(val id: Id = Id())
+        data class Services(val id: Id = Id()) {
+            @Resource("{service}/{role}")
+            @Serializable
+            data class One(val parent: Services = Services(), val service: String, val role: ServiceRole)
+        }
     }
 
 //    /**
@@ -312,6 +320,22 @@ class UserRoleService(database: Database, private val serviceMetaService: Servic
                 it[role] = roleId
                 it[createBy] = byUser.toJavaUuid()
                 it[createTime] = Clock.System.now()
+            }
+        }
+    }
+
+    suspend fun removeUserEnv(id: Uuid, envId: String) {
+        dbQuery {
+            UserEnvs.deleteWhere {
+                user eq id.toJavaUuid() and (env eq envId)
+            }
+        }
+    }
+
+    suspend fun removeUserServiceRole(id: Uuid, serviceId: String, roleId: ServiceRole) {
+        dbQuery {
+            UserServiceRoles.deleteWhere {
+                user eq id.toJavaUuid() and (env eq serviceId) and (role eq roleId)
             }
         }
     }

@@ -25,4 +25,25 @@ data class GrantAuthorities(
      * 允许分配权限
      */
     val assigns: Boolean,
-)
+) {
+    fun toArray(): Array<String> {
+        val buf = mutableListOf("ROLE_USER")
+        if (users) {
+            buf.add("ROLE_USERS")
+        }
+        if (envs) {
+            buf.add("ROLE_ENVS")
+        }
+        if (roles) {
+            buf.add("ROLE_ROLES")
+        }
+        if (assigns) {
+            buf.add("ROLE_ASSIGN")
+        }
+        if (root) {
+            buf.add("ROLE_ROOT")
+            buf.add("ROLE_MANAGER")
+        }
+        return buf.toTypedArray()
+    }
+}

@@ -60,6 +60,20 @@ internal fun Application.configureConsoleUser() {
                 }
             }
         }
+        delete<UserResource.Id.Envs.One> { target ->
+            withAuthorization(
+                {
+                    val manageEnvs = toUserEnvs(
+                        it.id
+                    )
+                    it.grantAuthorities?.users == true && it.grantAuthorities.envs && manageEnvs.contains(
+                        target.env
+                    )
+                }) {
+                service.removeUserEnv(target.parent.id.id!!, target.env)
+                call.respond(HttpStatusCode.NoContent)
+            }
+        }
         post<UserResource.Id.Envs> {
             val targetEnvId = call.receive<String>()
             logger.info { "分配环境${targetEnvId}给${it.id.id}" }
@@ -101,6 +115,15 @@ internal fun Application.configureConsoleUser() {
                 call.respond(target.filterKeys {
                     currentUserOwners.containsKey(it)
                 })
+            }
+        }
+        delete<UserResource.Id.Services.One> { target ->
+            withAuthorization(
+                {
+                    it.grantAuthorities?.users == true && it.grantAuthorities.roles && it.grantAuthorities.assigns
+                }) {
+                service.removeUserServiceRole(target.parent.id.id!!, target.service, target.role)
+                call.respond(HttpStatusCode.NoContent)
             }
         }
         post<UserResource.Id.Services> {

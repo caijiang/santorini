@@ -12,6 +12,8 @@ const ResourceDetail = lazy(() => import('./pages/envFor/ResourceDetail'));
 
 const LoongCollector = lazy(() => import('./pages/support/LoongCollector'));
 
+const Users = lazy(() => import('./pages/users'));
+
 export default [
   {
     path: 'home',
@@ -51,5 +53,9 @@ export default [
   {
     path: 'loongCollector',
     element: <LoongCollector />,
+  },
+  {
+    path: 'users',
+    element: <Users />,
   },
 ];

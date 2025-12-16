@@ -83,7 +83,6 @@ fun Application.configureSecurity(
                         user.id,
                         user.name,
                         user.avatarUrl,
-                        user.audit.toGrantAuthorities(),
                         user.grantAuthorities
                     )
                 )
@@ -204,9 +203,8 @@ data class LoginUserData(
      * 头像 url
      */
     override val avatarUrl: String?,
-
-    override val grantAuthorities: Array<String>,
     val authorities: GrantAuthorities?,
+    override val grantAuthorities: Array<String> = authorities?.toArray() ?: arrayOf(),
 ) : LoginUser {
     override val bytesId: ByteArray
         get() = id.toByteArray()
