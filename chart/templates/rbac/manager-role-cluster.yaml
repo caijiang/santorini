@@ -10,7 +10,7 @@ metadata:
 rules:
   # 这里算是直接部署资源
   - apiGroups: [ "apps" ]
-    resources: [ "deployments" ]
+    resources: [ "deployments","deployments/newreplicaset" ]
     resourceNames: [ ]
     verbs: [ "create","update","get", "list","delete" ]
   - apiGroups: [ "" ]
@@ -34,6 +34,10 @@ rules:
     resources: [ "pods","pods/log" ]
     resourceNames: [ ]
     verbs: [ "list","get" ]
+  - apiGroups: [ "" ]
+    resources: [ "pods/exec" ]
+    resourceNames: [ ]
+    verbs: [ "list","get","create" ]
   - apiGroups: [ "" ]
     resources: [ "events" ]
     resourceNames: [ ]
