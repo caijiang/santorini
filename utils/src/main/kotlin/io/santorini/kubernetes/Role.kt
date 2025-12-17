@@ -276,7 +276,7 @@ fun KubernetesClient.makesureRightServiceRoles(
         }
 }
 
-private const val serviceRoleDataVersion = "1"
+private const val serviceRoleDataVersion = "2"
 private fun findOrCreateRole(
     namespace: String,
     root: HasMetadata,
@@ -315,11 +315,19 @@ private fun buildRole(builder: RoleBuilder, serviceId: String, role: ServiceRole
     if (role == null) {
         return builder.addToRules(
             PolicyRule(listOf(""), null, listOf(serviceId), listOf("services"), listOf("list", "get")),
+            PolicyRule(listOf("apps"), null, listOf(serviceId), listOf("deployments"), listOf("list", "get")),
         ).build()
     }
     if (role == ServiceRole.Owner) {
         return builder.addToRules(
             PolicyRule(listOf(""), null, listOf(serviceId), listOf("services"), listOf("create", "update", "delete")),
+            PolicyRule(
+                listOf("apps"),
+                null,
+                listOf(serviceId),
+                listOf("deployments"),
+                listOf("create", "update", "delete")
+            ),
         )
             .build()
     }

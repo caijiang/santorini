@@ -1,6 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { kubeBaseApi } from './kubernetes';
-import { IDeploymentList } from 'kubernetes-models/apps/v1/DeploymentList';
 import { IDeployment } from 'kubernetes-models/apps/v1/Deployment';
 import { IService } from 'kubernetes-models/v1';
 import {
@@ -132,32 +131,45 @@ export const kubeServiceApi = createApi({
           },
         }),
       }),
-      // TODO: 暂时部署只以 deployment 进行
-      deployments: build.query<
-        IDeployment[],
-        NamespaceWithLabelSelectors,
-        IDeploymentList
-      >({
-        transformResponse: (baseQueryReturnValue) => {
-          return baseQueryReturnValue?.items ?? [];
-        },
+      /**
+       * 单个获取,所有都是必须的
+       */
+      deployment: build.query<IDeployment, NamespaceWithLabelSelectors>({
         providesTags: ['deployments'],
-        query: ({ namespace, labelSelectors }) => ({
-          url: namespace
-            ? `/apis/apps/v1/namespaces/${namespace}/deployments`
-            : '/apis/apps/v1/deployments',
+        query: ({ namespace, labelSelectors, name }) => ({
+          url: `/apis/apps/v1/namespaces/${namespace}/deployments/${name}`,
           params: {
             labelSelector:
               labelSelectors?.join(',') ?? 'santorini.io/manageable=true',
           },
         }),
       }),
+      // TODO: 暂时部署只以 deployment 进行
+      // deployments: build.query<
+      //   IDeployment[],
+      //   NamespaceWithLabelSelectors,
+      //   IDeploymentList
+      // >({
+      //   transformResponse: (baseQueryReturnValue) => {
+      //     return baseQueryReturnValue?.items ?? [];
+      //   },
+      //   providesTags: ['deployments'],
+      //   query: ({ namespace, labelSelectors }) => ({
+      //     url: namespace
+      //       ? `/apis/apps/v1/namespaces/${namespace}/deployments`
+      //       : '/apis/apps/v1/deployments',
+      //     params: {
+      //       labelSelector:
+      //         labelSelectors?.join(',') ?? 'santorini.io/manageable=true',
+      //     },
+      //   }),
+      // }),
     };
   },
 });
 
 export const {
-  useDeploymentsQuery,
+  useDeploymentQuery,
   useDaemonSetsQuery,
   useCreateDaemonSetMutation,
 } = kubeServiceApi;
