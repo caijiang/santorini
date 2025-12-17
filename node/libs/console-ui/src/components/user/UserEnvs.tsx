@@ -20,8 +20,8 @@ interface UserEnvsProps {
  */
 const UserEnvs: React.FC<UserEnvsProps> = ({ userId }) => {
   const { data, isLoading } = useUserEnvsQuery(userId);
-  const [addApi] = useGrantEnvMutation();
-  const [removeApi] = useRemoveEnvMutation();
+  const [addApi, { isLoading: w1 }] = useGrantEnvMutation();
+  const [removeApi, { isLoading: w2 }] = useRemoveEnvMutation();
   const list = useEnvs();
   const envsGranted = useCurrentLoginUserHaveAnyRole(['envs', 'root']);
 
@@ -32,6 +32,7 @@ const UserEnvs: React.FC<UserEnvsProps> = ({ userId }) => {
         {list.map((it) => (
           <Checkbox
             key={it.id}
+            disabled={w1 || w2}
             onChange={async () => {
               if (data.includes(it.id)) {
                 await removeApi({ userId, envId: it.id }).unwrap();

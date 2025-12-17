@@ -20,7 +20,7 @@ interface ServiceRolesProps {
 
 const ServiceRoles: React.FC<ServiceRolesProps> = ({ userId, service }) => {
   const grantAssign = useCurrentLoginUserHaveAnyRole('assign');
-  const [api] = useRemoveServiceRolesMutation();
+  const [api, { isLoading: apiWorking }] = useRemoveServiceRolesMutation();
   const { data, isLoading } = useUserServiceRolesQuery(userId);
   const roles = useMemo(() => {
     if (!data) return undefined;
@@ -34,7 +34,7 @@ const ServiceRoles: React.FC<ServiceRolesProps> = ({ userId, service }) => {
       {roles.map((role) => (
         <Tag
           key={kotlinEnumToString(role)}
-          closable={grantAssign}
+          closable={grantAssign && !apiWorking}
           onClose={async () => {
             await api({ userId, serviceId: service.id, role }).unwrap();
           }}

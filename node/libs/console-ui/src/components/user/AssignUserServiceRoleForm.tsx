@@ -14,7 +14,10 @@ import {
   toProSchemaValueEnumMap,
 } from '../../common/ktor';
 import ServiceUnit from '../service/ServiceUnit';
-import { useAddServiceRolesMutation } from '../../apis/user';
+import {
+  useAddServiceRolesMutation,
+  useRemoveServiceRolesMutation,
+} from '../../apis/user';
 
 interface AssignUserServiceRoleFormProps {
   userId: string;
@@ -29,6 +32,7 @@ const AssignUserServiceRoleForm: React.FC<AssignUserServiceRoleFormProps> = ({
   userId,
 }) => {
   const [api] = useAddServiceRolesMutation();
+  const [, { isLoading: removeApiWorking }] = useRemoveServiceRolesMutation();
   const { data: list } = useAllServiceQuery(undefined);
 
   if (!list) return <Spin />;
@@ -36,7 +40,7 @@ const AssignUserServiceRoleForm: React.FC<AssignUserServiceRoleFormProps> = ({
     <ModalForm
       title={'授权服务角色'}
       trigger={
-        <Button type={'dashed'} size={'small'}>
+        <Button type={'dashed'} size={'small'} disabled={removeApiWorking}>
           <PlusOutlined />
         </Button>
       }

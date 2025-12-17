@@ -78,9 +78,11 @@ fun Application.consoleModuleEntry(
     install(Koin) {
         slf4jLogger()
         modules(module {
-//            val serviceMetaService = ServiceMetaService(database)
             single {
-                DeploymentService(database, kubernetesClient)
+                kubernetesClient
+            }
+            single {
+                DeploymentService(database, get())
             }
             single {
                 EnvService(database)
@@ -92,7 +94,7 @@ fun Application.consoleModuleEntry(
                 ServiceMetaService(database, lazy { get() })
             }
             single {
-                UserRoleService(database, get())
+                UserRoleService(database, get(), get())
             }
         })
     }

@@ -11,4 +11,5 @@
     <!--    <logger name="io.ktor.server.routing.Routing" level="trace"/>-->
     <!--    <logger name="io.ktor.client.plugins" level="trace"/>-->
     <logger name="Exposed" level="trace"/>
+    <logger name="io.santorini.kubernetes" level="debug"/>
 </configuration>

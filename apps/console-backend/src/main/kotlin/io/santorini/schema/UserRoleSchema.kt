@@ -3,8 +3,13 @@
 package io.santorini.schema
 
 import io.fabric8.kubernetes.api.model.ServiceAccount
+import io.fabric8.kubernetes.client.KubernetesClient
 import io.ktor.resources.*
 import io.santorini.*
+import io.santorini.kubernetes.currentPod
+import io.santorini.kubernetes.makesureRightServiceRoles
+import io.santorini.kubernetes.removeAllServiceRolesFromNamespace
+import io.santorini.kubernetes.rootOwner
 import io.santorini.model.*
 import io.santorini.schema.ServiceMetaService.ServiceMetas
 import io.santorini.schema.UserRoleService.UserEnvs.env
@@ -88,7 +93,11 @@ data class UserResource(
 //    data class Envs(val parent: UserResource = UserResource(), val id: String? = null)
 }
 
-class UserRoleService(database: Database, private val serviceMetaService: ServiceMetaService) {
+class UserRoleService(
+    database: Database,
+    private val kubernetesClient: KubernetesClient,
+    private val serviceMetaService: ServiceMetaService
+) {
     object Users : UUIDTable() {
         val thirdPlatform = enumerationByName("third-platform", 10, OAuthPlatform::class)
         val thirdId = varchar("third-id", 100)
@@ -287,6 +296,7 @@ class UserRoleService(database: Database, private val serviceMetaService: Servic
                 it[createTime] = Clock.System.now()
             }
         }
+        kubernetesRoles(userId)
     }
 
     /**
@@ -322,6 +332,7 @@ class UserRoleService(database: Database, private val serviceMetaService: Servic
                 it[createTime] = Clock.System.now()
             }
         }
+        kubernetesRoles(targetUser)
     }
 
     suspend fun removeUserEnv(id: Uuid, envId: String) {
@@ -330,12 +341,41 @@ class UserRoleService(database: Database, private val serviceMetaService: Servic
                 user eq id.toJavaUuid() and (env eq envId)
             }
         }
+        kubernetesRoles(id, envId)
     }
 
     suspend fun removeUserServiceRole(id: Uuid, serviceId: String, roleId: ServiceRole) {
         dbQuery {
             UserServiceRoles.deleteWhere {
                 user eq id.toJavaUuid() and (service eq serviceId) and (role eq roleId)
+            }
+        }
+        kubernetesRoles(id)
+    }
+
+    private suspend fun kubernetesRoles(userId: Uuid, removeEnv: String? = null) {
+        val userData = userById(userId.toJavaUuid()) ?: return
+        val root = kubernetesClient.currentPod().rootOwner()
+        removeEnv?.let {
+            kubernetesClient.removeAllServiceRolesFromNamespace(root, userData.serviceAccountName, it)
+        }
+        // 获取每一组权限，检查是否符合要求，应加则加，应减则减
+        val envs = dbQuery {
+            UserEnvs.select(env)
+                .where { UserEnvs.user eq userId.toJavaUuid() }
+                .map { it[env].value }
+        }
+        val serviceRoles = dbQuery {
+            UserServiceRoles.select(UserServiceRoles.service, UserServiceRoles.role)
+                .where {
+                    UserServiceRoles.user eq userId.toJavaUuid()
+                }.map { it[UserServiceRoles.service].value to it[UserServiceRoles.role] }
+                .groupBy({ it.first }, { it.second })
+        }
+
+        envs.forEach { envId ->
+            serviceRoles.forEach { (t, u) ->
+                kubernetesClient.makesureRightServiceRoles(root, userData.serviceAccountName, envId, t, u)
             }
         }
     }

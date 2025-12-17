@@ -136,12 +136,18 @@ class UserRoleKtTest {
         } answers {
 
         }
+        mockkStatic(kubernetesClient::removeAllServiceRolesFromNamespace)
+        mockkStatic(kubernetesClient::makesureRightServiceRoles)
+
+        every { kubernetesClient.removeAllServiceRolesFromNamespace(any(), anyNullable(), anyNullable()) } answers {}
+        every { kubernetesClient.makesureRightServiceRoles(any(), any(), any(), any(), any()) } answers {}
         manager.post("https://localhost/users/${userData.id}/envs") {
             contentType(ContentType.Application.Json)
             setBody(envId)
         }.apply {
             status shouldBe HttpStatusCode.Created
         }
+
 //        verify(exactly = 1) {
 //            kubernetesClient.assignClusterRole(envRole.metadata.name, any())
 //        }
