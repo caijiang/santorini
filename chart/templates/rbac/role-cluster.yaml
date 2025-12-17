@@ -7,6 +7,14 @@ metadata:
     {{- include "common.labels.withoutName" . | nindent 4 }}
 rules:
   - apiGroups: [ "rbac.authorization.k8s.io" ]
+    resources: [ "rolebindings" ]
+    resourceNames: [ ]
+    verbs: [ "get", "list", "watch", "create", "update", "delete" ]
+  - apiGroups: [ "rbac.authorization.k8s.io" ]
+    resources: [ "roles" ]
+    resourceNames: [ ]
+    verbs: [ "get", "list", "watch", "create", "update", "delete" ]
+  - apiGroups: [ "rbac.authorization.k8s.io" ]
     resources: [ "clusterroles" ]
     resourceNames: [ ]
     verbs: [ "list","get" ]
