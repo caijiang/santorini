@@ -6,10 +6,7 @@ import io.fabric8.kubernetes.api.model.ServiceAccount
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.ktor.resources.*
 import io.santorini.*
-import io.santorini.kubernetes.currentPod
-import io.santorini.kubernetes.makesureRightServiceRoles
-import io.santorini.kubernetes.removeAllServiceRolesFromNamespace
-import io.santorini.kubernetes.rootOwner
+import io.santorini.kubernetes.*
 import io.santorini.model.*
 import io.santorini.schema.ServiceMetaService.ServiceMetas
 import io.santorini.schema.UserRoleService.UserEnvs.env
@@ -374,6 +371,7 @@ class UserRoleService(
         }
 
         envs.forEach { envId ->
+            kubernetesClient.makesureRightEnvRoles(root, userData.serviceAccountName, envId)
             serviceRoles.forEach { (t, u) ->
                 kubernetesClient.makesureRightServiceRoles(root, userData.serviceAccountName, envId, t, u)
             }

@@ -15,18 +15,21 @@ export const kubeBaseApi = retry(
     ).data;
     console.debug('jwtToken:', jwtToken);
     if (!jwtToken) {
-      throw new Error('please retry.');
-      // retry
-      // return {
-      //   data: undefined as unknown,
-      //   error: {} as unknown as undefined,
-      //   isUninitialized: false,
-      //   isLoading: false,
-      //   isFetching: false,
-      //   isSuccess: false,
-      //   isError: true,
-      //   refetch: () => {},
-      // };
+      // throw new Error('please retry.');
+      console.info('jwtToken not ready,take rest to retry.');
+      await new Promise((resolve) => {
+        setTimeout(resolve, 3500);
+      });
+      return {
+        data: undefined as unknown,
+        error: {} as unknown as undefined,
+        isUninitialized: false,
+        isLoading: false,
+        isFetching: false,
+        isSuccess: false,
+        isError: true,
+        refetch: () => {},
+      };
     }
     const baseApi = fetchBaseQuery({
       baseUrl: '/kubernetes',

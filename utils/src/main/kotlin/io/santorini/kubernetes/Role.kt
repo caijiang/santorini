@@ -5,6 +5,8 @@ import io.fabric8.kubernetes.api.model.ServiceAccount
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder
 import io.fabric8.kubernetes.api.model.rbac.*
 import io.fabric8.kubernetes.client.KubernetesClient
+import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable
+import io.fabric8.kubernetes.client.dsl.Resource
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.santorini.model.ServiceRole
 
@@ -183,6 +185,26 @@ fun KubernetesClient.clusterRoleBindingBySubject(subject: Subject): List<String>
         .map { it.roleRef.name }
 }
 
+
+/**
+ * 如果只属于目标 subject 则执行删除
+ */
+private fun FilterWatchListDeletable<RoleBinding, RoleBindingList, Resource<RoleBinding>>.deleteIfOnlyBelongs(
+    client: KubernetesClient,
+    namespace: String,
+    kind: String,
+    name: String
+) {
+    val all = list().items
+
+    val toDelete = all
+        .filter { it -> it.subjects.any { it.name == name && it.kind == kind && it.namespace == namespace } && it.subjects.size == 1 }
+    if (toDelete.isEmpty()) {
+        toDelete.forEach {
+            client.rbac().roleBindings().resource(it).delete()
+        }
+    }
+}
 // role -> santorini.io/service -> %s
 // role -> santorini.io/role -> (role|lc)
 // Binding -> santorini.io/type -> service-role
@@ -193,20 +215,88 @@ fun KubernetesClient.removeAllServiceRolesFromNamespace(
     namespace: String
 ) {
     val instance = root.metadata.labels["app.kubernetes.io/instance"] ?: throw Exception("顶级元素不包含实例信息")
-    val all = rbac().roleBindings().inNamespace(namespace)
+    rbac().roleBindings().inNamespace(namespace)
         .withLabel("santorini.io/type", "service-role")
+        .withLabel("app.kubernetes.io/instance", instance)
+        .deleteIfOnlyBelongs(this, this.namespace, "ServiceAccount", serviceAccountName)
+
+    rbac().roleBindings().inNamespace(namespace)
+        .withLabel("santorini.io/type", "env-role")
+        .withLabel("app.kubernetes.io/instance", instance)
+        .deleteIfOnlyBelongs(this, this.namespace, "ServiceAccount", serviceAccountName)
+
+}
+
+fun KubernetesClient.makesureRightEnvRoles(
+    root: HasMetadata,
+    serviceAccountName: String,
+    namespace: String
+) {
+    val instance = root.metadata.labels["app.kubernetes.io/instance"] ?: throw Exception("顶级元素不包含实例信息")
+
+    val labels = mapOf(
+        "app.kubernetes.io/instance" to instance,
+        "santorini.io/type" to "env-role",
+        "santorini.io/version" to "4"
+    )
+
+    val role = findOrCreateRoleImpl(this, namespace, labels, "env-role-") {
+        it.addToRules(
+            PolicyRule(
+                listOf(""), null, listOf(), listOf("pods", "pods/log"), listOf("list", "get")
+            ),
+            PolicyRule(
+                listOf("apps"), null, listOf(), listOf("replicasets"), listOf("list", "get")
+            ),
+            PolicyRule(
+                listOf("autoscaling"), null, listOf(), listOf("horizontalpodautoscalers"), listOf("list")
+            ),
+            PolicyRule(
+                listOf(""), null, listOf(), listOf("events"), listOf("list")
+            )
+        ).build()
+    }
+
+    // 寻找我的
+    val current = rbac().roleBindings().inNamespace(namespace)
+        .withLabel("santorini.io/type", "env-role")
         .withLabel("app.kubernetes.io/instance", instance)
         .list()
         .items
-
-    val toDelete = all
-        .filter { it -> it.subjects.any { it.name == serviceAccountName && it.kind == "ServiceAccount" && it.namespace == this.namespace } && it.subjects.size == 1 }
-    if (toDelete.isEmpty()) {
-        toDelete.forEach {
-            rbac().roleBindings().resource(it).delete()
+        .filter { it ->
+            it.subjects.any {
+                it.name == serviceAccountName && it.kind == "ServiceAccount"
+                        && it.namespace == this.namespace
+            }
         }
+    // 删除过时的
+    current.filter {
+        it.roleRef.name != role.metadata.name
+    }.forEach {
+        rbac().roleBindings().resource(it).delete()
     }
+    // 绑定现有的
+    if (current.none { it.roleRef.name == role.metadata.name }) {
+        val b = RoleBindingBuilder()
+            .withNewMetadata()
+            .withNamespace(namespace)
+            .withGenerateName("env-role-")
+            .addToLabels("santorini.io/type", "env-role")
+            .addToLabels("app.kubernetes.io/instance", instance)
+            .endMetadata()
+            .withRoleRef(
+                RoleRef("rbac.authorization.k8s.io", "Role", role.metadata.name)
+            )
+            .withSubjects(
+                SubjectBuilder()
+                    .withKind("ServiceAccount")
+                    .withNamespace(this.namespace)
+                    .withName(serviceAccountName)
+                    .build()
+            ).build()
 
+        rbac().roleBindings().resource(b).create()
+    }
 }
 
 fun KubernetesClient.makesureRightServiceRoles(
@@ -276,7 +366,7 @@ fun KubernetesClient.makesureRightServiceRoles(
         }
 }
 
-private const val serviceRoleDataVersion = "2"
+private const val serviceRoleDataVersion = "3"
 private fun findOrCreateRole(
     namespace: String,
     root: HasMetadata,
@@ -293,6 +383,18 @@ private fun findOrCreateRole(
         "santorini.io/version" to serviceRoleDataVersion
     )
 
+    return findOrCreateRoleImpl(client, namespace, labels, "service-role") {
+        buildRole(it, serviceId, role)
+    }
+}
+
+private fun findOrCreateRoleImpl(
+    client: KubernetesClient,
+    namespace: String,
+    labels: Map<String, String>,
+    generateName: String,
+    api: (builder: RoleBuilder) -> Role
+): Role {
     val target = client.rbac().roles().inNamespace(namespace)
         .withLabels(labels)
         .list()
@@ -301,12 +403,12 @@ private fun findOrCreateRole(
     if (target != null) {
         return target
     }
-    val item = buildRole(
+    val item = api(
         RoleBuilder().withNewMetadata()
-            .withGenerateName("service-role")
+            .withGenerateName(generateName)
             .withNamespace(namespace)
             .withLabels<String, String>(labels)
-            .endMetadata(), serviceId, role
+            .endMetadata()
     )
     return client.rbac().roles().resource(item).create()
 }
@@ -315,11 +417,21 @@ private fun buildRole(builder: RoleBuilder, serviceId: String, role: ServiceRole
     if (role == null) {
         return builder.addToRules(
             PolicyRule(listOf(""), null, listOf(serviceId), listOf("services"), listOf("list", "get")),
-            PolicyRule(listOf("apps"), null, listOf(serviceId), listOf("deployments"), listOf("list", "get")),
+            PolicyRule(
+                listOf("apps"),
+                null,
+                listOf(serviceId),
+                listOf("deployments", "deployments/newreplicaset"),
+                listOf("list", "get")
+            ),
         ).build()
     }
     if (role == ServiceRole.Owner) {
         return builder.addToRules(
+            // pod 名字随机的，没有办法了，只能按照 k8s 的设计哲学 广权但自律
+            PolicyRule(
+                listOf(""), null, listOf(), listOf("pods/exec"), listOf("create", "get", "list")
+            ),
             PolicyRule(listOf(""), null, listOf(serviceId), listOf("services"), listOf("create", "update", "delete")),
             PolicyRule(
                 listOf("apps"),
