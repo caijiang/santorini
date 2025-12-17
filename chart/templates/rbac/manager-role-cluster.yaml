@@ -29,7 +29,7 @@ rules:
   - apiGroups: [ "apps" ]
     resources: [ "replicasets" ]
     resourceNames: [ ]
-    verbs: [ "list","get" ]
+    verbs: [ "list","get","delete" ]
   - apiGroups: [ "" ]
     resources: [ "pods","pods/log" ]
     resourceNames: [ ]
