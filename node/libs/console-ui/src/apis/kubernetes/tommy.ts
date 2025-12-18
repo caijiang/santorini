@@ -306,8 +306,10 @@ export default {
                 // dnsPolicy: ClusterFirst
                 // hostNetwork: false
                 restartPolicy: 'Always',
+                // readinessProbe
               },
             ],
+            terminationGracePeriodSeconds: 30,
           },
         },
         // restartPolicy: Always

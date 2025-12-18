@@ -9,6 +9,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.santorini.consoleModule
+import io.santorini.model.Lifecycle
 import io.santorini.model.PageResult
 import io.santorini.model.ServiceType
 import io.santorini.schema.ServiceMetaData
@@ -35,7 +36,8 @@ class ServiceKtTest {
         }
 
         val demoService = ServiceMetaData(
-            id = "demo-service", name = "范例", type = ServiceType.JVM, requirements = null
+            id = "demo-service", name = "范例", type = ServiceType.JVM, requirements = null,
+            lifecycle = Lifecycle(),
         )
         c.addServiceMeta(demoService)
         // 分页获取,

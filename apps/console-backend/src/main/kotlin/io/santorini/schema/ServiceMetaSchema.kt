@@ -42,6 +42,7 @@ data class ServiceMetaData(
     val name: String,
     val type: ServiceType,
     val requirements: List<ResourceRequirement>?,
+    val lifecycle: Lifecycle?
 )
 
 inline fun <reified T> mergeJson(jsonData: T, otherJson: String?): String {
@@ -101,6 +102,7 @@ class ServiceMetaService(
         val name = varchar("name", length = 50)
         val type = enumerationByName("type", 10, ServiceType::class)
         val requirements = jsonb<List<ResourceRequirement>>("requirements", Json).nullable()
+        val lifecycle = jsonb<Lifecycle>("lifecycle", Json).nullable()
         val createTime = timestamp("create_time")
         override val primaryKey = PrimaryKey(id)
     }
@@ -139,6 +141,7 @@ class ServiceMetaService(
             ServiceMetas.update({ ServiceMetas.id eq id }) {
                 it[name] = serviceMetaData.name
                 it[requirements] = serviceMetaData.requirements
+                it[lifecycle] = serviceMetaData.lifecycle
             }
             ServiceMetaOthers.update({ ServiceMetaOthers.id eq id }) {
                 it[data] = other.toPrettyString()
@@ -159,6 +162,7 @@ class ServiceMetaService(
                 ServiceMetas.update({ ServiceMetas.id eq serviceMetaData.id }) {
                     it[name] = serviceMetaData.name
                     it[requirements] = serviceMetaData.requirements
+                    it[lifecycle] = serviceMetaData.lifecycle
                 }
                 ServiceMetaOthers.update({ ServiceMetas.id eq serviceMetaData.id }) {
                     it[data] = other.toPrettyString()
@@ -184,6 +188,7 @@ class ServiceMetaService(
             it[type] = serviceMetaData.type
             it[name] = serviceMetaData.name
             it[requirements] = serviceMetaData.requirements
+            it[lifecycle] = serviceMetaData.lifecycle
         }
         return ServiceMetaOthers.insert {
             it[id] = serviceMetaData.id
@@ -238,6 +243,7 @@ class ServiceMetaService(
                         name = it[ServiceMetas.name],
                         type = it[ServiceMetas.type],
                         requirements = it[ServiceMetas.requirements],
+                        lifecycle = it[ServiceMetas.lifecycle],
                     )
                 }
         }
@@ -252,6 +258,7 @@ class ServiceMetaService(
                         name = it[ServiceMetas.name],
                         type = it[ServiceMetas.type],
                         requirements = it[ServiceMetas.requirements],
+                        lifecycle = it[ServiceMetas.lifecycle],
                     )
                 }
         }
@@ -269,6 +276,7 @@ class ServiceMetaService(
                         name = it[ServiceMetas.name],
                         type = it[ServiceMetas.type],
                         requirements = it[ServiceMetas.requirements],
+                        lifecycle = it[ServiceMetas.lifecycle],
                     )
                 }.firstOrNull()?.let { data ->
                     data to ServiceMetaOthers.selectAll()

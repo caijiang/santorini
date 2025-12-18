@@ -15,6 +15,7 @@ import io.santorini.consoleModuleEntry
 import io.santorini.kubernetes.SantoriniResourceKubernetesImpl
 import io.santorini.kubernetes.applyStringSecret
 import io.santorini.kubernetes.findResourcesInNamespace
+import io.santorini.model.Lifecycle
 import io.santorini.model.ResourceRequirement
 import io.santorini.model.ResourceType
 import io.santorini.model.ServiceType
@@ -47,7 +48,8 @@ class DeploymentKtTest {
         val deployDemoService = ServiceMetaData(
             id = "demo-for-deploy-service", name = "范例", type = ServiceType.JVM, requirements = listOf(
                 ResourceRequirement(ResourceType.Mysql)
-            )
+            ),
+            lifecycle = Lifecycle(),
         )
         c.post("https://localhost/services") {
             contentType(ContentType.Application.Json)

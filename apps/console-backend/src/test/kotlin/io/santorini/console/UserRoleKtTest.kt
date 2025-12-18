@@ -22,6 +22,7 @@ import io.mockk.mockkStatic
 import io.santorini.LoginUserData
 import io.santorini.consoleModuleEntry
 import io.santorini.kubernetes.*
+import io.santorini.model.Lifecycle
 import io.santorini.model.PageResult
 import io.santorini.model.ServiceRole
 import io.santorini.model.ServiceType
@@ -178,7 +179,8 @@ class UserRoleKtTest {
 
         // 新增一个服务
         val rolePlayService = ServiceMetaData(
-            id = "role-play-service", name = "UserRoleKtTest", type = ServiceType.JVM, requirements = null
+            id = "role-play-service", name = "UserRoleKtTest", type = ServiceType.JVM, requirements = null,
+            lifecycle = Lifecycle(),
         )
         manager.addServiceMeta(rolePlayService)
 
