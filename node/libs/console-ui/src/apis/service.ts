@@ -42,6 +42,29 @@ export function generateDemoService(): ServiceConfigData {
   };
 }
 
+interface IHTTPGetAction {
+  port: number;
+  path: string;
+  host?: string;
+  scheme?: 'HTTP' | 'HTTPS';
+}
+
+interface IProbe {
+  httpGet?: IHTTPGetAction;
+  initialDelaySeconds: number;
+  periodSeconds?: number;
+  timeoutSeconds?: number;
+  failureThreshold?: number;
+  successThreshold?: number;
+}
+
+interface ILifecycle {
+  terminationGracePeriodSeconds?: number;
+  livenessProbe?: IProbe;
+  readinessProbe?: IProbe;
+  startupProbe?: IProbe;
+}
+
 export interface ServiceConfigData {
   /**
    * https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/names/#dns-label-names
@@ -81,6 +104,7 @@ export interface ServiceConfigData {
   }[];
   // 声明依赖资源 先跳过
   requirements?: ResourceRequirement[];
+  lifecycle?: ILifecycle;
 }
 
 export interface DeploymentDeployData {
