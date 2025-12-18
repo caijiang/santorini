@@ -4,7 +4,7 @@ import {Button, Divider} from 'antd';
 import {ServiceConfigData} from '../apis/service';
 import {toKtorRequest} from '../common/ktor';
 import {serviceIdColumn, serviceNameColumn, serviceTypeColumn,} from '../columns/service';
-import {useNavigate} from 'react-router-dom';
+import {NavLink, useNavigate} from 'react-router-dom';
 import {DeploymentUnitOutlined} from '@ant-design/icons';
 import EnvChooserModal from '../components/EnvChooserModal';
 import {ProTable} from '@ant-design/pro-components';
@@ -54,8 +54,14 @@ export default () => {
                 path={`/#/deployment/${id}/${entity.id}?namespace=${id}`}
                 key={'dashboard'}
               >
-                查看
+                Dashboard
               </DashboardLink>,
+              <NavLink
+                key={'pods'}
+                to={`/envFor/${id}/services/${entity.id}/pods`}
+              >
+                Pods
+              </NavLink>,
               <EnvChooserModal
                 key={'deploy'}
                 trigger={

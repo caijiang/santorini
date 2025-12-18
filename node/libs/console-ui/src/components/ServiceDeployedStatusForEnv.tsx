@@ -1,10 +1,8 @@
 import { ServiceConfigData } from '../apis/service';
 import { Empty, Spin } from 'antd';
 import * as React from 'react';
-import { useEnv } from '../hooks/common';
 import { useDeploymentQuery } from '../apis/kubernetes/service';
 import DeploymentStatus from './kubernetes/tommy/DeploymentStatus';
-import { queryDeploymentEnvPair } from './ServiceDeployedStatus';
 
 interface ServiceDeployedStatusForEnvProps {
   service: ServiceConfigData;
@@ -18,7 +16,6 @@ interface ServiceDeployedStatusForEnvProps {
 const ServiceDeployedStatusForEnv: React.FC<
   ServiceDeployedStatusForEnvProps
 > = ({ service: { id }, envId }) => {
-  const envs = useEnv(envId);
   const { data, isLoading, refetch } = useDeploymentQuery({
     namespace: envId,
     name: id,
@@ -28,14 +25,11 @@ const ServiceDeployedStatusForEnv: React.FC<
   //   namespace: envId,
   //   labelSelectors: ['santorini.io/service-type', `santorini.io/id=${id}`],
   // });
-  const x = queryDeploymentEnvPair(data && [data], envs ? [envs] : undefined);
 
-  if (!x || isLoading) {
+  if (isLoading) {
     return <Spin />;
   }
-  // console.log('x:', x);
-
-  if (x.length == 0) {
+  if (!data) {
     return (
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -51,7 +45,7 @@ const ServiceDeployedStatusForEnv: React.FC<
       />
     );
   }
-  return <DeploymentStatus refresh={refetch} data={x[0].deployment.status} />;
+  return <DeploymentStatus refresh={refetch} data={data.status} />;
 };
 
 export default ServiceDeployedStatusForEnv;

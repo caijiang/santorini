@@ -16,31 +16,17 @@ interface ServiceDeployedStatusProps {
   service: ServiceConfigData;
 }
 
-export function queryDeploymentEnvPair(
-  data: IDeployment[] | undefined,
-  envs: CUEnv[] | undefined
-) {
-  return (
-    data &&
-    envs &&
-    data
-      .filter((d) => envs.some((it) => it.id == d.metadata?.namespace))
-      .map((d) => ({
-        deployment: d,
-        env: envs.find((it) => it.id == d.metadata?.namespace)!!,
-      }))
-  );
-}
-
 export function queryDeploymentEnvPair2(
   record: Record<string, IDeployment | undefined> | undefined,
   envs: CUEnv[] | undefined
 ) {
   if (!record) return undefined;
-  return _.keys(record).map((id) => ({
-    deployment: record?.[id],
-    env: envs?.find((it) => it.id == id)!!,
-  }));
+  return _.keys(record)
+    .filter((it) => !!record[it])
+    .map((id) => ({
+      deployment: record?.[id],
+      env: envs?.find((it) => it.id == id)!!,
+    }));
 }
 
 /**

@@ -14,6 +14,10 @@ const LoongCollector = lazy(() => import('./pages/support/LoongCollector'));
 
 const Users = lazy(() => import('./pages/users'));
 
+const EnvServiceLayout = lazy(() => import('./layouts/EnvServiceLayout'));
+const Pods = lazy(() => import('./pages/envFor/service/Pods'));
+const Pod = lazy(() => import('./pages/envFor/service/Pod'));
+
 export default [
   {
     path: 'home',
@@ -36,6 +40,22 @@ export default [
     path: 'envFor/:env',
     element: <EnvLayout />,
     children: [
+      {
+        path: 'services/:serviceId',
+        element: <EnvServiceLayout />,
+        children: [
+          {
+            path: 'pods',
+            element: <Pods />,
+            children: [
+              {
+                path: ':podId',
+                element: <Pod />,
+              },
+            ],
+          },
+        ],
+      },
       {
         path: 'addResource',
         element: <AddResource />,

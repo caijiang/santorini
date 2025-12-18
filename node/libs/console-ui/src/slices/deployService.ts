@@ -32,14 +32,11 @@ async function findServiceInstanceInKubernetes(
   envId: string,
   dispatch: GetThunkAPI<any>['dispatch']
 ): Promise<ServiceInstanceInKubernetes | undefined> {
-  const rs = await dispatch(
-    kubeServiceApi.endpoints.deployments.initiate({
+  const rs0 = await dispatch(
+    kubeServiceApi.endpoints.deployment.initiate({
       namespace: envId,
-      labelSelectors: [
-        // 'santorini.io/manageable=true'
-        'santorini.io/service-type',
-        `santorini.io/id=${serviceId}`,
-      ],
+      name: serviceId,
+      labelSelectors: ['santorini.io/service-type'],
     })
   ).unwrap();
   const ss = await dispatch(
@@ -48,7 +45,6 @@ async function findServiceInstanceInKubernetes(
       name: serviceId,
     })
   ).unwrap();
-  const rs0 = rs?.find(() => true);
   if (!ss && !rs0) {
     return undefined;
   }
