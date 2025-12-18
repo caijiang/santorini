@@ -165,13 +165,45 @@ spec:
           ports:
             - containerPort: 8080
               name: http
-          resources:
-            limits:
-              cpu: "250m"
-              memory: 256Mi
-            requests:
-              cpu: 125m
-              memory: 128Mi
+          {{- if .Values.santorini.resources }}
+          resources: {{- toYaml .Values.santorini.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.santorini.healthCheck.livenessProbe.enabled }}
+          livenessProbe:
+            {{- if eq .Values.santorini.healthCheck.type "http" }}
+            httpGet:
+              path: {{ .Values.santorini.healthCheck.livenessProbe.httpPath }}
+              port: {{ .Values.santorini.healthCheck.port }}
+            {{- else }}
+            tcpSocket:
+              port: {{ .Values.santorini.healthCheck.port }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.santorini.healthCheck.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.santorini.healthCheck.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.santorini.healthCheck.livenessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.santorini.healthCheck.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.santorini.healthCheck.livenessProbe.failureThreshold }}
+          {{- else if .Values.santorini.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customLivenessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.santorini.healthCheck.readinessProbe.enabled }}
+          readinessProbe:
+            {{- if eq .Values.santorini.healthCheck.type "http" }}
+            httpGet:
+              path: {{ .Values.santorini.healthCheck.readinessProbe.httpPath }}
+              port: {{ .Values.santorini.healthCheck.port }}
+            {{- else }}
+            tcpSocket:
+              port: {{ .Values.santorini.healthCheck.port }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.santorini.healthCheck.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.santorini.healthCheck.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.santorini.healthCheck.readinessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.santorini.healthCheck.readinessProbe.successThreshold }}
+            failureThreshold: {{ .Values.santorini.healthCheck.readinessProbe.failureThreshold }}
+          {{- else if .Values.santorini.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.santorini.customReadinessProbe "context" $) | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: shared-data
               mountPath: /work
