@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalUuidApi::class)
+@file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 
 package io.santorini.schema
 
@@ -16,12 +16,13 @@ import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
 import org.jetbrains.exposed.v1.core.statements.InsertStatement
-import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
+import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.jsonb
-import java.time.OffsetDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
@@ -100,7 +101,7 @@ class ServiceMetaService(
         val name = varchar("name", length = 50)
         val type = enumerationByName("type", 10, ServiceType::class)
         val requirements = jsonb<List<ResourceRequirement>>("requirements", Json).nullable()
-        val createTime = timestampWithTimeZone("createTime")
+        val createTime = timestamp("create_time")
         override val primaryKey = PrimaryKey(id)
     }
 
@@ -179,7 +180,7 @@ class ServiceMetaService(
     ): InsertStatement<Number> {
         ServiceMetas.insert {
             it[id] = serviceMetaData.id
-            it[createTime] = OffsetDateTime.now()
+            it[createTime] = Clock.System.now()
             it[type] = serviceMetaData.type
             it[name] = serviceMetaData.name
             it[requirements] = serviceMetaData.requirements

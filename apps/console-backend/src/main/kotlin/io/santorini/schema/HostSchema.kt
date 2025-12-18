@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package io.santorini.schema
 
 import io.ktor.resources.*
@@ -9,11 +11,12 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
-import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
+import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import java.time.OffsetDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @Serializable
 data class HostData(
@@ -44,9 +47,11 @@ class HostService(database: Database) {
          * 并非域名，而是一个可以
          */
         override val id = varchar("hostname", 63).entityId()
-        val issuerName = varchar("issuerName", 63)
-        val secretName = varchar("secretName", 63)
-        val createTime = timestampWithTimeZone("createTime")
+        val issuerName = varchar("issuer_name", 63)
+        val secretName = varchar("secret_name", 63)
+
+        // timestamp(6) | NULL
+        val createTime = timestamp("create_time")
         override val primaryKey = PrimaryKey(ServiceMetas.id)
     }
 
@@ -94,7 +99,7 @@ class HostService(database: Database) {
                     this[Hosts.id] = it.hostname
                     this[Hosts.issuerName] = it.issuerName
                     this[Hosts.secretName] = it.secretName
-                    this[Hosts.createTime] = OffsetDateTime.now()
+                    this[Hosts.createTime] = Clock.System.now()
                 }.size
             } else
                 0
@@ -112,7 +117,7 @@ class HostService(database: Database) {
                 it[id] = input.hostname
                 it[issuerName] = input.issuerName
                 it[secretName] = input.secretName
-                it[createTime] = OffsetDateTime.now()
+                it[createTime] = Clock.System.now()
             }
         }
     }

@@ -20,17 +20,14 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.timestamp
-import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.extract
 import org.jetbrains.exposed.v1.json.jsonb
-import java.time.OffsetDateTime
 import java.util.*
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import kotlin.time.toKotlinInstant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
@@ -96,8 +93,8 @@ class UserRoleService(
     private val serviceMetaService: ServiceMetaService
 ) {
     object Users : UUIDTable() {
-        val thirdPlatform = enumerationByName("third-platform", 10, OAuthPlatform::class)
-        val thirdId = varchar("third-id", 100)
+        val thirdPlatform = enumerationByName("third_platform", 10, OAuthPlatform::class)
+        val thirdId = varchar("third_id", 100)
 
         /**
          * 这个属性被设定为只有 root 可以修改
@@ -110,7 +107,7 @@ class UserRoleService(
          * 给邦定的 sa
          */
         val serviceAccountName = varchar("service_account_name", 100)
-        val createTime = timestampWithTimeZone("createTime")
+        val createTime = timestamp("create_time")
 
         init {
             uniqueIndex(thirdPlatform, thirdId)
@@ -121,10 +118,10 @@ class UserRoleService(
      * 用户，环境的可见关系
      */
     object UserEnvs : Table() {
-        val user = reference("user-id", Users)
-        val env = reference("env-id", EnvService.Envs)
-        val createBy = reference("create-by", Users)
-        val createTime = timestamp("create-time")
+        val user = reference("user_id", Users)
+        val env = reference("env_id", EnvService.Envs)
+        val createBy = reference("create_by", Users)
+        val createTime = timestamp("create_time")
 
         init {
             UserEnvs.uniqueIndex(user, env)
@@ -132,11 +129,13 @@ class UserRoleService(
     }
 
     object UserServiceRoles : Table() {
-        val user = reference("user-id", Users)
-        val service = reference("service-id", ServiceMetas)
+        val user = reference("user_id", Users)
+        val service = reference("service_id", ServiceMetas)
         val role = enumeration<ServiceRole>("role")
-        val createBy = reference("create-by", Users)
-        val createTime = timestamp("create-time")
+        val createBy = reference("create_by", Users)
+
+        // datetime(6)
+        val createTime = timestamp("create_time")
 
         init {
             UserServiceRoles.uniqueIndex(user, service, role)
@@ -190,7 +189,7 @@ class UserRoleService(
                     it[name] = platformUserData.name
                     it[avatarUrl] = platformUserData.avatarUrl
                     it[serviceAccountName] = account.metadata.name
-                    it[createTime] = OffsetDateTime.now()
+                    it[createTime] = Clock.System.now()
                 }
                 data.copy(grantAuthorities = defaultGrantAuthorities(result), id = id.value.toKotlinUuid())
             } else {
@@ -244,7 +243,7 @@ class UserRoleService(
             resultRow[Users.id].value.toString(),
             resultRow[Users.name],
             resultRow[Users.avatarUrl],
-            time.toInstant().toKotlinInstant().toLocalDateTime(timezone),
+            time.toLocalDateTime(timezone),
             resultRow[Users.grantAuthorities],
             resultRow[Users.serviceAccountName],
         )

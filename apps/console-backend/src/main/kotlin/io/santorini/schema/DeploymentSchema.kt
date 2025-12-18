@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package io.santorini.schema
 
 import io.fabric8.kubernetes.client.KubernetesClient
@@ -16,12 +18,13 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
+import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.jsonb
-import java.time.OffsetDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 
 @Serializable
@@ -53,7 +56,7 @@ class DeploymentService(database: Database, private val kubernetesClient: Kubern
     object Deployments : UUIDTable() {
         val service = reference("service", ServiceMetas)
         val env = reference("env", EnvService.Envs)
-        val createTime = timestampWithTimeZone("createTime")
+        val createTime = timestamp("create_time")
         val imageRepository = varchar("image_repository", 120)
         val imageTag = varchar("image_tag", 50).nullable()
         val pullSecretName = jsonb<List<String>>("pull_secret_name", Json).nullable()
@@ -109,7 +112,7 @@ class DeploymentService(database: Database, private val kubernetesClient: Kubern
             Deployments.insert {
                 it[service] = deploy.serverId
                 it[env] = deploy.envId
-                it[createTime] = OffsetDateTime.now()
+                it[createTime] = Clock.System.now()
                 it[imageRepository] = data.imageRepository
                 it[imageTag] = data.imageTag
                 it[pullSecretName] = data.pullSecretName
