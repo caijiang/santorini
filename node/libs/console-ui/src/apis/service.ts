@@ -112,6 +112,14 @@ export interface DeploymentDeployData {
   imageTag?: string;
   pullSecretName?: string[];
   resourcesSupply?: Record<string, string>;
+  /**
+   * 成功部署的资源版本
+   */
+  targetResourceVersion?: string;
+  /**
+   * 部署时服务的镜像
+   */
+  serviceDataSnapshot?: string;
 }
 
 export interface LastReleaseDeploymentSummary extends DeploymentDeployData {}
@@ -156,7 +164,7 @@ export const serviceApi = createApi({
         }),
       }),
       deploy: build.mutation<
-        undefined,
+        string,
         { envId: string; serviceId: string; data: DeploymentDeployData }
       >({
         invalidatesTags: ['Deployments'],
@@ -164,6 +172,34 @@ export const serviceApi = createApi({
           method: 'POST',
           url: `/deployments/deploy/${envId}/${serviceId}`,
           body: data,
+          // application/json 而且带有括号
+        }),
+      }),
+      /**
+       * 回收一次失败的部署
+       */
+      invokeDeploy: build.mutation<undefined, string>({
+        invalidatesTags: ['Deployments'],
+        query: (arg) => ({
+          method: 'DELETE',
+          url: `/deployments/${arg}`,
+        }),
+      }),
+      /**
+       * 汇报结果
+       */
+      reportDeployResult: build.mutation<
+        undefined,
+        { id: string; resourceVersion: string }
+      >({
+        invalidatesTags: ['Deployments'],
+        query: ({ id, resourceVersion }) => ({
+          method: 'PUT',
+          url: `/deployments/${id}/targetResourceVersion`,
+          body: resourceVersion,
+          headers: {
+            'Content-Type': 'text/plain',
+          },
         }),
       }),
       /**

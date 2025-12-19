@@ -1,4 +1,4 @@
-import { KubernetesYamlGenerator } from './yamlGenerator';
+import { fromYamlTextToObject, KubernetesYamlGenerator } from './yamlGenerator';
 import { App } from 'cdk8s';
 import { ServiceChart } from '../../slices/ServiceChart';
 
@@ -14,7 +14,7 @@ export default {
       input
     );
     return {
-      deployment: app.synthYaml(),
+      deployment: fromYamlTextToObject(app.synthYaml()),
     };
   },
 } as KubernetesYamlGenerator;

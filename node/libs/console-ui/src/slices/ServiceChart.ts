@@ -108,11 +108,11 @@ export class ServiceChart extends Chart {
     fd.exposeViaService({});
   }
 
-  private toImage({ envRelated }: ServiceDeployToKubernetesProps) {
-    if (envRelated.imageTag) {
-      return envRelated.imageRepository + ':' + envRelated.imageTag;
+  private toImage({ deployData }: ServiceDeployToKubernetesProps) {
+    if (deployData.imageTag) {
+      return deployData.imageRepository + ':' + deployData.imageTag;
     }
-    return envRelated.imageRepository;
+    return deployData.imageRepository;
   }
 
   private toResource({ resources }: ServiceConfigData) {

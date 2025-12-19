@@ -56,11 +56,12 @@ export default () => {
             const action = deployToKubernetes({
               service: service!!,
               env: env!!,
-              envRelated: {
+              deployData: {
                 ...other,
                 imageRepository: st[0],
                 imageTag: st.length > 1 ? st[1] : undefined,
               },
+              lastDeploy: lastReleaseSummary,
             });
             try {
               await dispatchActionThrowIfError(dispatch, action);

@@ -18,6 +18,7 @@ export interface ObjectContainer {
   namespace?: string;
   name?: string;
   yaml?: string;
+  jsonObject?: any;
 }
 
 export interface TypedObjectContainer<T> extends ObjectContainer {

@@ -1,8 +1,9 @@
-@file:OptIn(ExperimentalTime::class)
+@file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
 
 package io.santorini.schema
 
 import io.fabric8.kubernetes.client.KubernetesClient
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.resources.*
 import io.santorini.kubernetes.applyStringSecret
 import io.santorini.kubernetes.findResourcesInNamespace
@@ -18,14 +19,18 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.jsonb
+import java.util.*
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
 
+private val logger = KotlinLogging.logger {}
 
 @Serializable
 data class DeploymentDeployData(
@@ -34,6 +39,14 @@ data class DeploymentDeployData(
     val pullSecretName: List<String>? = null,
     // ResourceRequirement-> type-name ; 没有名字那就""
     val resourcesSupply: Map<String, String>? = null,
+    /**
+     * 只存在输出中
+     */
+    val targetResourceVersion: String? = null,
+    /**
+     * 只存在输出中
+     */
+    val serviceDataSnapshot: String? = null,
 )
 
 @Resource("/deployments")
@@ -49,9 +62,21 @@ data class DeploymentResource(
     @Resource("deploy/{envId}/{serverId}")
     @Serializable
     data class Deploy(val parent: DeploymentResource = DeploymentResource(), val serverId: String, val envId: String)
+
+    @Resource("{id}/{name}")
+    @Serializable
+    data class IdAndName(val parent: DeploymentResource = DeploymentResource(), val id: String, val name: String)
+
+    @Resource("{id}")
+    @Serializable
+    data class Id(val parent: DeploymentResource = DeploymentResource(), val id: String)
 }
 
-class DeploymentService(database: Database, private val kubernetesClient: KubernetesClient) {
+class DeploymentService(
+    database: Database,
+    private val kubernetesClient: KubernetesClient,
+    private val serviceMetaService: ServiceMetaService
+) {
 
     object Deployments : UUIDTable() {
         val service = reference("service", ServiceMetas)
@@ -61,11 +86,26 @@ class DeploymentService(database: Database, private val kubernetesClient: Kubern
         val imageTag = varchar("image_tag", 50).nullable()
         val pullSecretName = jsonb<List<String>>("pull_secret_name", Json).nullable()
         val resourcesSupply = jsonb<Map<String, String>>("resources_supply", Json).nullable()
+
+        /**
+         * 因本次部署获得的版本号
+         */
+        val targetResourceVersion = varchar("target_resource_version", 38).nullable()
+
+        /**
+         * 服务镜像
+         */
+        val serviceDataSnapshot = text("service_data_snapshot")
     }
 
     init {
         transaction(database) {
             SchemaUtils.create(Deployments)
+            val sqls = SchemaUtils.addMissingColumnsStatements(Deployments)
+            sqls.forEach {
+                logger.info { "Executing for missing columns:$it" }
+                exec(it)
+            }
         }
     }
 
@@ -76,8 +116,10 @@ class DeploymentService(database: Database, private val kubernetesClient: Kubern
             }
         }
 
-    suspend fun deploy(deploy: DeploymentResource.Deploy, data: DeploymentDeployData) {
-        dbQuery {
+    suspend fun deploy(deploy: DeploymentResource.Deploy, data: DeploymentDeployData): UUID {
+        val snapshot = serviceMetaService.readFull(deploy.serverId)
+            ?: throw IllegalArgumentException("No ServiceMetas found for ${deploy.serverId}")
+        return dbQuery {
             val (type, serviceRequirements) = ServiceMetas.select(ServiceMetas.type, ServiceMetas.requirements)
                 .where { ServiceMetas.id eq deploy.serverId }
                 .map {
@@ -109,7 +151,7 @@ class DeploymentService(database: Database, private val kubernetesClient: Kubern
 
             kubernetesClient.applyStringSecret(deploy.envId, deploy.serverId + "-env", context.toEnvResult())
 
-            Deployments.insert {
+            Deployments.insertAndGetId {
                 it[service] = deploy.serverId
                 it[env] = deploy.envId
                 it[createTime] = Clock.System.now()
@@ -117,8 +159,8 @@ class DeploymentService(database: Database, private val kubernetesClient: Kubern
                 it[imageTag] = data.imageTag
                 it[pullSecretName] = data.pullSecretName
                 it[resourcesSupply] = data.resourcesSupply
-            }
-
+                it[serviceDataSnapshot] = snapshot
+            }.value
         }
     }
 
@@ -136,9 +178,27 @@ class DeploymentService(database: Database, private val kubernetesClient: Kubern
                         it[Deployments.imageRepository],
                         it[Deployments.imageTag],
                         it[Deployments.pullSecretName],
-                        it[Deployments.resourcesSupply]
+                        it[Deployments.resourcesSupply],
+                        it[Deployments.targetResourceVersion],
+                        it[Deployments.serviceDataSnapshot],
                     )
                 }.firstOrNull()
+        }
+    }
+
+    suspend fun updateTargetResourceVersion(id: UUID, version: String): Int {
+        return dbQuery {
+            Deployments.update({ Deployments.id eq id and Deployments.targetResourceVersion.isNull() }) {
+                it[targetResourceVersion] = version
+            }
+        }
+    }
+
+    suspend fun deleteFailedDeploy(id: UUID): Int {
+        return dbQuery {
+            Deployments.deleteWhere {
+                Deployments.id eq id and targetResourceVersion.isNull()
+            }
         }
     }
 }

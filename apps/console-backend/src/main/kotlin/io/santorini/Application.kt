@@ -82,9 +82,6 @@ fun Application.consoleModuleEntry(
                 kubernetesClient
             }
             single {
-                DeploymentService(database, get())
-            }
-            single {
                 EnvService(database)
             }
             single {
@@ -92,6 +89,9 @@ fun Application.consoleModuleEntry(
             }
             single {
                 ServiceMetaService(database, lazy { get() })
+            }
+            single {
+                DeploymentService(database, get(), get())
             }
             single {
                 UserRoleService(database, get(), get())

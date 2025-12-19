@@ -1,8 +1,11 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package io.santorini.console
 
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -26,6 +29,8 @@ import io.santorini.schema.mergeJson
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
 import kotlin.test.Test
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * @author CJ
@@ -46,7 +51,8 @@ class DeploymentKtTest {
         }
 
         val deployDemoService = ServiceMetaData(
-            id = "demo-for-deploy-service", name = "范例", type = ServiceType.JVM, requirements = listOf(
+            id = "demo-for-deploy-service", name = "范例", type = ServiceType.JVM,
+            requirements = listOf(
                 ResourceRequirement(ResourceType.Mysql)
             ),
             lifecycle = Lifecycle(),
@@ -179,12 +185,35 @@ class DeploymentKtTest {
         }.apply {
             withClue("正常工作了") {
                 status shouldBe HttpStatusCode.OK
+                val deploymentId = body<Uuid>()
+                deploymentId.shouldNotBeNull()
+
+                c.put("https://localhost/deployments/$deploymentId/targetResourceVersion") {
+                    contentType(ContentType.Application.Json)
+                    setBody(deploymentId.toString())
+                }.apply {
+                    status shouldBe HttpStatusCode.NoContent
+                }
+
+                withClue("提交过后是不可以删除的") {
+                    c.delete("https://localhost/deployments/$deploymentId")
+                        .apply {
+                            status shouldBe HttpStatusCode.BadRequest
+                        }
+                }
+
             }
         }
 
         c.get("https://localhost/services/${deployDemoService.id}/lastRelease/${deployTargetEnv.id}").apply {
             status shouldBe HttpStatusCode.OK
-            body<DeploymentDeployData>() shouldBe deployData.copy(
+            val deploymentDeployData = body<DeploymentDeployData>()
+            deploymentDeployData.targetResourceVersion.shouldNotBeNull()
+            deploymentDeployData.serviceDataSnapshot.shouldNotBeNull()
+            deploymentDeployData.copy(
+                targetResourceVersion = null,
+                serviceDataSnapshot = null
+            ) shouldBe deployData.copy(
                 resourcesSupply = mapOf(
                     ResourceRequirement(ResourceType.Mysql).toString() to "never"
                 )

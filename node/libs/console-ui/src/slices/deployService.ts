@@ -9,11 +9,19 @@ import { kubeServiceApi } from '../apis/kubernetes/service';
 import yamlGenerator from '../apis/kubernetes/yamlGenerator';
 import { IDeployment } from 'kubernetes-models/apps/v1/Deployment';
 import { IService } from 'kubernetes-models/v1';
+import { compare } from 'fast-json-patch';
 
 export interface ServiceDeployToKubernetesProps {
   service: ServiceConfigData;
   env: CUEnv;
-  envRelated: DeploymentDeployData;
+  /**
+   * 这次要部署的数据
+   */
+  deployData: DeploymentDeployData;
+  /**
+   * 非首次部署的话还有这个，表示上次部署的情况
+   */
+  lastDeploy?: DeploymentDeployData;
 }
 
 /**
@@ -60,97 +68,146 @@ async function findServiceInstanceInKubernetes(
 export const deployToKubernetes = createAsyncThunk(
   'service/deployToKubernetes',
   async (input: ServiceDeployToKubernetesProps, { dispatch }) => {
-    const { service, env } = input;
+    const { service, env, lastDeploy } = input;
 
-    // 先跟服务器交互
-    // 最好是可以获取到一个 id; 然后拿到新部署后的 id 映射过去
+    console.debug('之前部署的概要信息: lastDeploy:', lastDeploy);
     // 如果失败，则直接删除
     const result = await dispatch(
       serviceApi.endpoints.deploy.initiate({
         envId: env.id,
         serviceId: service.id,
-        data: input.envRelated,
+        data: input.deployData,
       })
     ).unwrap();
 
     console.debug('服务端部署结果:', result);
 
-    const current = await findServiceInstanceInKubernetes(
-      service.id,
-      env.id,
-      dispatch
-    );
-    console.debug('current service instance: ', current);
-    const yaml = yamlGenerator.serviceInstance(input);
-    console.debug('yaml:', yaml);
-    let deploymentResult: IDeployment | undefined = undefined;
-    if (current) {
-      // 更新
-      if (yaml.deployment) {
-        if (current.deployment) {
-          deploymentResult = await dispatch(
-            kubeServiceApi.endpoints.updateDeployment.initiate({
-              namespace: env.id,
-              yaml: yaml.deployment,
-              name: service.id,
-            })
-          ).unwrap();
+    try {
+      const current = await findServiceInstanceInKubernetes(
+        service.id,
+        env.id,
+        dispatch
+      );
+      console.debug('当前 kube 已部署情况: ', current);
+      const thisTimeVersion = yamlGenerator.serviceInstance(input);
+      const lastVersion = lastDeploy?.serviceDataSnapshot
+        ? yamlGenerator.serviceInstance({
+            ...input,
+            service: JSON.parse(lastDeploy.serviceDataSnapshot),
+            deployData: lastDeploy,
+          })
+        : undefined;
+      console.debug('thisTimeVersion:', thisTimeVersion);
+      console.debug('lastVersion:', lastVersion);
+      let deploymentResult: IDeployment | undefined = undefined;
+      if (current) {
+        // 更新
+        if (thisTimeVersion.deployment) {
+          if (current.deployment) {
+            const versionMergePatch = lastVersion
+              ? compare(
+                  lastVersion.deployment.toJsonObject(),
+                  thisTimeVersion.deployment.toJsonObject()
+                )
+              : undefined;
+            console.debug(
+              '之前已经部署了 deployment,本次进行更新:',
+              versionMergePatch
+            );
+
+            if (versionMergePatch) {
+              // console.error("from: ",lastVersion?.deployment?.toJsonText())
+              // console.error("to: ",thisTimeVersion.deployment.toJsonText())
+              console.debug('另一个版本的闪存也在:', versionMergePatch);
+              // console.error(JSON.stringify(versionMergePatch));
+              deploymentResult = await dispatch(
+                kubeServiceApi.endpoints.patchDeployment.initiate({
+                  namespace: env.id,
+                  jsonObject: versionMergePatch,
+                  name: service.id,
+                })
+              ).unwrap();
+            } else {
+              deploymentResult = await dispatch(
+                kubeServiceApi.endpoints.updateDeployment.initiate({
+                  namespace: env.id,
+                  yaml: thisTimeVersion.deployment.toYamlText(),
+                  name: service.id,
+                })
+              ).unwrap();
+            }
+          } else {
+            console.debug('首次部署 deployment');
+            deploymentResult = await dispatch(
+              kubeServiceApi.endpoints.createDeployment.initiate({
+                namespace: env.id,
+                yaml: thisTimeVersion.deployment.toYamlText(),
+              })
+            ).unwrap();
+          }
         } else {
-          deploymentResult = await dispatch(
-            kubeServiceApi.endpoints.createDeployment.initiate({
-              namespace: env.id,
-              yaml: yaml.deployment,
-            })
-          ).unwrap();
+          // TODO never
+        }
+
+        if (thisTimeVersion.service) {
+          if (!current.service) {
+            await dispatch(
+              kubeServiceApi.endpoints.createService.initiate({
+                namespace: env.id,
+                yaml: thisTimeVersion.service.toYamlText(),
+              })
+            ).unwrap();
+          } else {
+            await dispatch(
+              kubeServiceApi.endpoints.updateService.initiate({
+                namespace: env.id,
+                yaml: thisTimeVersion.service.toYamlText(),
+                name: service.id,
+              })
+            ).unwrap();
+          }
+        } else {
+          if (current.service) {
+            await dispatch(
+              kubeServiceApi.endpoints.deleteService.initiate({
+                namespace: env.id,
+                name: service.id,
+              })
+            ).unwrap();
+          }
         }
       } else {
-        // TODO never
-      }
-
-      if (yaml.service) {
-        if (!current.service) {
+        // 部署
+        deploymentResult = await dispatch(
+          kubeServiceApi.endpoints.createDeployment.initiate({
+            namespace: env.id,
+            yaml: thisTimeVersion.deployment.toYamlText(),
+          })
+        ).unwrap();
+        if (thisTimeVersion.service) {
           await dispatch(
             kubeServiceApi.endpoints.createService.initiate({
               namespace: env.id,
-              yaml: yaml.service,
-            })
-          ).unwrap();
-        } else {
-          await dispatch(
-            kubeServiceApi.endpoints.updateService.initiate({
-              namespace: env.id,
-              yaml: yaml.service,
-              name: service.id,
-            })
-          ).unwrap();
-        }
-      } else {
-        if (current.service) {
-          await dispatch(
-            kubeServiceApi.endpoints.deleteService.initiate({
-              namespace: env.id,
-              name: service.id,
+              yaml: thisTimeVersion.service.toYamlText(),
             })
           ).unwrap();
         }
       }
-    } else {
-      // 部署
-      deploymentResult = await dispatch(
-        kubeServiceApi.endpoints.createDeployment.initiate({
-          namespace: env.id,
-          yaml: yaml.deployment,
-        })
-      ).unwrap();
-      if (yaml.service) {
+      console.debug('kubernetes 部署结果:', deploymentResult);
+      if (deploymentResult?.metadata?.resourceVersion) {
         await dispatch(
-          kubeServiceApi.endpoints.createService.initiate({
-            namespace: env.id,
-            yaml: yaml.service,
+          serviceApi.endpoints.reportDeployResult.initiate({
+            id: result,
+            resourceVersion: deploymentResult?.metadata?.resourceVersion,
           })
         ).unwrap();
       }
+    } catch (e) {
+      console.log('部署发生了错误:', e);
+      await dispatch(
+        serviceApi.endpoints.invokeDeploy.initiate(result)
+      ).unwrap();
+      throw e;
     }
-    console.debug('kubernetes 部署结果:', deploymentResult);
   }
 );

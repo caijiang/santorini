@@ -58,10 +58,9 @@ internal fun Application.configureConsoleService() {
         }
         get<ServiceMetaResource.Id> {
             withAuthorization { _ ->
-                val detail = service.read(it.id)
+                val detail = service.readFull(it.id)
                 if (detail != null) {
-                    val text = mergeJson(detail.first, detail.second)
-                    call.respondText(text, ContentType.Application.Json, HttpStatusCode.OK)
+                    call.respondText(detail, ContentType.Application.Json, HttpStatusCode.OK)
                 } else {
                     call.respond(HttpStatusCode.NotFound)
                 }

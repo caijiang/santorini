@@ -106,10 +106,19 @@ export const kubeServiceApi = createApi({
           },
         }),
       }),
-      updateDeployment: build.mutation<
-        IDeployment,
-        ObjectContainer & { name: string }
-      >({
+      patchDeployment: build.mutation<IDeployment, ObjectContainer>({
+        invalidatesTags: ['deployments'],
+        query: ({ namespace, jsonObject, name }) => ({
+          url: `/apis/apps/v1/namespaces/${namespace}/deployments/${name}`,
+          method: 'PATCH',
+          body: JSON.stringify(jsonObject),
+          headers: {
+            // 'Content-Type': 'application/strategic-merge-patch+json',
+            'Content-Type': 'application/json-patch+json',
+          },
+        }),
+      }),
+      updateDeployment: build.mutation<IDeployment, ObjectContainer>({
         invalidatesTags: ['deployments'],
         query: ({ namespace, yaml, name }) => ({
           url: `/apis/apps/v1/namespaces/${namespace}/deployments/${name}`,
@@ -118,6 +127,48 @@ export const kubeServiceApi = createApi({
           headers: {
             'Content-Type': 'application/yaml',
           },
+        }),
+      }),
+      // 这个作为纯纯的测试
+      // https://kubernetes.io/zh-cn/docs/reference/using-api/api-concepts/#patch-and-apply
+      // https://www.npmjs.com/package/json-merge-patch?activeTab=readme
+      pd: build.mutation({
+        query: () => ({
+          url: '/apis/apps/v1/namespaces/test-ns/deployments/patch-test-obj',
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/strategic-merge-patch+json',
+          },
+          // 在一个已存在的对象中 插入一个新属性
+          // body: JSON.stringify({
+          //   metadata: {
+          //     newProperty1: 'v1',
+          //   },
+          // }),
+          // 新增了一个 对象
+          // body: JSON.stringify({
+          //   metadata: {
+          //     labels: {
+          //       newProperty1: 'v1',
+          //     },
+          //   },
+          // }),
+          // 修改一个现有对象的值
+          // body: JSON.stringify({
+          //   metadata: {
+          //     labels: {
+          //       newProperty1: 'v2',
+          //     },
+          //   },
+          // }),
+          // 在一个已存在的对象中 插入一个新属性
+          body: JSON.stringify({
+            metadata: {
+              labels: {
+                newProperty2: 'v1',
+              },
+            },
+          }),
         }),
       }),
       createDeployment: build.mutation<IDeployment, ObjectContainer>({

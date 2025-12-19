@@ -1,4 +1,8 @@
-import { CUEditableIngress, KubernetesYamlGenerator } from './yamlGenerator';
+import {
+  CUEditableIngress,
+  fromJsonToObject,
+  KubernetesYamlGenerator,
+} from './yamlGenerator';
 import { Deployment } from 'kubernetes-models/apps/v1';
 import YAML from 'yaml';
 import { Service } from 'kubernetes-models/v1';
@@ -216,7 +220,7 @@ export default {
     });
     return YAML.stringify(ingress.toJSON());
   },
-  serviceInstance: ({ service, env, envRelated }) => {
+  serviceInstance: ({ service, env, deployData }) => {
     const deployment = new Deployment({
       metadata: {
         labels: {
@@ -253,15 +257,15 @@ export default {
           },
           spec: {
             automountServiceAccountToken: false,
-            imagePullSecrets: envRelated.pullSecretName?.map((it) => ({
+            imagePullSecrets: deployData.pullSecretName?.map((it) => ({
               name: it,
             })),
             containers: [
               {
                 name: 'main',
                 image:
-                  envRelated.imageRepository +
-                  (envRelated.imageTag ? `:${envRelated.imageTag}` : ''),
+                  deployData.imageRepository +
+                  (deployData.imageTag ? `:${deployData.imageTag}` : ''),
                 imagePullPolicy: 'IfNotPresent', //
                 ports: service.ports.map((it) => ({
                   containerPort: it.number,
@@ -346,10 +350,11 @@ export default {
         : undefined;
     const deploymentJson = deployment.toJSON();
     const serviceJson = s?.toJSON();
-    console.log('json:', deploymentJson, ',type:', typeof deploymentJson);
+    // console.debug('deploymentJson json:', deploymentJson);
+    // console.debug('serviceJson json:', serviceJson);
     return {
-      deployment: YAML.stringify(deploymentJson),
-      service: serviceJson ? YAML.stringify(serviceJson) : undefined,
+      deployment: fromJsonToObject(deploymentJson),
+      service: serviceJson ? fromJsonToObject(serviceJson) : undefined,
     };
   },
 } as KubernetesYamlGenerator;

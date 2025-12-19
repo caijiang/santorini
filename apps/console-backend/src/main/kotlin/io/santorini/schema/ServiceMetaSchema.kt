@@ -264,6 +264,11 @@ class ServiceMetaService(
         }
     }
 
+    suspend fun readFull(id: String): String? {
+        val detail = read(id) ?: return null
+        return mergeJson(detail.first, detail.second)
+    }
+
     suspend fun read(id: String): Pair<ServiceMetaData, String>? {
         return dbQuery {
             ServiceMetas.selectAll()
