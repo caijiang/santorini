@@ -12,7 +12,7 @@ rules:
   - apiGroups: [ "apps" ]
     resources: [ "deployments","deployments/newreplicaset" ]
     resourceNames: [ ]
-    verbs: [ "create","update","get", "list","delete" ]
+    verbs: [ "create","update","get", "list","delete","patch" ]
   - apiGroups: [ "" ]
     resources: [ "services" ]
     resourceNames: [ ]
