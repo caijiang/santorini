@@ -1,24 +1,75 @@
-<svg fill="none" height="64" viewBox="0 0 64 64" width="64" xmlns="http://www.w3.org/2000/svg">
-  <!-- 背景圆环（高级感） -->
-  <circle cx="32" cy="32" r="24" stroke="var(--ant-color-primary)" stroke-opacity="0.2" stroke-width="2"/>
-
-  <!-- 主体：盾牌+钥匙孔（私密+Root权限） -->
-  <path d="M32 12L16 24V36C16 46 24 52 32 52C40 52 48 46 48 36V24L32 12Z"
-        fill="url(#gradient)"
-        stroke="var(--ant-color-border)"/>
-
-  <!-- 钥匙孔（Root权限隐喻） -->
-  <circle cx="32" cy="32" fill="var(--ant-color-bg-container)" r="6"/>
-  <rect fill="var(--ant-color-text)" height="8" rx="2" width="4" x="30" y="20"/>
-
-  <!-- 高光效果（明亮感） -->
-  <path d="M32 16L44 24V32" opacity="0.5" stroke="white" stroke-linecap="round" stroke-width="2"/>
-
-  <!-- 渐变定义（高级感） -->
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img">
   <defs>
-    <linearGradient gradientUnits="userSpaceOnUse" id="gradient" x1="32" x2="32" y1="12" y2="52">
-      <stop stop-color="var(--ant-color-primary)" stop-opacity="0.8"/>
-      <stop offset="1" stop-color="var(--ant-color-primary)" stop-opacity="0.2"/>
+    <linearGradient id="blue" x1="0" x2="1">
+      <stop offset="0%" stop-color="#0B63B6"/>
+      <stop offset="100%" stop-color="#083A66"/>
     </linearGradient>
   </defs>
+
+  <!-- Gear -->
+  <path fill="#0A2F52"
+        d="M512 80 580 120 650 100 700 160 780 200 780 280
+       860 340 830 420 900 500 830 580 860 660
+       780 720 780 800 700 840 650 900 580 880
+       512 920 444 880 374 900 324 840
+       244 800 244 720 164 660 194 580
+       124 500 194 420 164 340 244 280
+       244 200 324 160 374 100 444 120 Z"/>
+
+  <!-- Shield -->
+  <path fill="#FFFFFF"
+        d="M512 180 760 320 760 560 512 700 264 560 264 320 Z"/>
+
+  <!-- Kubernetes hex -->
+  <g fill="#0B63B6">
+    <polygon points="300,340 340,360 340,400 300,420 260,400 260,360"/>
+    <polygon points="345,370 385,390 385,430 345,450 305,430 305,390"/>
+  </g>
+
+  <!-- Dome -->
+  <path fill="url(#blue)"
+        d="M512 320
+       C450 320 400 360 400 420
+       H624
+       C624 360 574 320 512 320 Z"/>
+
+  <!-- Building -->
+  <path fill="#F4F7FB"
+        d="M400 420 H624 V600
+       C624 640 400 640 400 600 Z"/>
+
+  <!-- Door -->
+  <path fill="#E2E8F0"
+        d="M480 500
+       C480 470 544 470 544 500
+       V580
+       C544 600 480 600 480 580 Z"/>
+
+  <!-- Wheel -->
+  <g stroke="#0A2F52" stroke-width="12" fill="none">
+    <circle cx="660" cy="400" r="48"/>
+    <line x1="660" y1="340" x2="660" y2="370"/>
+    <line x1="660" y1="430" x2="660" y2="460"/>
+    <line x1="610" y1="400" x2="640" y2="400"/>
+    <line x1="680" y1="400" x2="710" y2="400"/>
+  </g>
+
+  <!-- Waves -->
+  <path d="M360 660
+           C420 630 460 630 512 660
+           C564 690 604 690 664 660"
+        stroke="#0B63B6" stroke-width="18" fill="none"/>
+
+  <!-- Wordmark -->
+  <rect x="240" y="780" width="544" height="120" rx="16" fill="#0A2F52"/>
+  <path fill="#FFFFFF"
+        d="M300 820 h40 v60 h-40 z
+       M360 820 h40 v60 h-40 z
+       M420 820 h40 v60 h-40 z
+       M480 820 h40 v60 h-40 z
+       M540 820 h40 v60 h-40 z
+       M600 820 h40 v60 h-40 z
+       M660 820 h40 v60 h-40 z
+       M720 820 h40 v60 h-40 z"/>
 </svg>

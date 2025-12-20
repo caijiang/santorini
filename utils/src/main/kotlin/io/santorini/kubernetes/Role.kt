@@ -366,7 +366,7 @@ fun KubernetesClient.makesureRightServiceRoles(
         }
 }
 
-private const val serviceRoleDataVersion = "3"
+private const val serviceRoleDataVersion = "4"
 private fun findOrCreateRole(
     namespace: String,
     root: HasMetadata,
@@ -438,7 +438,7 @@ private fun buildRole(builder: RoleBuilder, serviceId: String, role: ServiceRole
                 null,
                 listOf(serviceId),
                 listOf("deployments"),
-                listOf("create", "update", "delete")
+                listOf("create", "update", "delete", "patch")
             ),
         )
             .build()

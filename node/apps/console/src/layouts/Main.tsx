@@ -17,7 +17,7 @@ export default () => {
   const { data: currentUser } = useCurrentLoginUserQuery(undefined);
   return (
     <ProLayout
-      title="超级平台"
+      title="Santorini"
       siderWidth={177}
       logo={logo}
       breadcrumbRender={(items) => {
