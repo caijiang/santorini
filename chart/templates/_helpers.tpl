@@ -12,6 +12,10 @@
 {{- define "common.santoriniConsoleBackendName" -}}
 {{- printf "%s-console-backend" (include "common.santoriniName" .) }}
 {{- end }}
+{{/*定义一个变量表示 santorini 控制台前端 名称*/}}
+{{- define "common.santoriniConsoleFrontendName" -}}
+{{- printf "%s-console-frontend" (include "common.santoriniName" .) }}
+{{- end }}
 
 {{/*定义一个变量表示 santorini nacos 名称*/}}
 {{- define "common.santoriniNacosName" -}}
@@ -82,4 +86,12 @@ Return the proper Nacos image name
 */}}
 {{- define "nacos.image" -}}
 {{- include "common.images.image" (dict "imageRoot" .Values.santorini.nacos.image "global" .Values.global) -}}
+{{- end -}}
+
+{{- define "backend.image" -}}
+{{- include "common.images.image" (dict "imageRoot" .Values.santorini.backend.image "global" .Values.global) -}}
+{{- end -}}
+
+{{- define "frontend.image" -}}
+{{- include "common.images.image" (dict "imageRoot" .Values.santorini.frontend.image "global" .Values.global) -}}
 {{- end -}}

@@ -13,10 +13,11 @@ export function toKtorRequest<
   DataType = Record<string, any>,
   ParamType = Record<string, string>
 >(
-  uri: string,
+  requestUri: string,
   customParams?: (input: ParamType) => any
 ): ProTableProps<DataType, ParamType>['request'] {
   // , sorter, filter
+  const uri = '/api' + requestUri;
   return async (params) => {
     const { pageSize, current, keyword, ...otherParams } = params;
     const moreParams =

@@ -1,9 +1,9 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { apiBase } from '@private-everest/app-support';
+import { stBaseQuery } from './api';
 
 export const miscApi = createApi({
   reducerPath: 'consoleMiscApi',
-  baseQuery: apiBase,
+  baseQuery: stBaseQuery,
   endpoints: (build) => {
     return {
       dashboardHost: build.query<string | undefined, undefined>({

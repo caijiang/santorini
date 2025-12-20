@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "common.santoriniConsoleFrontendName" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "common.santoriniConsoleFrontendName" . }}
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+spec:
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "common.santoriniConsoleFrontendName" . }}
+    {{- include "common.labels.withoutName" . | nindent 4 }}

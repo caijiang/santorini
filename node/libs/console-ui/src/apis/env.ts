@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { apiBase } from '@private-everest/app-support';
 import { IObjectMeta } from '@kubernetes-models/apimachinery/apis/meta/v1/ObjectMeta';
+import { stBaseQuery } from './api';
 
 // 应用中直接使用的 一律做 CU
 export interface CUEnv {
@@ -30,7 +30,7 @@ export interface SantoriniResourceData extends X {
 
 export const envApi = createApi({
   reducerPath: 'consoleEnvApi',
-  baseQuery: apiBase,
+  baseQuery: stBaseQuery,
   tagTypes: ['env', 'resources'],
   endpoints: (build) => {
     return {

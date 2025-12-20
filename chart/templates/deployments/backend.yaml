@@ -100,8 +100,8 @@ spec:
         #  docker image load -i /root/jib-image.tar
         #  docker run --rm -d --name santorini-console-backend -p 8080:8080 santorini-console-backend:latest
         - name: console-backend
-          image: santorini-console-backend:latest
-          imagePullPolicy: IfNotPresent
+          image: {{ template "backend.image" . }}
+          imagePullPolicy: {{ .Values.santorini.backend.image.pullPolicy | quote }}
           env:
             - name: DASHBOARD_HOST
               valueFrom:
@@ -165,8 +165,8 @@ spec:
           ports:
             - containerPort: 8080
               name: http
-          {{- if .Values.santorini.resources }}
-          resources: {{- toYaml .Values.santorini.resources | nindent 12 }}
+          {{- if .Values.santorini.backend.resources }}
+          resources: {{- toYaml .Values.santorini.backend.resources | nindent 12 }}
           {{- end }}
           {{- if .Values.santorini.healthCheck.livenessProbe.enabled }}
           livenessProbe:

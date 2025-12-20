@@ -7,14 +7,16 @@ import groovy.json.JsonSlurper
 import org.gradle.api.DefaultTask
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.RegularFile
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.TaskAction
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
 import java.io.File
 import javax.inject.Inject
 
+
+private const val ConfigFileName = "local-upload-sftp-config.json"
 
 /**
  * 负责上传到特定 sftp然后执行什么东西
@@ -34,16 +36,17 @@ abstract class UploadAndExecuteSshTask : DefaultTask() {
     @get:InputFiles
     abstract val targetFiles: ConfigurableFileCollection
 
-    @get:InputDirectory
-    @get:Optional
-    abstract val rootDir: DirectoryProperty
-
     private fun toConfig(file: RegularFile): SftpSyncConfig? {
-        if (!file.asFile.exists()) {
+        val f = file.asFile
+        return toConfigFromFile(f)
+    }
+
+    private fun toConfigFromFile(f: File): SftpSyncConfig? {
+        if (!f.exists()) {
             return null
         }
-        val json = JsonSlurper().parseText(file.asFile.readText()) as Map<*, *>
-//        logger.warn("Parsing config from ${json["executeCommands"]} ${json["executeCommands"]?.javaClass}")
+        val json = JsonSlurper().parseText(f.readText()) as Map<*, *>
+        //        logger.warn("Parsing config from ${json["executeCommands"]} ${json["executeCommands"]?.javaClass}")
         @Suppress("UNCHECKED_CAST")
         return SftpSyncConfig(
             json["username"] as String?,
@@ -57,16 +60,31 @@ abstract class UploadAndExecuteSshTask : DefaultTask() {
         )
     }
 
-    private fun ggc(): SftpSyncConfig? {
-        val projectLevel = toConfig(layout.projectDirectory.file("local-upload-sftp-config.json"))
-        if (rootDir.isPresent) {
-            val rootLevel = toConfig(rootDir.get().file("local-upload-sftp-config.json"))
-            if (projectLevel == null) {
-                return rootLevel
+    private fun findParentConfig(dir: File?): SftpSyncConfig? {
+        if (dir == null || !dir.exists() || !dir.canRead()) {
+            logger.debug("{} can not be readable", dir)
+            val homeConfigFile = File(System.getProperty("user.home")).resolve(ConfigFileName)
+            if (homeConfigFile.exists()) {
+                return toConfigFromFile(homeConfigFile)
             }
-            return projectLevel.mergeFromParent(rootLevel)
+            return null
         }
-        return projectLevel
+        val configFile = dir.resolve(ConfigFileName)
+        return if (configFile.exists()) {
+            toConfigFromFile(configFile)
+        } else {
+            findParentConfig(dir.parentFile)
+        }
+    }
+
+    private fun ggc(): SftpSyncConfig? {
+        // 一直往上读，不存在上级或者没有可读权限后 就读取 用户目录
+        val projectLevel = toConfig(layout.projectDirectory.file(ConfigFileName))
+        val rootLevel = findParentConfig(layout.projectDirectory.asFile.parentFile)
+        if (projectLevel == null) {
+            return rootLevel
+        }
+        return projectLevel.mergeFromParent(rootLevel)
     }
 
     @TaskAction

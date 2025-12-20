@@ -1,11 +1,11 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { apiBase } from '@private-everest/app-support';
 import { kotlinEnumToString } from '@private-everest/kotlin-utils';
 import { io } from '@santorini/generated-santorini-model';
+import { stBaseQuery } from './api';
 
 export const userApi = createApi({
   reducerPath: 'consoleUserApi',
-  baseQuery: apiBase,
+  baseQuery: stBaseQuery,
   tagTypes: ['Envs', 'ServiceRoles'],
   endpoints: (build) => {
     return {

@@ -9,10 +9,12 @@ metadata:
   annotations:
     # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # nginx.ingress.kubernetes.io/rewrite-target: /
     # add an annotation indicating the issuer to use.
     cert-manager.io/cluster-issuer: {{ $issuerName }}
-  name: "{{ include "common.names.fullname" . }}-console"
+  name: "{{ include "common.names.fullname" . }}-console-2"
   labels:
     {{- include "common.labels.withoutName" . | nindent 4 }}
 spec:
@@ -25,10 +27,10 @@ spec:
     - host: {{ $hostName }}
       http:
         paths:
-          - path: /
-            pathType: Prefix
+          - path: /api/(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: {{ include "common.santoriniConsoleBackendName" . }}
                 port:
-                  number: 8080
+                  name: http

@@ -1,0 +1,52 @@
+name: Build & Push Frontend
+inputs:
+  github-token:
+    required: true
+    description: token...
+  tag:
+    default: latest
+    description: tag of image
+
+# https://docs.gradle.org/current/userguide/build_environment.html#setting_a_project_property
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/setup-java
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v5
+
+    - name: Setup node
+      uses: actions/setup-node@v6
+      with:
+        node-version: 22.x
+        cache: npm
+        cache-dependency-path: node/
+
+    - name: Install npm
+      shell: sh
+      working-directory: ./node
+      run: npm i
+
+    - name: Build Share
+      shell: sh
+      run: ./gradlew -p share build
+
+    - name: Test And Build
+      shell: sh
+      working-directory: ./node
+      run: |
+        npx nx run @santorini/console-ui:test
+        npx nx run @santorini/console:build
+    #登录到 ghcr
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.github-token }}
+    - name: Build Docker image
+      uses: docker/build-push-action@v6
+      with:
+        context: ./node/apps/console
+        push: true
+        tags: ghcr.io/${{ github.actor }}/santorini-console-frontend:${{ inputs.tag }},ghcr.io/${{ github.actor }}/santorini-console-frontend:${{ github.sha }}

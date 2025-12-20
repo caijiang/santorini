@@ -1,0 +1,37 @@
+{{ $defaultIssuerName := (include "santorini.issuer" .) }}
+{{- $defaultHost := printf "op.%s" .Values.domain -}}
+{{/*# 定义 host 名字*/}}
+{{- $hostName := .Values.santorini.host | default $defaultHost -}}
+{{- $issuerName := .Values.santorini.issuerName | default $defaultIssuerName -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+    # add an annotation indicating the issuer to use.
+    cert-manager.io/cluster-issuer: {{ $issuerName }}
+    # nginx.ingress.kubernetes.io/canary: "true"
+    # nginx.ingress.kubernetes.io/canary-by-header: "sec-fetch-mode"
+    # nginx.ingress.kubernetes.io/canary-by-header-value: "navigate"
+  name: "{{ include "common.names.fullname" . }}-console-1"
+  labels:
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ $hostName }}
+      secretName: "{{ include "common.names.fullname" . }}-console-tls"
+  rules:
+    - host: {{ $hostName }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "common.santoriniConsoleFrontendName" . }}
+                port:
+                  name: http

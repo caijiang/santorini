@@ -1,5 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { apiBase } from '@private-everest/app-support';
+import { stBaseQuery } from './api';
 
 type ServiceType = 'JVM';
 
@@ -126,7 +126,7 @@ export interface LastReleaseDeploymentSummary extends DeploymentDeployData {}
 
 export const serviceApi = createApi({
   reducerPath: 'serviceApi',
-  baseQuery: apiBase,
+  baseQuery: stBaseQuery,
   tagTypes: ['Services', 'Deployments'],
   endpoints: (build) => {
     return {

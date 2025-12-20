@@ -25,7 +25,6 @@ application {
 
 tasks.register<UploadAndExecuteSshTask>("uploadAndExecuteSsh") {
     targetFiles.from(layout.buildDirectory.file("jib-image.tar"))
-    rootDir = rootProject.projectDir
     dependsOn("buildImage")
 }
 
@@ -48,6 +47,7 @@ tasks.named("test") {
 ktor {
     docker {
         localImageName = "santorini-console-backend"
+        imageTag = findProperty("dockerVersion")?.toString() ?: "latest"
     }
 }
 

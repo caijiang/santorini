@@ -20,15 +20,19 @@ tasks.register("test") {
     doFirst {
         val work = isCommandAvailable("helm")
         if (work) {
+            logger.info("helm command available")
+            val shell = System.getenv("SHELL") ?: "/bin/sh"
             val ps = ProcessBuilder()
-                .command("helm", "unittest", layout.projectDirectory.asFile.absolutePath)
+//                .command("helm", "unittest", layout.projectDirectory.asFile.absolutePath)
+                .command(shell, layout.projectDirectory.file("build.sh").asFile.absolutePath)
                 .start()
                 .onExit()
                 .join()
             ps.inputReader().lines().forEach { line -> logger.info(line) }
+            ps.errorReader().lines().forEach { line -> logger.warn(line) }
             val code = ps.exitValue()
             if (code != 0)
-                throw GradleException("helm unittest failed")
+                throw GradleException("helm unittest failed:${code}")
         } else {
             logger.warn("因为不存在 helm 跳过 chart 测试")
         }

@@ -1,0 +1,44 @@
+name: Main Workflow
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Build
+        uses: ./.github/actions/push-console-backend
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Build
+        uses: ./.github/actions/push-console-frontend
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-submission:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-java
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@v5

@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.santoriniConsoleFrontendName" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "common.santoriniConsoleFrontendName" . }}
+    {{- include "common.labels.withoutName" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "common.santoriniConsoleFrontendName" . }}
+      {{- include "common.matchLabels.withoutName" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "common.santoriniConsoleFrontendName" . }}
+        {{- include "common.labels.withoutName" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "common.santoriniName" . }}
+      containers:
+        - name: main
+          image: {{ template "frontend.image" . }}
+          imagePullPolicy: {{ .Values.santorini.frontend.image.pullPolicy | quote }}
+          env:
+            {{- if .Values.santorini.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.santorini.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+          ports:
+            - containerPort: 80
+              name: http
+          {{- if .Values.santorini.frontend.resources }}
+          resources: {{- toYaml .Values.santorini.frontend.resources | nindent 12 }}
+          {{- end }}
+        
