@@ -1,16 +1,15 @@
 import Ingresses from '../components/EnvContext/Ingresses';
 import Resources from '../components/EnvContext/Resources';
-import {Button, Divider} from 'antd';
+import {Divider} from 'antd';
 import {ServiceConfigData} from '../apis/service';
 import {toKtorRequest} from '../common/ktor';
 import {serviceIdColumn, serviceNameColumn, serviceTypeColumn,} from '../columns/service';
-import {NavLink, useNavigate} from 'react-router-dom';
-import {DeploymentUnitOutlined} from '@ant-design/icons';
-import EnvChooserModal from '../components/EnvChooserModal';
+import {NavLink} from 'react-router-dom';
 import {ProTable} from '@ant-design/pro-components';
 import {useEnvContext} from '../layouts/EnvLayout';
 import ServiceDeployedStatusForEnv from '../components/ServiceDeployedStatusForEnv';
 import DashboardLink from '../components/DashboardLink';
+import RocketForm from '../components/EnvContext/rollout/RocketForm';
 
 /**
  * 环境首页,展示环境直接相关的资源
@@ -18,7 +17,6 @@ import DashboardLink from '../components/DashboardLink';
  * 2. 已部署的服务
  */
 export default () => {
-  const nf = useNavigate();
   const {
     data: { id },
   } = useEnvContext();
@@ -62,18 +60,7 @@ export default () => {
               >
                 Pods
               </NavLink>,
-              <EnvChooserModal
-                key={'deploy'}
-                trigger={
-                  <Button title={'部署'} type={'primary'}>
-                    <DeploymentUnitOutlined />
-                  </Button>
-                }
-                onChooseEnv={(e) => {
-                  nf(`/deploy/${e.id}/${entity.id}`);
-                  return true;
-                }}
-              />,
+              <RocketForm key={'rock'} service={entity}></RocketForm>,
             ],
           },
         ]}
