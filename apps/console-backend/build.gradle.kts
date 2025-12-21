@@ -32,7 +32,7 @@ tasks.named("buildImage") {
     finalizedBy("uploadAndExecuteSsh")
 }
 tasks.named("test") {
-    finalizedBy(":chart:test")
+    finalizedBy(":charts:santorini:test")
 }
 
 //tasks.named("clean") {

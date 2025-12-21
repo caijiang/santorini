@@ -5,29 +5,30 @@
     metadata:
       annotations:
         cert-manager.io/cluster-issuer: release-name-santorini-common-letsencrypt-issuer
+        nginx.ingress.kubernetes.io/backend-protocol: HTTPS
         nginx.ingress.kubernetes.io/rewrite-target: /
         nginx.ingress.kubernetes.io/ssl-redirect: "true"
       labels:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/version: 0.0.1
-        helm.sh/chart: santorini-0.1.0
-      name: release-name-santorini-longhorn-expose-0
-      namespace: longhorn-system
+        helm.sh/chart: santorini-0.1.1
+      name: release-name-santorini-dashboard-expose-0
+      namespace: kubernetes-dashboard
     spec:
       ingressClassName: nginx
       rules:
-        - host: longhorn.example.com
+        - host: dashboard.example.com
           http:
             paths:
               - backend:
                   service:
-                    name: longhorn-frontend
+                    name: kubernetes-dashboard-kong-proxy
                     port:
-                      number: 80
+                      number: 443
                 path: /
                 pathType: Prefix
       tls:
         - hosts:
-            - longhorn.example.com
-          secretName: release-name-santorini-longhorn-expose-0-tls
+            - dashboard.example.com
+          secretName: release-name-santorini-dashboard-expose-0-tls
