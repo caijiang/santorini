@@ -7,31 +7,31 @@ metadata:
   labels:
     {{- include "common.labels.withoutName" . | nindent 4 }}
 data:
-  dashboard-host: {{ include "santorini.host.dashboard" .}}
-  mysql-database: {{ .Values.santorini.mysql.name | default "santorini" | quote }}
+  DASHBOARD_HOST: {{ include "santorini.host.dashboard" .}}
+  MYSQL_DATABASE: {{ .Values.santorini.mysql.name | default "santorini" | quote }}
 {{- if not .Values.santorini.mysql.enable }}
   # 这里是使用自配的 mysql
-  mysql-host: {{ .Values.santorini.mysql.host | required "santorini.mysql.host is required / santorini.mysql.host 必须填写" | quote }}
-  mysql-port: {{ .Values.santorini.mysql.port | quote }}
-  mysql-root-username: {{ .Values.santorini.mysql.rootName | quote }}
-  mysql-username: {{ .Values.santorini.mysql.username | default "santorini" | quote }}
+  MYSQL_HOST: {{ .Values.santorini.mysql.host | required "santorini.mysql.host is required / santorini.mysql.host 必须填写" | quote }}
+  MYSQL_PORT: {{ .Values.santorini.mysql.port | quote }}
+  MYSQL_ROOT_USERNAME: {{ .Values.santorini.mysql.rootName | quote }}
+  MYSQL_USER: {{ .Values.santorini.mysql.username | default "santorini" | quote }}
   # 如果不存在的话 就自动创建
   {{- if .Values.santorini.mysql.username }}
-  mysql-create-username: "false"
+  MYSQL_CREATE_USERNAME: "false"
   {{- else }}
-  mysql-create-username: "true"
+  MYSQL_CREATE_USERNAME: "true"
   {{- end }}
   {{- if .Values.santorini.mysql.name }}
-  mysql-create-database: "false"
+  MYSQL_CREATE_DATABASE: "false"
   {{- else }}
-  mysql-create-database: "true"
+  MYSQL_CREATE_DATABASE: "true"
   {{- end}}
 {{- else }}
   # 这里使用的是内置的 mysql
-  mysql-host: {{ include "common.mysqlName" . | quote }}
-  mysql-port: "3306"
-  mysql-root-username: {{ .Values.santorini.mysql.rootName | quote }}
-  mysql-username: {{ .Values.santorini.mysql.username | default "santorini" | quote }}
-  mysql-create-username: "true"
-  mysql-create-database: "true"
+  MYSQL_HOST: {{ include "common.mysqlName" . | quote }}
+  MYSQL_PORT: "3306"
+  MYSQL_ROOT_USERNAME: {{ .Values.santorini.mysql.rootName | quote }}
+  MYSQL_USER: {{ .Values.santorini.mysql.username | default "santorini" | quote }}
+  MYSQL_CREATE_USERNAME: "true"
+  MYSQL_CREATE_DATABASE: "true"
 {{- end }}

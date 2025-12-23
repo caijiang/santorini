@@ -27,54 +27,20 @@ spec:
         - name: init-db
           image: mysql:8.0.27
           imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                optional: false
+                name: {{ include "common.santoriniName" . }}
+            - secretRef:
+                optional: false
+                name: {{ include "common.santoriniName" . }}    
           env:
-            - name: MYSQL_DATABASE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" .}}
-                  key: mysql-database
-            - name: MYSQL_HOST
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-host
-            - name: MYSQL_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-port
-            - name: MYSQL_ROOT_USERNAME
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-root-username
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "common.mysqlName" . }}
                   key: mysql-root-password
                   optional: true
-            - name: MYSQL_CREATE_USERNAME
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-create-username
-            - name: MYSQL_CREATE_DATABASE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-create-database
-            - name: MYSQL_USER
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-username
-            - name: MYSQL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-password
-                  optional: false
           command:
             - sh
             - -c
@@ -102,63 +68,14 @@ spec:
         - name: console-backend
           image: {{ template "backend.image" . }}
           imagePullPolicy: {{ .Values.santorini.backend.image.pullPolicy | quote }}
+          envFrom:
+            - configMapRef:
+                optional: false
+                name: {{ include "common.santoriniName" . }}
+            - secretRef:
+                optional: false
+                name: {{ include "common.santoriniName" . }}
           env:
-            - name: DASHBOARD_HOST
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: dashboard-host
-            - name: MANAGER_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: manager-name
-            - name: SESSION_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: session
-            - name: FEISHU_CALLBACK_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: feishu-url
-            - name: FEISHU_APP_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: feishu-id
-            - name: FEISHU_APP_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: feishu-secret
-            - name: MYSQL_DATABASE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" .}}
-                  key: mysql-database
-            - name: MYSQL_HOST
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-host
-            - name: MYSQL_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-port
-            - name: MYSQL_USER
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-username
-            - name: MYSQL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-password
-                  optional: false
             {{- if .Values.santorini.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.santorini.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}

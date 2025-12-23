@@ -35,22 +35,11 @@ spec:
           volumeMounts:
             - mountPath: /san
               name: sql
+          envFrom:
+            - configMapRef:
+                optional: false
+                name: {{ include "common.santoriniName" . }}
           env:
-            - name: MYSQL_HOST
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-host
-            - name: MYSQL_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-port
-            - name: MYSQL_ROOT_USERNAME
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "common.santoriniName" . }}
-                  key: mysql-root-username
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -91,14 +80,14 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "common.santoriniName" . }}
-                  key: mysql-host
+                  key: MYSQL_HOST
             - name: MYSQL_SERVICE_DB_NAME
               value: "nacos"
             - name: MYSQL_SERVICE_PORT
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "common.santoriniName" . }}
-                  key: mysql-port
+                  key: MYSQL_PORT
             - name: MYSQL_SERVICE_USER
               value: "nacos"
             - name: MYSQL_SERVICE_DB_PARAM
