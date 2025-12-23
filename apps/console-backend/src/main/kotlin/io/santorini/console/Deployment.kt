@@ -15,18 +15,31 @@ import io.santorini.schema.DeploymentDeployData
 import io.santorini.schema.DeploymentResource
 import io.santorini.schema.DeploymentService
 import io.santorini.withAuthorization
-import org.koin.ktor.ext.get
 import java.util.*
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
+import org.koin.ktor.ext.get as koinGet
 
 
 private val logger = KotlinLogging.logger {}
 
 internal fun Application.configureConsoleDeployment() {
-    val service = get<DeploymentService>()
+    val service = koinGet<DeploymentService>()
     // 一般人员可以读取 env
     routing {
+        // 所有人的最近发布信息?
+        get<DeploymentResource> { resource ->
+            // 默认降序
+            // 可见环境，可见服务
+            val pr = resource.toPageRequest()
+            withAuthorization {
+                if (pr != null) {
+                    call.respond(service.readAsPage(resource, it.id, pr))
+                } else {
+                    call.respond(service.read(resource, it.id))
+                }
+            }
+        }
         post<DeploymentResource.Deploy> { deployData ->
             // 这个得检查权限
             withAuthorization {
@@ -38,7 +51,7 @@ internal fun Application.configureConsoleDeployment() {
                 // 因为这玩意儿是一成不变的，所以只能新增，无法修改
                 try {
                     // 然后操作 kubernetes
-                    call.respond(service.deploy(deployData, data).toKotlinUuid())
+                    call.respond(service.deploy(it.id, deployData, data).toKotlinUuid())
                 } catch (e: Exception) {
                     logger.info(e) { "处理部署时" }
                     call.respond(HttpStatusCode.BadRequest)

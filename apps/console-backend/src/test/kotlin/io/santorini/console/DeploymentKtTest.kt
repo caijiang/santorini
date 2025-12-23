@@ -2,6 +2,7 @@
 
 package io.santorini.console
 
+import io.fabric8.kubernetes.api.model.Pod
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldHaveSize
@@ -14,18 +15,11 @@ import io.ktor.server.testing.*
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.santorini.LoginUserData
 import io.santorini.consoleModuleEntry
-import io.santorini.kubernetes.SantoriniResourceKubernetesImpl
-import io.santorini.kubernetes.applyStringSecret
-import io.santorini.kubernetes.findResourcesInNamespace
-import io.santorini.model.Lifecycle
-import io.santorini.model.ResourceRequirement
-import io.santorini.model.ResourceType
-import io.santorini.model.ServiceType
-import io.santorini.schema.DeploymentDeployData
-import io.santorini.schema.EnvData
-import io.santorini.schema.ServiceMetaData
-import io.santorini.schema.mergeJson
+import io.santorini.kubernetes.*
+import io.santorini.model.*
+import io.santorini.schema.*
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
 import kotlin.test.Test
@@ -35,18 +29,19 @@ import kotlin.uuid.Uuid
 /**
  * @author CJ
  */
+@Suppress("NonAsciiCharacters", "TestFunctionName")
 class DeploymentKtTest {
     @Test
-    fun testRoot() = testApplication {
+    fun 部署服务() = testApplication {
         val kubernetesClient = mockk<KubernetesClient>()
         application {
             consoleModuleEntry(kubernetesClient = kubernetesClient)
             mockUserModule()
         }
 
-        val c = createStandardClient()
+        val manager = createStandardClient()
 
-        c.get("/mockUser/Manager").apply {
+        manager.get("/mockUser/Manager").apply {
             status shouldBe HttpStatusCode.OK
         }
 
@@ -57,7 +52,7 @@ class DeploymentKtTest {
             ),
             lifecycle = Lifecycle(),
         )
-        c.post("https://localhost/services") {
+        manager.post("https://localhost/services") {
             contentType(ContentType.Application.Json)
             setBody(
                 mergeJson(
@@ -79,17 +74,18 @@ class DeploymentKtTest {
         val deployTargetEnv = EnvData(id = "deploy", name = "test", production = true)
 
         withClue("一开始可以查得出来，但是带上 env就查不出来了。") {
-            c.get("https://localhost/services?keyword=${deployDemoService.id}").apply {
+            manager.get("https://localhost/services?keyword=${deployDemoService.id}").apply {
                 status shouldBe HttpStatusCode.OK
                 body<List<ServiceMetaData>>() shouldHaveSize 1
             }
-            c.get("https://localhost/services?keyword=${deployDemoService.id}&envId=${deployTargetEnv.id}").apply {
-                status shouldBe HttpStatusCode.OK
-                body<List<ServiceMetaData>>() shouldHaveSize 0
-            }
+            manager.get("https://localhost/services?keyword=${deployDemoService.id}&envId=${deployTargetEnv.id}")
+                .apply {
+                    status shouldBe HttpStatusCode.OK
+                    body<List<ServiceMetaData>>() shouldHaveSize 0
+                }
         }
 
-        c.post("https://localhost/envs") {
+        manager.post("https://localhost/envs") {
             contentType(ContentType.Application.Json)
             setBody(deployTargetEnv)
         }.apply {
@@ -97,7 +93,7 @@ class DeploymentKtTest {
         }
 
         // 要求没有满足，那不行的
-        c.post("https://localhost/deployments/deploy/${deployTargetEnv.id}/${deployDemoService.id}") {
+        manager.post("https://localhost/deployments/deploy/${deployTargetEnv.id}/${deployDemoService.id}") {
             contentType(ContentType.Application.Json)
         }.apply {
             status shouldBe HttpStatusCode.UnsupportedMediaType
@@ -107,7 +103,7 @@ class DeploymentKtTest {
             imageRepository = "image-repository",
         )
 
-        c.post("https://localhost/deployments/deploy/${deployTargetEnv.id}/${deployDemoService.id}") {
+        manager.post("https://localhost/deployments/deploy/${deployTargetEnv.id}/${deployDemoService.id}") {
             contentType(ContentType.Application.Json)
             setBody(deployData)
         }.apply {
@@ -116,7 +112,7 @@ class DeploymentKtTest {
             }
         }
 
-        c.post("https://localhost/deployments/deploy/${deployTargetEnv.id}/${deployDemoService.id}") {
+        manager.post("https://localhost/deployments/deploy/${deployTargetEnv.id}/${deployDemoService.id}") {
             contentType(ContentType.Application.Json)
             setBody(
                 deployData.copy(
@@ -136,7 +132,7 @@ class DeploymentKtTest {
             kubernetesClient.findResourcesInNamespace(deployTargetEnv.id!!, anyNullable())
         } returns listOf()
 
-        c.post("https://localhost/deployments/deploy/${deployTargetEnv.id}/${deployDemoService.id}") {
+        manager.post("https://localhost/deployments/deploy/${deployTargetEnv.id}/${deployDemoService.id}") {
             contentType(ContentType.Application.Json)
             setBody(
                 deployData.copy(
@@ -173,7 +169,7 @@ class DeploymentKtTest {
         } answers {
 
         }
-        c.post("https://localhost/deployments/deploy/${deployTargetEnv.id}/${deployDemoService.id}") {
+        manager.post("https://localhost/deployments/deploy/${deployTargetEnv.id}/${deployDemoService.id}") {
             contentType(ContentType.Application.Json)
             setBody(
                 deployData.copy(
@@ -188,7 +184,7 @@ class DeploymentKtTest {
                 val deploymentId = body<Uuid>()
                 deploymentId.shouldNotBeNull()
 
-                c.put("https://localhost/deployments/$deploymentId/targetResourceVersion") {
+                manager.put("https://localhost/deployments/$deploymentId/targetResourceVersion") {
                     contentType(ContentType.Application.Json)
                     setBody(deploymentId.toString())
                 }.apply {
@@ -196,7 +192,7 @@ class DeploymentKtTest {
                 }
 
                 withClue("提交过后是不可以删除的") {
-                    c.delete("https://localhost/deployments/$deploymentId")
+                    manager.delete("https://localhost/deployments/$deploymentId")
                         .apply {
                             status shouldBe HttpStatusCode.BadRequest
                         }
@@ -205,30 +201,107 @@ class DeploymentKtTest {
             }
         }
 
-        c.get("https://localhost/services/${deployDemoService.id}/lastRelease/${deployTargetEnv.id}").apply {
-            status shouldBe HttpStatusCode.OK
-            val deploymentDeployData = body<DeploymentDeployData>()
-            deploymentDeployData.targetResourceVersion.shouldNotBeNull()
-            deploymentDeployData.serviceDataSnapshot.shouldNotBeNull()
-            deploymentDeployData.copy(
-                targetResourceVersion = null,
-                serviceDataSnapshot = null
-            ) shouldBe deployData.copy(
-                resourcesSupply = mapOf(
-                    ResourceRequirement(ResourceType.Mysql).toString() to "never"
+        manager.get("https://localhost/services/${deployDemoService.id}/lastRelease/${deployTargetEnv.id}")
+            .apply {
+                status shouldBe HttpStatusCode.OK
+                val deploymentDeployData = body<DeploymentDeployData>()
+                deploymentDeployData.targetResourceVersion.shouldNotBeNull()
+                deploymentDeployData.serviceDataSnapshot.shouldNotBeNull()
+                deploymentDeployData.copy(
+                    targetResourceVersion = null,
+                    serviceDataSnapshot = null
+                ) shouldBe deployData.copy(
+                    resourcesSupply = mapOf(
+                        ResourceRequirement(ResourceType.Mysql).toString() to "never"
+                    )
                 )
-            )
-        }
+            }
 
         withClue("部署完成了，就可以查出来了。") {
-            c.get("https://localhost/services?keyword=${deployDemoService.id}").apply {
+            manager.get("https://localhost/services?keyword=${deployDemoService.id}").apply {
                 status shouldBe HttpStatusCode.OK
                 body<List<ServiceMetaData>>() shouldHaveSize 1
             }
-            c.get("https://localhost/services?keyword=${deployDemoService.id}&envId=${deployTargetEnv.id}").apply {
+            manager.get("https://localhost/services?keyword=${deployDemoService.id}&envId=${deployTargetEnv.id}")
+                .apply {
+                    status shouldBe HttpStatusCode.OK
+                    body<List<ServiceMetaData>>() shouldHaveSize 1
+                }
+        }
+
+        withClue("管理员可以按需查看发布记录") {
+            manager.get("https://localhost/deployments?serviceId=${deployDemoService.id}&envId=${deployTargetEnv.id}")
+                .apply {
+                    status shouldBe HttpStatusCode.OK
+                    val list = body<List<DeploymentDataInList>>()
+                    list shouldHaveSize 1
+                }
+        }
+        withClue("普通人看不到，但授权后就可以看到了") {
+            val user = createStandardClient()
+            user.get("/mockUser").apply {
                 status shouldBe HttpStatusCode.OK
-                body<List<ServiceMetaData>>() shouldHaveSize 1
             }
+            val userData = user.get("https://localhost/currentLogin").body<LoginUserData>()
+            user.get("https://localhost/deployments?serviceId=${deployDemoService.id}&envId=${deployTargetEnv.id}")
+                .apply {
+                    status shouldBe HttpStatusCode.OK
+                    val list = body<List<DeploymentDataInList>>()
+                    list shouldHaveSize 0
+                }
+
+            mockkStatic(kubernetesClient::removeAllServiceRolesFromNamespace)
+            mockkStatic(kubernetesClient::makesureRightServiceRoles)
+            mockkStatic(kubernetesClient::makesureRightEnvRoles)
+
+            every {
+                kubernetesClient.removeAllServiceRolesFromNamespace(
+                    any(),
+                    anyNullable(),
+                    anyNullable()
+                )
+            } answers {}
+            every { kubernetesClient.makesureRightServiceRoles(any(), any(), any(), any(), any()) } answers {}
+            every { kubernetesClient.makesureRightEnvRoles(anyNullable(), any(), any()) } answers {}
+
+            val pod = mockk<Pod>(relaxed = true)
+
+            mockkStatic(Pod::rootOwner)
+            mockkStatic(KubernetesClient::currentPod)
+//            mockkStatic("io.santorini.kubernetes.RoleKt")
+            every {
+                kubernetesClient.currentPod()
+            } returns pod
+            every { pod.rootOwner() } returns mockk()
+
+            manager.post("https://localhost/users/${userData.id}/envs") {
+                contentType(ContentType.Application.Json)
+                setBody(deployTargetEnv.id)
+            }.apply {
+                status shouldBe HttpStatusCode.Created
+            }
+
+            user.get("https://localhost/deployments?serviceId=${deployDemoService.id}&envId=${deployTargetEnv.id}")
+                .apply {
+                    status shouldBe HttpStatusCode.OK
+                    val list = body<List<DeploymentDataInList>>()
+                    list shouldHaveSize 0
+                }
+
+            manager.post("https://localhost/users/${userData.id}/services") {
+                contentType(ContentType.Application.Json)
+                setBody(deployDemoService.id to ServiceRole.Owner)
+            }.apply {
+                status shouldBe HttpStatusCode.NoContent
+            }
+
+            user.get("https://localhost/deployments?serviceId=${deployDemoService.id}&envId=${deployTargetEnv.id}")
+                .apply {
+                    status shouldBe HttpStatusCode.OK
+                    val list = body<List<DeploymentDataInList>>()
+                    list shouldHaveSize 1
+                }
+
         }
 
     }

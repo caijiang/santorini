@@ -34,6 +34,14 @@ import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
 
 @Serializable
+data class UserDataSimple(
+    val id: String,
+    val name: String,
+    val avatarUrl: String,
+    val createTime: LocalDateTime,
+)
+
+@Serializable
 data class UserData(
     val id: String,
     val name: String,
@@ -90,7 +98,8 @@ data class UserResource(
 class UserRoleService(
     database: Database,
     private val kubernetesClient: KubernetesClient,
-    private val serviceMetaService: ServiceMetaService
+    private val serviceMetaService: ServiceMetaService,
+    private val envService: EnvService,
 ) {
     object Users : UUIDTable() {
         val thirdPlatform = enumerationByName("third_platform", 10, OAuthPlatform::class)
@@ -273,7 +282,22 @@ class UserRoleService(
             }
     }
 
-    suspend fun envIdsByUserId(userId: Uuid): List<String> {
+
+    /**
+     * @return [EnvService.Envs.id] 获取用户可以访问的环境
+     */
+    suspend fun toUserEnvs(userId: Uuid): List<String> {
+        val user = userById(userId.toJavaUuid())
+        return if (user == null) {
+            listOf()
+        } else if (user.grantAuthorities.root) {
+            envService.readId()
+        } else {
+            envIdsByUserId(userId)
+        }
+    }
+
+    private suspend fun envIdsByUserId(userId: Uuid): List<String> {
         return dbQuery {
             UserEnvs.select(env)
                 .where {

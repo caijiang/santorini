@@ -102,10 +102,7 @@ class UserRoleKtTest {
         val userData = user.get("https://localhost/currentLogin").body<LoginUserData>()
         val pod = mockk<Pod>(relaxed = true)
 
-//        mockkStatic(KubernetesClient::findClusterRole)
-//        mockkStatic(KubernetesClient::currentPod)
         mockkStatic(Pod::rootOwner)
-//        mockkStatic(KubernetesClient::clusterRoleBindingBySubject)
         mockkStatic("io.santorini.kubernetes.RoleKt")
         every {
             kubernetesClient.currentPod()

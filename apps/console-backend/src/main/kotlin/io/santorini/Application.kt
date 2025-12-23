@@ -9,14 +9,24 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.calllogging.*
+import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.response.*
 import io.santorini.console.configureConsole
 import io.santorini.schema.*
+import io.santorini.scope.AppBackgroundScope
+import io.santorini.well.StatusException
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.koin.dsl.module
+import org.koin.ktor.ext.get
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
 import org.slf4j.event.Level
+import kotlin.time.Duration.Companion.seconds
 
 private val ktLogger = KotlinLogging.logger {}
 fun main(args: Array<String>) {
@@ -79,6 +89,9 @@ fun Application.consoleModuleEntry(
         slf4jLogger()
         modules(module {
             single {
+                AppBackgroundScope()
+            }
+            single {
                 kubernetesClient
             }
             single {
@@ -94,9 +107,26 @@ fun Application.consoleModuleEntry(
                 DeploymentService(database, get(), get())
             }
             single {
-                UserRoleService(database, get(), get())
+                UserRoleService(database, get(), get(), get())
             }
         })
+    }
+    monitor.subscribe(ApplicationStarted) {
+        it.get<AppBackgroundScope>().launch {
+            while (isActive) {
+                ktLogger.debug { "系统心跳" }
+                get<DeploymentService>().heart()
+                delay(10.seconds)
+            }
+        }
+    }
+    monitor.subscribe(ApplicationStopped) {
+        it.get<AppBackgroundScope>().cancel("stop")
+    }
+    install(StatusPages) {
+        exception<StatusException> { call, cause ->
+            call.respond(cause.status)
+        }
     }
     install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) {
         json(Json)

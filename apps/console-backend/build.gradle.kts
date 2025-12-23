@@ -1,4 +1,5 @@
 import buildsrc.convention.santorini.tasks.UploadAndExecuteSshTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 plugins {
     id("buildsrc.convention.kotlin-jvm")
@@ -12,6 +13,14 @@ plugins {
 
 application {
     mainClass = "io.ktor.server.cio.EngineMain"
+}
+
+tasks.withType<KotlinCompilationTask<*>> {
+    compilerOptions {
+        optIn.add("kotlin.time.ExperimentalTime")
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
+//        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
 }
 
 //jib{
@@ -83,6 +92,8 @@ dependencies {
     implementation("com.h2database:h2:2.3.232")
     implementation("io.insert-koin:koin-ktor:4.2.0-beta2")
     implementation("io.insert-koin:koin-logger-slf4j:4.2.0-beta2")
+    implementation("io.ktor:ktor-server-host-common:3.3.2")
+    implementation("io.ktor:ktor-server-status-pages:3.3.2")
     testImplementation("io.ktor:ktor-client-logging:3.3.2")
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)

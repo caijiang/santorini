@@ -12,4 +12,5 @@
     <!--    <logger name="io.ktor.client.plugins" level="trace"/>-->
     <logger name="Exposed" level="trace"/>
     <logger name="io.santorini.kubernetes" level="debug"/>
+    <logger name="io.santorini.schema" level="debug"/>
 </configuration>
