@@ -121,7 +121,11 @@ fun Application.consoleModuleEntry(
         }
     }
     monitor.subscribe(ApplicationStopped) {
-        it.get<AppBackgroundScope>().cancel("stop")
+        try {
+            it.get<AppBackgroundScope>().cancel("stop")
+        } catch (e: Throwable) {
+            ktLogger.warn(e) { "关闭时，不太关心" }
+        }
     }
     install(StatusPages) {
         exception<StatusException> { call, cause ->
