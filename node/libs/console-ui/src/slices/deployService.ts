@@ -1,15 +1,12 @@
 import { createAsyncThunk, GetThunkAPI } from '@reduxjs/toolkit';
-import {
-  DeploymentDeployData,
-  serviceApi,
-  ServiceConfigData,
-} from '../apis/service';
+import { DeploymentDeployData, ServiceConfigData } from '../apis/service';
 import { CUEnv } from '../apis/env';
 import { kubeServiceApi } from '../apis/kubernetes/service';
 import yamlGenerator from '../apis/kubernetes/yamlGenerator';
 import { IDeployment } from 'kubernetes-models/apps/v1/Deployment';
 import { IService } from 'kubernetes-models/v1';
 import { compare } from 'fast-json-patch';
+import { deploymentApi } from '../apis/deployment';
 
 export interface ServiceDeployToKubernetesProps {
   service: ServiceConfigData;
@@ -73,7 +70,7 @@ export const deployToKubernetes = createAsyncThunk(
     console.debug('之前部署的概要信息: lastDeploy:', lastDeploy);
     // 如果失败，则直接删除
     const result = await dispatch(
-      serviceApi.endpoints.deploy.initiate({
+      deploymentApi.endpoints.deploy.initiate({
         envId: env.id,
         serviceId: service.id,
         data: input.deployData,
@@ -196,7 +193,7 @@ export const deployToKubernetes = createAsyncThunk(
       console.debug('kubernetes 部署结果:', deploymentResult);
       if (deploymentResult?.metadata?.resourceVersion) {
         await dispatch(
-          serviceApi.endpoints.reportDeployResult.initiate({
+          deploymentApi.endpoints.reportDeployResult.initiate({
             id: result,
             resourceVersion: deploymentResult?.metadata?.resourceVersion,
           })
@@ -205,7 +202,7 @@ export const deployToKubernetes = createAsyncThunk(
     } catch (e) {
       console.log('部署发生了错误:', e);
       await dispatch(
-        serviceApi.endpoints.invokeDeploy.initiate(result)
+        deploymentApi.endpoints.invokeDeploy.initiate(result)
       ).unwrap();
       throw e;
     }

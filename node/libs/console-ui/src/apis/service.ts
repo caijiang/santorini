@@ -163,59 +163,6 @@ export const serviceApi = createApi({
           method: 'PUT',
         }),
       }),
-      deploy: build.mutation<
-        string,
-        { envId: string; serviceId: string; data: DeploymentDeployData }
-      >({
-        invalidatesTags: ['Deployments'],
-        query: ({ envId, serviceId, data }) => ({
-          method: 'POST',
-          url: `/deployments/deploy/${envId}/${serviceId}`,
-          body: data,
-          // application/json 而且带有括号
-        }),
-      }),
-      /**
-       * 回收一次失败的部署
-       */
-      invokeDeploy: build.mutation<undefined, string>({
-        invalidatesTags: ['Deployments'],
-        query: (arg) => ({
-          method: 'DELETE',
-          url: `/deployments/${arg}`,
-        }),
-      }),
-      /**
-       * 汇报结果
-       */
-      reportDeployResult: build.mutation<
-        undefined,
-        { id: string; resourceVersion: string }
-      >({
-        invalidatesTags: ['Deployments'],
-        query: ({ id, resourceVersion }) => ({
-          method: 'PUT',
-          url: `/deployments/${id}/targetResourceVersion`,
-          body: resourceVersion,
-          headers: {
-            'Content-Type': 'text/plain',
-          },
-        }),
-      }),
-      /**
-       * 获取最后一次发布的记录
-       */
-      lastRelease: build.query<
-        LastReleaseDeploymentSummary | undefined,
-        {
-          serviceId: string;
-          envId: string;
-        }
-      >({
-        providesTags: ['Deployments'],
-        query: ({ serviceId, envId }) =>
-          `/services/${serviceId}/lastRelease/${envId}`,
-      }),
     };
   },
 });
@@ -223,7 +170,6 @@ export const serviceApi = createApi({
 export const {
   useServiceByIdQuery,
   useCreateServiceMutation,
-  useLastReleaseQuery,
   useAllServiceQuery,
   useUpdateServiceMutation,
 } = serviceApi;

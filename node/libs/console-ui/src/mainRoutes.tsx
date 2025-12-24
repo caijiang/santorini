@@ -17,6 +17,14 @@ const Users = lazy(() => import('./pages/users'));
 const EnvServiceLayout = lazy(() => import('./layouts/EnvServiceLayout'));
 const Pods = lazy(() => import('./pages/envFor/service/Pods'));
 const Pod = lazy(() => import('./pages/envFor/service/Pod'));
+const EnvDeploymentHistory = lazy(
+  () => import('./pages/envFor/service/DeploymentHistory')
+);
+
+const ServiceLayout = lazy(() => import('./layouts/ServiceLayout'));
+const DeploymentHistory = lazy(
+  () => import('./pages/service/DeploymentHistory')
+);
 
 export default [
   {
@@ -28,8 +36,18 @@ export default [
     element: <AddService />,
   },
   {
-    path: 'services/:id',
-    element: <EditService />,
+    path: 'services/:serviceId',
+    element: <ServiceLayout />,
+    children: [
+      {
+        path: 'edit',
+        element: <EditService />,
+      },
+      {
+        path: 'history',
+        element: <DeploymentHistory />,
+      },
+    ],
   },
   // 部署一个新的
   {
@@ -44,6 +62,10 @@ export default [
         path: 'services/:serviceId',
         element: <EnvServiceLayout />,
         children: [
+          {
+            path: 'history',
+            element: <EnvDeploymentHistory />,
+          },
           {
             path: 'pods',
             element: <Pods />,

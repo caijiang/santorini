@@ -5,6 +5,7 @@ import { describe } from 'vitest';
 import _ from 'lodash';
 import { isAction } from '@reduxjs/toolkit';
 import { deployToKubernetes } from './deployService';
+import { deploymentApi } from '../apis/deployment';
 
 const demoServiceData = {
   id: 'demo',
@@ -39,9 +40,9 @@ describe('部署服务', () => {
   const getState = vi.fn();
   // import { kubeServiceApi } from '../apis/kubernetes/service';
   // 1️⃣ 全局 mock
-  vi.mock('../apis/service', () => {
+  vi.mock('../apis/deployment', () => {
     return {
-      serviceApi: {
+      deploymentApi: {
         endpoints: {
           reportDeployResult: {
             initiate: vi.fn(() => 'reportDeployResult'),
@@ -56,6 +57,14 @@ describe('部署服务', () => {
               }
             ),
           },
+        },
+      },
+    };
+  });
+  vi.mock('../apis/service', () => {
+    return {
+      serviceApi: {
+        endpoints: {
           serviceById: {
             initiate: vi.fn((id: string) => {
               return 'serviceById-' + id;
@@ -119,12 +128,12 @@ describe('部署服务', () => {
         unwrap: () => Promise.resolve(undefined),
       };
     }
-    if (arg == serviceApi.endpoints.deploy.initiate({} as any)) {
+    if (arg == deploymentApi.endpoints.deploy.initiate({} as any)) {
       return {
         unwrap: () => Promise.resolve('deploymentId'),
       };
     }
-    if (arg == serviceApi.endpoints.reportDeployResult.initiate({} as any)) {
+    if (arg == deploymentApi.endpoints.reportDeployResult.initiate({} as any)) {
       return {
         unwrap: () => Promise.resolve(undefined),
       };
@@ -141,7 +150,7 @@ describe('部署服务', () => {
     }
     if (
       arg ==
-      serviceApi.endpoints.lastRelease.initiate({
+      deploymentApi.endpoints.lastRelease.initiate({
         serviceId: 'demo',
         envId: 'online',
       })

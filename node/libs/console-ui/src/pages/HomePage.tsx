@@ -60,15 +60,18 @@ export default () => {
             valueType: 'option',
             title: '操作',
             render: (_, entity) => [
-              <NavLink key={'edit'} to={`/services/${entity.id}`}>
-                <Button>
+              <NavLink key={'edit'} to={`/services/${entity.id}/edit`}>
+                <Button size={'small'}>
                   <EditOutlined />
                 </Button>
+              </NavLink>,
+              <NavLink key={'history'} to={`/services/${entity.id}/history`}>
+                历史
               </NavLink>,
               <EnvChooserModal
                 key={'deploy'}
                 trigger={
-                  <Button title={'部署'} type={'primary'}>
+                  <Button size={'small'} title={'部署'} type={'primary'}>
                     <DeploymentUnitOutlined />
                   </Button>
                 }

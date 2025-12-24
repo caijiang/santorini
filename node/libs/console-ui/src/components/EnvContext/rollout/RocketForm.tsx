@@ -1,16 +1,13 @@
 import { RocketOutlined } from '@ant-design/icons';
 import { ModalForm, ProFormText } from '@ant-design/pro-components';
-import {
-  ServiceConfigData,
-  useLastReleaseQuery,
-  useServiceByIdQuery,
-} from '../../../apis/service';
+import { ServiceConfigData, useServiceByIdQuery } from '../../../apis/service';
 import { Alert, App, Button, Spin } from 'antd';
 import * as React from 'react';
 import { useEnvContext } from '../../../layouts/EnvLayout';
 import { deployToKubernetes } from '../../../slices/deployService';
 import { dispatchActionThrowIfError } from '../../../common/rtk';
 import { useDispatch } from 'react-redux';
+import { useLastReleaseQuery } from '../../../apis/deployment';
 
 interface RocketFormProps {
   service: ServiceConfigData;

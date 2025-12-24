@@ -12,6 +12,7 @@ import { hostApi } from './apis/host';
 import { miscApi } from './apis/misc';
 import { userApi } from './apis/user';
 import { kubePodsApi } from './apis/kubernetes/pods';
+import { deploymentApi } from './apis/deployment';
 
 export default {
   middlewares: [
@@ -19,6 +20,7 @@ export default {
     commonApi.middleware,
     kubeServiceApi.middleware,
     ingressApi.middleware,
+    deploymentApi.middleware,
     envApi.middleware,
     kubePodsApi.middleware,
     serviceApi.middleware,
@@ -32,6 +34,7 @@ export default {
     [commonApi.reducerPath]: commonApi.reducer,
     [kubeServiceApi.reducerPath]: kubeServiceApi.reducer,
     [ingressApi.reducerPath]: ingressApi.reducer,
+    [deploymentApi.reducerPath]: deploymentApi.reducer,
     [envApi.reducerPath]: envApi.reducer,
     [kubePodsApi.reducerPath]: kubePodsApi.reducer,
     [serviceApi.reducerPath]: serviceApi.reducer,

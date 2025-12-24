@@ -8,7 +8,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useEnv } from '../../hooks/common';
 import {
   keyOfResourceRequirement,
-  useLastReleaseQuery,
   useServiceByIdQuery,
 } from '../../apis/service';
 import { useSecretByNamespaceQuery } from '../../apis/kubernetes/common';
@@ -18,6 +17,7 @@ import { deployToKubernetes } from '../../slices/deployService';
 import { App } from 'antd';
 import { dispatchActionThrowIfError } from '../../common/rtk';
 import ResourceRequirementFormField from '../../components/deploy/ResourceRequirementFormField';
+import { useLastReleaseQuery } from '../../apis/deployment';
 
 export default () => {
   // 作为一个部署服务的专用页面

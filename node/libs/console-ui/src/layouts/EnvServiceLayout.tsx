@@ -10,7 +10,8 @@ import {serviceNameColumn, serviceTypeColumn} from '../columns/service';
  * 某环境，某服务
  */
 export default () => {
-  const { setSharePageContainerProps } = useEnvContext();
+  const ec = useEnvContext();
+  const { setSharePageContainerProps } = ec;
   const { serviceId } = useParams();
   useEffect(() => {
     setSharePageContainerProps({ title: serviceId });
@@ -26,7 +27,7 @@ export default () => {
       ></ProDescriptions>
 
       <Suspense fallback={<Skeleton />}>
-        <Outlet />
+        <Outlet context={ec} />
       </Suspense>
     </>
   );

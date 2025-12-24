@@ -60,6 +60,12 @@ export default () => {
               >
                 Pods
               </NavLink>,
+              <NavLink
+                key={'history'}
+                to={`/envFor/${id}/services/${entity.id}/history`}
+              >
+                历史
+              </NavLink>,
               <RocketForm key={'rock'} service={entity}></RocketForm>,
             ],
           },

@@ -3,7 +3,7 @@ import { baseAxios } from '@private-everest/app-support';
 import _ from 'lodash';
 import { ProSchemaValueEnumType } from '@ant-design/pro-provider';
 
-interface PageResult<T> {
+export interface PageResult<T> {
   records: T[];
   total: number;
 }
