@@ -112,12 +112,22 @@ fun Application.consoleModuleEntry(
         })
     }
     monitor.subscribe(ApplicationStarted) {
-        it.get<AppBackgroundScope>().launch {
-            while (isActive) {
-                ktLogger.debug { "系统心跳" }
-                get<DeploymentService>().heart()
-                delay(10.seconds)
+        try {
+            it.get<AppBackgroundScope>().launch {
+                while (isActive) {
+                    ktLogger.debug { "系统心跳" }
+                    try {
+                        get<DeploymentService>().heart()
+                    } catch (e: Exception) {
+                        ktLogger.warn(e) {
+                            "业务问题"
+                        }
+                    }
+                    delay(10.seconds)
+                }
             }
+        } catch (e: Throwable) {
+            ktLogger.warn(e) { "启动时？github-action中？" }
         }
     }
     monitor.subscribe(ApplicationStopped) {
