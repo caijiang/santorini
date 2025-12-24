@@ -113,11 +113,12 @@ fun Application.consoleModuleEntry(
     }
     monitor.subscribe(ApplicationStarted) {
         try {
+            val deploymentService = get<DeploymentService>()
             it.get<AppBackgroundScope>().launch {
                 while (isActive) {
                     ktLogger.debug { "系统心跳" }
                     try {
-                        get<DeploymentService>().heart()
+                        deploymentService.heart()
                     } catch (e: Exception) {
                         ktLogger.warn(e) {
                             "业务问题"
