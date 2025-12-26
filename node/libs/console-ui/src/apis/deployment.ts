@@ -3,6 +3,25 @@ import { stBaseQuery } from './api';
 import { PageResult } from '../common/ktor';
 import { DeploymentDeployData, LastReleaseDeploymentSummary } from './service';
 
+export interface PreDeployResult {
+  /**
+   * 不正常情况就给这个
+   */
+  warnMessage?: string;
+  /**
+   * 空的话就是不存在
+   */
+  imageDigest?: string;
+  /**
+   * 平台是否满足
+   */
+  imagePlatformMatch: boolean;
+  /**
+   * 成功部署的目标环境
+   */
+  successfulEnvs?: string[];
+}
+
 export interface UserDataSimple {
   id: string;
   name: string;
@@ -55,6 +74,18 @@ export const deploymentApi = createApi({
             ...args,
             limit: `${limit ?? 10}`,
           },
+        }),
+      }),
+      preDeploy: build.mutation<
+        PreDeployResult,
+        { envId: string; serviceId: string; data: DeploymentDeployData }
+      >({
+        invalidatesTags: ['Deployments'],
+        query: ({ envId, serviceId, data }) => ({
+          method: 'POST',
+          url: `/deployments/preDeploy/${envId}/${serviceId}`,
+          body: data,
+          // application/json 而且带有括号
         }),
       }),
       deploy: build.mutation<
@@ -114,5 +145,8 @@ export const deploymentApi = createApi({
   },
 });
 
-export const { useDeploymentHistorySummaryQuery, useLastReleaseQuery } =
-  deploymentApi;
+export const {
+  useDeploymentHistorySummaryQuery,
+  useLastReleaseQuery,
+  usePreDeployMutation,
+} = deploymentApi;

@@ -52,6 +52,8 @@ http-client.private.env.json
 
 # 特殊
 local-upload-sftp-config.json
+# 本地构建所需资源
+local-build*
 
 # 反向前端
 kotlin-js-store

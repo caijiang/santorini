@@ -14,6 +14,7 @@ import io.santorini.kubernetes.findResourcesInNamespace
 import io.santorini.model.*
 import io.santorini.resources.GenerateContextHome
 import io.santorini.schema.ServiceMetaService.ServiceMetas
+import io.santorini.service.ImageService
 import io.santorini.well.StatusException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,6 +39,29 @@ import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 
 private val logger = KotlinLogging.logger {}
+
+/**
+ * 预部署执行结果，主要是检查发布
+ */
+@Serializable
+data class PreDeployResult(
+    /**
+     * 不正常情况就给这个
+     */
+    val warnMessage: String? = null,
+    /**
+     * 空的话就是不存在
+     */
+    val imageDigest: String? = null,
+    /**
+     * 平台是否满足
+     */
+    val imagePlatformMatch: Boolean = false,
+    /**
+     * 成功部署的目标环境
+     */
+    val successfulEnvs: List<String>? = null,
+)
 
 /**
  * 这是作为可重复部署的数据
@@ -98,6 +122,10 @@ data class DeploymentResource(
     @Serializable
     data class Deploy(val parent: DeploymentResource = DeploymentResource(), val serverId: String, val envId: String)
 
+    @Resource("preDeploy/{envId}/{serverId}")
+    @Serializable
+    data class PreDeploy(val parent: DeploymentResource = DeploymentResource(), val serverId: String, val envId: String)
+
     @Resource("{id}/{name}")
     @Serializable
     data class IdAndName(val parent: DeploymentResource = DeploymentResource(), val id: String, val name: String)
@@ -110,7 +138,8 @@ data class DeploymentResource(
 class DeploymentService(
     database: Database,
     private val kubernetesClient: KubernetesClient,
-    private val serviceMetaService: ServiceMetaService
+    private val serviceMetaService: ServiceMetaService,
+    private val imageService: ImageService,
 ) {
 
     object Deployments : UUIDTable() {
@@ -131,6 +160,7 @@ class DeploymentService(
          * 因本次部署获得的版本号
          */
         val targetResourceVersion = varchar("target_resource_version", 38).nullable()
+        val digest = varchar("digest", 71).index()
 
         /**
          * 版本已经过期，别再检查了
@@ -140,12 +170,12 @@ class DeploymentService(
         /**
          * 是否完成/停止部署
          */
-        val completed = bool("completed")
+        val completed = bool("completed").index()
 
         /**
          * 是否成功部署
          */
-        val successful = bool("successful")
+        val successful = bool("successful").index()
 
         /**
          * 服务镜像
@@ -170,6 +200,67 @@ class DeploymentService(
                 block()
             }
         }
+
+    suspend fun preDeploy(
+        deploy: DeploymentResource.PreDeploy,
+        data: DeploymentDeployData
+    ): PreDeployResult {
+        val imageInfo = try {
+            imageService.toImageInfo(deploy.envId, data)
+                ?: return PreDeployResult(
+                    warnMessage = "镜像不存在",
+                )
+        } catch (e: Exception) {
+            logger.info(e) { "预览部署时" }
+            return PreDeployResult(
+                warnMessage = e.localizedMessage,
+            )
+        }
+
+        // 我们要确保是可以访问的
+        val systemInfoList = kubernetesClient.nodes().list()
+            .items
+            .mapNotNull {
+                it.status?.nodeInfo
+            }
+
+        val match = systemInfoList
+            .any { node ->
+                imageInfo.second.any {
+                    it.os.equals(node.operatingSystem, ignoreCase = true)
+                            && it.architecture.equals(node.architecture, ignoreCase = true)
+                }
+            }
+        if (!match) {
+            return PreDeployResult(
+                warnMessage = "请打包适合${
+                    systemInfoList.map { "${it.operatingSystem}/${it.architecture}" }
+                        .distinct()
+                        .joinToString(",")
+                }的镜像",
+                imageDigest = imageInfo.first,
+                imagePlatformMatch = false
+            )
+        }
+
+        return PreDeployResult(
+            imageDigest = imageInfo.first,
+            imagePlatformMatch = true,
+            successfulEnvs = dbQuery {
+                Deployments.select(Deployments.env)
+                    .where {
+                        Deployments.digest eq imageInfo.first
+                    }
+                    .andWhere {
+                        (Deployments.successful eq true).and(
+                            Deployments.completed eq true
+                        )
+                    }
+                    .withDistinct()
+                    .map { it[Deployments.env].value }
+            }
+        )
+    }
 
     /**
      * 部署
@@ -209,6 +300,8 @@ class DeploymentService(
                     rr.name
                 )
             }
+            val imageInfo = imageService.toImageInfo(deploy.envId, data)
+                ?: throw IllegalArgumentException("无法获取镜像")
 
             kubernetesClient.applyStringSecret(deploy.envId, deploy.serverId + "-env", context.toEnvResult())
 
@@ -218,6 +311,7 @@ class DeploymentService(
                 it[createTime] = Clock.System.now()
                 it[imageRepository] = data.imageRepository
                 it[imageTag] = data.imageTag
+                it[digest] = imageInfo.first
                 it[pullSecretName] = data.pullSecretName
                 it[resourcesSupply] = data.resourcesSupply
                 it[serviceDataSnapshot] = snapshot

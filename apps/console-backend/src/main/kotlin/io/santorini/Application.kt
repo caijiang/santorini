@@ -14,6 +14,7 @@ import io.ktor.server.response.*
 import io.santorini.console.configureConsole
 import io.santorini.schema.*
 import io.santorini.scope.AppBackgroundScope
+import io.santorini.service.ImageService
 import io.santorini.well.StatusException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -21,6 +22,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.jdbc.Database
+import org.koin.core.parameter.ParametersHolder
+import org.koin.core.scope.Scope
 import org.koin.dsl.module
 import org.koin.ktor.ext.get
 import org.koin.ktor.plugin.Koin
@@ -83,16 +86,25 @@ fun Application.consoleModuleEntry(
         user = EnvMysqlData.jdbcUser ?: "root",
         password = EnvMysqlData.jdbcPassword ?: "",
 //        driver = "org.h2.Driver",
-    )
+    ),
+    imageServiceLoader: Scope.(ParametersHolder) -> ImageService = {
+        ImageService(get(), get())
+    }
 ) {
     install(Koin) {
         slf4jLogger()
         modules(module {
             single {
+                httpClient
+            }
+            single {
                 AppBackgroundScope()
             }
             single {
                 kubernetesClient
+            }
+            single {
+                imageServiceLoader(it)
             }
             single {
                 EnvService(database)
@@ -104,7 +116,7 @@ fun Application.consoleModuleEntry(
                 ServiceMetaService(database, lazy { get() })
             }
             single {
-                DeploymentService(database, get(), get())
+                DeploymentService(database, get(), get(), get())
             }
             single {
                 UserRoleService(database, get(), get(), get())

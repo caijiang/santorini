@@ -15,7 +15,7 @@ import { arrayToProSchemaValueEnumMap } from '../../common/ktor';
 import { useDispatch } from 'react-redux';
 import { deployToKubernetes } from '../../slices/deployService';
 import { App } from 'antd';
-import { dispatchActionThrowIfError } from '../../common/rtk';
+import { dispatchAsyncThunkActionThrowIfError } from '../../common/rtk';
 import ResourceRequirementFormField from '../../components/deploy/ResourceRequirementFormField';
 import { useLastReleaseQuery } from '../../apis/deployment';
 
@@ -64,7 +64,7 @@ export default () => {
               lastDeploy: lastReleaseSummary,
             });
             try {
-              await dispatchActionThrowIfError(dispatch, action);
+              await dispatchAsyncThunkActionThrowIfError(dispatch, action);
               message.success('已成功部署该服务资源');
               nf('/');
               return true;

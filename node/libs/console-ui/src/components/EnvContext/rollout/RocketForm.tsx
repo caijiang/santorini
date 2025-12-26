@@ -4,8 +4,11 @@ import { ServiceConfigData, useServiceByIdQuery } from '../../../apis/service';
 import { Alert, App, Button, Spin } from 'antd';
 import * as React from 'react';
 import { useEnvContext } from '../../../layouts/EnvLayout';
-import { deployToKubernetes } from '../../../slices/deployService';
-import { dispatchActionThrowIfError } from '../../../common/rtk';
+import {
+  deployToKubernetes,
+  useImageTagRule,
+} from '../../../slices/deployService';
+import { dispatchAsyncThunkActionThrowIfError } from '../../../common/rtk';
 import { useDispatch } from 'react-redux';
 import { useLastReleaseQuery } from '../../../apis/deployment';
 
@@ -29,6 +32,7 @@ const RocketForm: React.FC<RocketFormProps> = ({
       envId: env.id,
       serviceId: serviceId,
     });
+  const tagRule = useImageTagRule(serviceId, env.id, lastReleaseSummary);
   if (lastReleaseLoading || isLoading) {
     return <Spin />;
   }
@@ -52,7 +56,7 @@ const RocketForm: React.FC<RocketFormProps> = ({
           lastDeploy: lastReleaseSummary,
         });
         try {
-          await dispatchActionThrowIfError(dispatch, action);
+          await dispatchAsyncThunkActionThrowIfError(dispatch, action);
           message.success('已成功部署该服务资源');
           return true;
         } catch (e) {
@@ -82,7 +86,7 @@ const RocketForm: React.FC<RocketFormProps> = ({
       <ProFormText
         label={'发布标签'}
         name={'tag'}
-        rules={[{ required: true }, { min: 2 }]}
+        rules={[{ required: true }, { min: 2 }, tagRule]}
       />
     </ModalForm>
   );

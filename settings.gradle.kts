@@ -42,3 +42,5 @@ include("charts:santorini")
 include("share")
 include("share:santorini-model")
 findProject(":share:santorini-model")?.name = "santorini-model"
+include("libs")
+include("libs:container-registry")

@@ -6,12 +6,14 @@ import io.fabric8.kubernetes.api.model.Pod
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -20,8 +22,11 @@ import io.santorini.consoleModuleEntry
 import io.santorini.kubernetes.*
 import io.santorini.model.*
 import io.santorini.schema.*
+import io.santorini.service.ImageService
+import io.santorini.test.mockDeploymentServicePreDeployWorkFineWith
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
+import me.jiangcai.cr.Deployable
 import kotlin.test.Test
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -34,8 +39,11 @@ class DeploymentKtTest {
     @Test
     fun 部署服务() = testApplication {
         val kubernetesClient = mockk<KubernetesClient>()
+        val imageService = mockk<ImageService>()
         application {
-            consoleModuleEntry(kubernetesClient = kubernetesClient)
+            consoleModuleEntry(kubernetesClient = kubernetesClient, imageServiceLoader = {
+                imageService
+            })
             mockUserModule()
         }
 
@@ -169,6 +177,34 @@ class DeploymentKtTest {
         } answers {
 
         }
+        val imageInfo = "sha256..." to listOf(
+            object : Deployable {
+                override val architecture: String
+                    get() = "a"
+                override val os: String
+                    get() = "o"
+            }
+        )
+        coEvery { imageService.toImageInfo(any(), any()) } returns imageInfo
+        mockDeploymentServicePreDeployWorkFineWith(kubernetesClient, imageInfo)
+        manager.post("https://localhost/deployments/preDeploy/${deployTargetEnv.id}/${deployDemoService.id}") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                deployData.copy(
+                    resourcesSupply = mapOf(
+                        ResourceRequirement(ResourceType.Mysql).toString() to "never"
+                    )
+                )
+            )
+        }.apply {
+            status shouldBe HttpStatusCode.OK
+            val result = body<PreDeployResult>()
+            result.imageDigest shouldBe "sha256..."
+            result.warnMessage.shouldBeNull()
+            result.imagePlatformMatch shouldBe true
+            result.successfulEnvs.shouldNotBeNull()
+        }
+
         manager.post("https://localhost/deployments/deploy/${deployTargetEnv.id}/${deployDemoService.id}") {
             contentType(ContentType.Application.Json)
             setBody(

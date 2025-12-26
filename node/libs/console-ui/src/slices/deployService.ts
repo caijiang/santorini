@@ -6,7 +6,9 @@ import yamlGenerator from '../apis/kubernetes/yamlGenerator';
 import { IDeployment } from 'kubernetes-models/apps/v1/Deployment';
 import { IService } from 'kubernetes-models/v1';
 import { compare } from 'fast-json-patch';
-import { deploymentApi } from '../apis/deployment';
+import { deploymentApi, usePreDeployMutation } from '../apis/deployment';
+import { Rule } from 'eslint';
+import { FieldProps } from 'rc-field-form/lib/Field';
 
 export interface ServiceDeployToKubernetesProps {
   service: ServiceConfigData;
@@ -56,6 +58,43 @@ async function findServiceInstanceInKubernetes(
   return {
     deployment: rs0,
     service: ss,
+  };
+}
+
+type Rules = Required<FieldProps['rules']>;
+type ExtractRule<T> = T extends Array<infer U> ? U : never;
+type Rule = ExtractRule<Rules>;
+// 有可能是输入了全部,
+// imageRepository: string
+// imageTag?: string
+// pullSecretName?: string[]
+export function useImageTagRule(
+  serviceId: string,
+  envId: string,
+  currentData: DeploymentDeployData | undefined
+): Rule {
+  const [preApi] = usePreDeployMutation();
+  return {
+    validator: async (_, value: string) => {
+      if (!currentData) return Promise.reject('尚未准备就绪');
+      if (!value) return Promise.resolve();
+      const ps = await preApi({
+        serviceId,
+        envId,
+        data: {
+          ...currentData,
+          imageTag: value,
+        },
+      }).unwrap();
+
+      if (!ps.imageDigest) {
+        return Promise.reject(`镜像无法找到，可能原因：${ps.warnMessage}`);
+      }
+      if (!ps.imagePlatformMatch || !ps.successfulEnvs) {
+        return Promise.reject(`镜像无法使用，可能原因：${ps.warnMessage}`);
+      }
+      return Promise.resolve();
+    },
   };
 }
 

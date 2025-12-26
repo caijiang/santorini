@@ -1,16 +1,21 @@
-import { Dispatch } from '@reduxjs/toolkit';
+import { AsyncThunkAction, Dispatch, PayloadAction } from '@reduxjs/toolkit';
 
-interface ErrorAble {
-  error?: {
-    message?: any;
-  };
-}
+type Error = {
+  message?: any;
+};
 
-export async function dispatchActionThrowIfError(
+// interface ErrorAble {
+//   error?: Error;
+// }
+
+export async function dispatchAsyncThunkActionThrowIfError<T>(
   dispatch: Dispatch<any>,
-  action: any
+  action: AsyncThunkAction<T, any, any>
 ) {
-  const result1: ErrorAble = await dispatch(action);
+  // 其实 meta 是: arg,requestId,requestStatus
+  const result1: PayloadAction<T, string, never, Error> = await dispatch(
+    action as any
+  );
   const { error, ...other } = result1;
   if (error) {
     console.warn('error:', error);
@@ -18,5 +23,7 @@ export async function dispatchActionThrowIfError(
     console.debug('dispatch result without error:', other);
     throw '未知错误发生了';
   }
-  console.info('dispatch result without error:', other);
+
+  console.debug('dispatch result success:', other);
+  return other.payload;
 }

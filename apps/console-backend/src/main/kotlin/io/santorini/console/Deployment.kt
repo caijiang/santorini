@@ -14,6 +14,7 @@ import io.ktor.server.routing.*
 import io.santorini.schema.DeploymentDeployData
 import io.santorini.schema.DeploymentResource
 import io.santorini.schema.DeploymentService
+import io.santorini.schema.PreDeployResult
 import io.santorini.withAuthorization
 import java.util.*
 import kotlin.uuid.ExperimentalUuidApi
@@ -37,6 +38,19 @@ internal fun Application.configureConsoleDeployment() {
                     call.respond(service.readAsPage(resource, it.id, pr))
                 } else {
                     call.respond(service.read(resource, it.id))
+                }
+            }
+        }
+        post<DeploymentResource.PreDeploy> { deployData ->
+            // 预发布
+            withAuthorization {
+                val data = call.receive<DeploymentDeployData>()
+                try {
+                    // 然后操作 kubernetes
+                    call.respond(service.preDeploy(deployData, data))
+                } catch (e: Exception) {
+                    logger.info(e) { "预览部署时" }
+                    call.respond(PreDeployResult(warnMessage = e.localizedMessage))
                 }
             }
         }
