@@ -113,10 +113,6 @@ export interface DeploymentDeployData {
   pullSecretName?: string[];
   resourcesSupply?: Record<string, string>;
   /**
-   * 成功部署的资源版本
-   */
-  targetResourceVersion?: string;
-  /**
    * 部署时服务的镜像
    */
   serviceDataSnapshot?: string;

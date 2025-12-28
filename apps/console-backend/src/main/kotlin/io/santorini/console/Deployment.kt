@@ -84,7 +84,7 @@ internal fun Application.configureConsoleDeployment() {
             }
         }
         put<DeploymentResource.IdAndName> { idAndName ->
-            if (idAndName.name != "targetResourceVersion") {
+            if (idAndName.name != "targetGeneration") {
                 call.respond(HttpStatusCode.NotFound)
             } else
                 withAuthorization {
@@ -96,7 +96,7 @@ internal fun Application.configureConsoleDeployment() {
                     // 因为这玩意儿是一成不变的，所以只能新增，无法修改
                     try {
                         // 然后操作 kubernetes
-                        if (service.updateTargetResourceVersion(UUID.fromString(idAndName.id), data) > 0) {
+                        if (service.updateTargetGeneration(UUID.fromString(idAndName.id), data.toLong()) > 0) {
                             call.respond(HttpStatusCode.NoContent)
                         } else
                             call.respond(HttpStatusCode.BadRequest)

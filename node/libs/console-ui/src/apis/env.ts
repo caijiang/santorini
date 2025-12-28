@@ -34,6 +34,9 @@ export const envApi = createApi({
   tagTypes: ['env', 'resources'],
   endpoints: (build) => {
     return {
+      dockerConfigJsonSecretNames: build.query<string[], string>({
+        query: (arg) => `/dockerConfigJsonSecretNames/${arg}`,
+      }),
       resources: build.query<
         SantoriniResourceData[],
         { envId: string; params?: any }
@@ -113,4 +116,5 @@ export const {
   useResourcesQuery,
   useCreateResourceMutation,
   useDeleteResourceMutation,
+  useDockerConfigJsonSecretNamesQuery,
 } = envApi;

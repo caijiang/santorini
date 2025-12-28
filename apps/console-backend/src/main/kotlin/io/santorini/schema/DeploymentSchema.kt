@@ -76,11 +76,8 @@ data class DeploymentDeployData(
     /**
      * 只存在输出中
      */
-    val targetResourceVersion: String? = null,
-    /**
-     * 只存在输出中
-     */
     val serviceDataSnapshot: String? = null,
+    val targetGeneration: Long? = null,
 )
 
 /**
@@ -155,11 +152,7 @@ class DeploymentService(
         val imageTag = varchar("image_tag", 50).nullable()
         val pullSecretName = jsonb<List<String>>("pull_secret_name", Json).nullable()
         val resourcesSupply = jsonb<Map<String, String>>("resources_supply", Json).nullable()
-
-        /**
-         * 因本次部署获得的版本号
-         */
-        val targetResourceVersion = varchar("target_resource_version", 38).nullable()
+        val targetGeneration = long("target_generation").nullable()
         val digest = varchar("digest", 71).index()
 
         /**
@@ -338,17 +331,17 @@ class DeploymentService(
                         it[Deployments.imageTag],
                         it[Deployments.pullSecretName],
                         it[Deployments.resourcesSupply],
-                        it[Deployments.targetResourceVersion],
                         it[Deployments.serviceDataSnapshot],
+                        it[Deployments.targetGeneration],
                     )
                 }.firstOrNull()
         }
     }
 
-    suspend fun updateTargetResourceVersion(id: UUID, version: String): Int {
+    suspend fun updateTargetGeneration(id: UUID, version: Long): Int {
         return dbQuery {
-            Deployments.update({ Deployments.id eq id and Deployments.targetResourceVersion.isNull() }) {
-                it[targetResourceVersion] = version
+            Deployments.update({ Deployments.id eq id and Deployments.targetGeneration.isNull() }) {
+                it[targetGeneration] = version
             }
         }
     }
@@ -356,7 +349,7 @@ class DeploymentService(
     suspend fun deleteFailedDeploy(id: UUID): Int {
         return dbQuery {
             Deployments.deleteWhere {
-                Deployments.id eq id and targetResourceVersion.isNull()
+                Deployments.id eq id and targetGeneration.isNull()
             }
         }
     }
@@ -365,14 +358,14 @@ class DeploymentService(
         val id: UUID,
         val namespace: String,
         val service: String,
-        val resourceVersion: String
+        val generation: Long
     )
 
     suspend fun heart() {
         val targets = dbQuery {
             Deployments.selectAll()
                 .where {
-                    Deployments.targetResourceVersion.isNotNull()
+                    Deployments.targetGeneration.isNotNull()
                 }
                 .andWhere {
                     // 10秒前部署的
@@ -389,7 +382,7 @@ class DeploymentService(
                         it[Deployments.id].value,
                         it[Deployments.env].value,
                         it[Deployments.service].value,
-                        it[Deployments.targetResourceVersion]!!
+                        it[Deployments.targetGeneration]!!
                     )
                 }
         }
@@ -402,8 +395,8 @@ class DeploymentService(
                 .get()
             logger.debug { "获取到 Deployment:$current" }
             if (current != null) {
-                if (current.metadata.resourceVersion != dc.resourceVersion) {
-                    logger.info { "目标部署物:$dc 已经过时;应该的版本号:${dc.resourceVersion} 实际的版本号:${current.metadata.resourceVersion}" }
+                if (current.metadata.generation != dc.generation) {
+                    logger.info { "目标部署物:$dc 已经过时;应该的版本号:${dc.generation} 实际的版本号:${current.metadata.generation}" }
                     dbQuery {
                         Deployments.update({ Deployments.id eq dc.id }) {
                             it[expiredVersion] = true

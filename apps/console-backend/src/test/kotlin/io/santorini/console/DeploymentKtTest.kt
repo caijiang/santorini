@@ -220,9 +220,9 @@ class DeploymentKtTest {
                 val deploymentId = body<Uuid>()
                 deploymentId.shouldNotBeNull()
 
-                manager.put("https://localhost/deployments/$deploymentId/targetResourceVersion") {
+                manager.put("https://localhost/deployments/$deploymentId/targetGeneration") {
                     contentType(ContentType.Application.Json)
-                    setBody(deploymentId.toString())
+                    setBody(1010101L.toString())
                 }.apply {
                     status shouldBe HttpStatusCode.NoContent
                 }
@@ -241,10 +241,10 @@ class DeploymentKtTest {
             .apply {
                 status shouldBe HttpStatusCode.OK
                 val deploymentDeployData = body<DeploymentDeployData>()
-                deploymentDeployData.targetResourceVersion.shouldNotBeNull()
+                deploymentDeployData.targetGeneration.shouldNotBeNull()
                 deploymentDeployData.serviceDataSnapshot.shouldNotBeNull()
                 deploymentDeployData.copy(
-                    targetResourceVersion = null,
+                    targetGeneration = null,
                     serviceDataSnapshot = null
                 ) shouldBe deployData.copy(
                     resourcesSupply = mapOf(

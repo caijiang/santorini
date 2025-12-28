@@ -11,5 +11,6 @@ fun Application.configureConsole(kubernetesClient: KubernetesClient) {
     configureConsoleHost()
     configureConsoleDeployment()
     configureConsoleMisc(kubernetesClient)
+    configureConsoleCrossKubernetes(kubernetesClient)
     configureConsoleUser()
 }

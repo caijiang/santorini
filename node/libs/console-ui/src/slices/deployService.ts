@@ -1,4 +1,4 @@
-import { createAsyncThunk, GetThunkAPI } from '@reduxjs/toolkit';
+import { createAsyncThunk, Dispatch, GetThunkAPI } from '@reduxjs/toolkit';
 import { DeploymentDeployData, ServiceConfigData } from '../apis/service';
 import { CUEnv } from '../apis/env';
 import { kubeServiceApi } from '../apis/kubernetes/service';
@@ -9,6 +9,7 @@ import { compare } from 'fast-json-patch';
 import { deploymentApi, usePreDeployMutation } from '../apis/deployment';
 import { Rule } from 'eslint';
 import { FieldProps } from 'rc-field-form/lib/Field';
+import { dispatchThunkActionThrowIfError } from '../common/rtk';
 
 export interface ServiceDeployToKubernetesProps {
   service: ServiceConfigData;
@@ -64,6 +65,44 @@ async function findServiceInstanceInKubernetes(
 type Rules = Required<FieldProps['rules']>;
 type ExtractRule<T> = T extends Array<infer U> ? U : never;
 type Rule = ExtractRule<Rules>;
+
+export function imageRule(
+  serviceId: string,
+  envId: string,
+  pullSecretName: string[] | undefined,
+  dispatch: Dispatch<any>,
+  warnMessageConsumer?: (message: string) => void
+): Rule {
+  return {
+    validator: async (_, value: string) => {
+      if (!value) return Promise.resolve();
+      const st = value.split(':', 2);
+      const ps = await dispatchThunkActionThrowIfError(
+        dispatch,
+        deploymentApi.endpoints.preDeploy.initiate({
+          serviceId,
+          envId,
+          data: {
+            pullSecretName,
+            imageRepository: st[0],
+            imageTag: st.length > 1 ? st[1] : undefined,
+          },
+        })
+      );
+      if (ps.warnMessage) {
+        warnMessageConsumer?.(ps.warnMessage);
+      }
+      if (!ps.imageDigest) {
+        return Promise.reject(`镜像无法找到，可能原因：${ps.warnMessage}`);
+      }
+      if (!ps.imagePlatformMatch || !ps.successfulEnvs) {
+        return Promise.reject(`镜像无法使用，可能原因：${ps.warnMessage}`);
+      }
+      return Promise.resolve();
+    },
+  };
+}
+
 // 有可能是输入了全部,
 // imageRepository: string
 // imageTag?: string
@@ -230,11 +269,11 @@ export const deployToKubernetes = createAsyncThunk(
         }
       }
       console.debug('kubernetes 部署结果:', deploymentResult);
-      if (deploymentResult?.metadata?.resourceVersion) {
+      if (deploymentResult?.metadata?.generation !== undefined) {
         await dispatch(
           deploymentApi.endpoints.reportDeployResult.initiate({
             id: result,
-            resourceVersion: deploymentResult?.metadata?.resourceVersion,
+            generation: `${deploymentResult?.metadata?.generation}`,
           })
         ).unwrap();
       }

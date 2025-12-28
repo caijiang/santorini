@@ -1,6 +1,7 @@
 import {
   PageContainer,
   ProForm,
+  ProFormDependency,
   ProFormSelect,
   ProFormText,
 } from '@ant-design/pro-components';
@@ -10,14 +11,14 @@ import {
   keyOfResourceRequirement,
   useServiceByIdQuery,
 } from '../../apis/service';
-import { useSecretByNamespaceQuery } from '../../apis/kubernetes/common';
 import { arrayToProSchemaValueEnumMap } from '../../common/ktor';
 import { useDispatch } from 'react-redux';
-import { deployToKubernetes } from '../../slices/deployService';
+import { deployToKubernetes, imageRule } from '../../slices/deployService';
 import { App } from 'antd';
 import { dispatchAsyncThunkActionThrowIfError } from '../../common/rtk';
 import ResourceRequirementFormField from '../../components/deploy/ResourceRequirementFormField';
 import { useLastReleaseQuery } from '../../apis/deployment';
+import { useDockerConfigJsonSecretNamesQuery } from '../../apis/env';
 
 export default () => {
   // 作为一个部署服务的专用页面
@@ -26,7 +27,7 @@ export default () => {
   const env = useEnv(envId);
   const { data: service, isLoading } = useServiceByIdQuery(serviceId!!);
   // 获取密钥
-  const { data: secrets } = useSecretByNamespaceQuery(envId!!);
+  const { data: secrets } = useDockerConfigJsonSecretNamesQuery(envId!!);
   // 获取环境资源
   const { data: lastReleaseSummary, isLoading: lastReleaseLoading } =
     useLastReleaseQuery({
@@ -74,22 +75,34 @@ export default () => {
             }
           }}
         >
-          <ProFormText
-            name={'image'}
-            label={'部署镜像'}
-            rules={[{ required: true }]}
-          />
-          {/*<ProFormSegmented name={"abc"} />*/}
           <ProFormSelect
             mode={'multiple'}
             name={'pullSecretName'}
             label={'拉取镜像密钥'}
             // tooltip={'tooltip'}
             valueEnum={
-              secrets &&
-              arrayToProSchemaValueEnumMap((it) => it.metadata?.name!!, secrets)
+              secrets && arrayToProSchemaValueEnumMap((it) => it, secrets)
             }
           />
+          <ProFormDependency name={['pullSecretName']}>
+            {({ pullSecretName }) => (
+              <ProFormText
+                name={'image'}
+                label={'部署镜像'}
+                rules={[
+                  { required: true },
+                  imageRule(
+                    serviceId!!,
+                    envId!!,
+                    pullSecretName,
+                    dispatch,
+                    (msg) => message.warning(msg)
+                  ),
+                ]}
+              />
+            )}
+          </ProFormDependency>
+
           {service?.requirements?.map((rr) => (
             <ResourceRequirementFormField
               key={keyOfResourceRequirement(rr)}

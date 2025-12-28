@@ -86,23 +86,6 @@ export const commonApi = createApi({
           }),
         }
       ),
-      // 专门找 pullImageSecret 的
-      secretByNamespace: build.query<ISecret[], string, ISecretList>({
-        providesTags: ['Secrets'],
-        transformResponse: (baseQueryReturnValue) => {
-          return (
-            baseQueryReturnValue?.items?.filter(
-              (it) => !it?.metadata?.labels?.['santorini.io/resource-type']
-            ) ?? []
-          );
-        },
-        query: (arg) => ({
-          url: `/api/v1/namespaces/${arg}/secrets`,
-          params: {
-            labelSelector: 'santorini.io/manageable=true',
-          },
-        }),
-      }),
       createNamespace: build.mutation<undefined, ModelData<INamespace>>({
         invalidatesTags: ['Namespaces'],
         query: (arg) => ({
@@ -138,7 +121,6 @@ export const commonApi = createApi({
 
 export const {
   useNamespacesQuery,
-  useSecretByNamespaceQuery,
   useConfigMapsQuery,
   useCreateNamespaceMutation,
   useCreateConfigMapMutation,

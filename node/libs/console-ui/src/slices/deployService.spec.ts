@@ -199,7 +199,7 @@ describe('部署服务', () => {
         expect.objectContaining({ type: 'service/deployToKubernetes/pending' })
       );
       expect(commonDispatch).toHaveBeenNthCalledWith(
-        8,
+        7,
         expect.objectContaining({
           type: 'service/deployToKubernetes/fulfilled',
         })
@@ -255,7 +255,7 @@ describe('部署服务', () => {
       expect.objectContaining({ type: 'service/deployToKubernetes/pending' })
     );
     expect(dispatch).toHaveBeenNthCalledWith(
-      8,
+      7,
       expect.objectContaining({
         type: 'service/deployToKubernetes/fulfilled',
       })

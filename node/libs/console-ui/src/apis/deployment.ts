@@ -115,13 +115,13 @@ export const deploymentApi = createApi({
        */
       reportDeployResult: build.mutation<
         undefined,
-        { id: string; resourceVersion: string }
+        { id: string; generation: string }
       >({
         invalidatesTags: ['Deployments'],
-        query: ({ id, resourceVersion }) => ({
+        query: ({ id, generation }) => ({
           method: 'PUT',
-          url: `/deployments/${id}/targetResourceVersion`,
-          body: resourceVersion,
+          url: `/deployments/${id}/targetGeneration`,
+          body: generation,
           headers: {
             'Content-Type': 'text/plain',
           },
