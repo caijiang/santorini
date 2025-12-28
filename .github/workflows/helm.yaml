@@ -1,0 +1,30 @@
+name: CD / Helm
+
+on:
+  push:
+    paths:
+      - '.github/workflows/helm.yml'
+      - 'charts/**'
+    branches:
+      - main
+
+jobs:
+  helm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.6.0
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          mark_as_latest: true
+          skip_existing: true
