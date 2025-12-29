@@ -55,16 +55,7 @@ spec:
               if [ ${MYSQL_CREATE_DATABASE} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;"; fi
               if [ ${MYSQL_CREATE_USERNAME} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "$SQL_C"; fi
               if [ ${MYSQL_CREATE_USERNAME} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "$SQL_G"; fi
-        - name: init-env
-          image: busybox
-          imagePullPolicy: IfNotPresent
-          command:
-            - sh
-            - -c
-            - echo "DYNAMIC_VALUE=$(date +%s)" > /work/envfile
-          volumeMounts:
-            - name: shared-data
-              mountPath: /work
+        
       containers:
         #  ctr -n k8s.io image import --base-name “santorini-console-backend:latest” /root/jib-image.tar
         #  docker image load -i /root/jib-image.tar
@@ -128,6 +119,7 @@ spec:
           volumeMounts:
             - name: shared-data
               mountPath: /work
+        {{- if .Values.santorini.debugWithShell }}
         - name: jshell
           image: jshell-auto-v2:latest
           imagePullPolicy: IfNotPresent
@@ -146,3 +138,4 @@ spec:
             - -c
             - |
               sleep 360000
+        {{- end }}

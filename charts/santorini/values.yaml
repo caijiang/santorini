@@ -7,6 +7,7 @@ domain: ""
 #namespace: "kube-santorini"
 
 santorini:
+  debugWithShell: false
   tolerations: []
   nacos:
     # 如果想自行定义host
