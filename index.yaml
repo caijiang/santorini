@@ -3,6 +3,26 @@ entries:
   santorini:
   - apiVersion: v2
     appVersion: 0.2.0
+    created: "2025-12-29T09:27:14.39363566Z"
+    dependencies:
+    - name: common
+      repository: oci://registry-1.docker.io/bitnamicharts
+      tags:
+      - bitnami-common
+      version: 2.x.x
+    - condition: santorini.mysql.enable
+      name: mysql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ~14.0.0
+    description: santorini for Kubernetes
+    digest: 4ce2b51e089ecb671e766d391121b9d439b056f54ae8e3bc84d6a50e357c77f8
+    name: santorini
+    type: application
+    urls:
+    - https://github.com/caijiang/santorini/releases/download/santorini-0.2.2/santorini-0.2.2.tgz
+    version: 0.2.2
+  - apiVersion: v2
+    appVersion: 0.2.0
     created: "2025-12-29T07:28:26.515825769Z"
     dependencies:
     - name: common
@@ -61,4 +81,4 @@ entries:
     urls:
     - https://github.com/caijiang/santorini/releases/download/santorini-0.1.1/santorini-0.1.1.tgz
     version: 0.1.1
-generated: "2025-12-29T07:28:26.51584769Z"
+generated: "2025-12-29T09:27:14.393649135Z"
