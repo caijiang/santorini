@@ -1,24 +1,23 @@
-import {Alert, Button, message, Skeleton, Space, theme} from "antd";
-import React, {ReactNode, useEffect, useState} from "react";
+import { Alert, Button, message, Skeleton, Space, theme } from 'antd';
+import React, { ReactNode, useEffect, useState } from 'react';
 import styles from './index.module.css';
-import {LoginForm, ProFormText} from "@ant-design/pro-components";
-import {LockOutlined, SecurityScanOutlined, UserOutlined} from "@ant-design/icons";
-import logo from '../../assets/logo.svg'
+import { LoginForm, ProFormText } from '@ant-design/pro-components';
+import {
+  LockOutlined,
+  SecurityScanOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+import logo from '../../assets/logo.svg';
 import {
   authenticatePasskey,
   globalNavigate,
   passkeyAvailable,
   useAuthenticatePasskeyMutation,
-  useAuthenticationWorkStatusQuery
-} from "@private-everest/app-support";
+  useAuthenticationWorkStatusQuery,
+} from '@private-everest/app-support';
 
-const LoginMessage = ({content}: { content: ReactNode }) => (
-  <Alert
-    style={{marginBottom: 24}}
-    message={content}
-    type="error"
-    showIcon
-  />
+const LoginMessage = ({ content }: { content: ReactNode }) => (
+  <Alert style={{ marginBottom: 24 }} message={content} type="error" showIcon />
 );
 const useToken = theme.useToken
 
@@ -52,7 +51,7 @@ const Login = () => {
   // 目前阶段我们只提供了一种登录方式
   useEffect(() => {
     console.warn("跳转到登录目录")
-    location.href = "https://op.k8s.mingshz.com/loginFeishu";
+    location.href = '/loginFeishu';
   }, [])
 
 
