@@ -1,8 +1,8 @@
 import { useNamespacesQuery } from '../apis/kubernetes/common';
-import { useEnvsQuery } from '../apis/env';
+import { CUEnv, useEnvsQuery } from '../apis/env';
 import { useCurrentLoginUserQuery } from '@private-everest/app-support';
 
-export function useEnvs() {
+export function useEnvs(): CUEnv[] | undefined {
   const { data: currentUser } = useCurrentLoginUserQuery(undefined);
   const loginAsManager =
     currentUser?.grantAuthorities?.includes('ROLE_MANAGER');
@@ -25,6 +25,17 @@ export function useEnvs() {
   const { data: ee } = useEnvsQuery(ids, {
     skip: skipQueryEnvs,
   });
+  // 如果存在 data 而且存在 ee, 同时 ee 并不包含 data 则添加一条
+  if (ids && ee) {
+    const notInEE = ids
+      .filter((it) => ee.every((e1) => e1.id != it.name))
+      .map((it) => ({
+        id: it.name!!,
+        name: it.name!!,
+        production: false,
+      }));
+    return [...ee, ...notInEE];
+  }
   return ee;
 }
 
