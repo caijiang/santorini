@@ -1,7 +1,7 @@
 *.output
 charts/*.tgz
 
-developments/staging_values.yaml
+developments/staging*_values.yaml
 
 # wget   https://raw.githubusercontent.com/alibaba/nacos/3.0.2/distribution/conf/mysql-schema.sql
 files/*.sql
