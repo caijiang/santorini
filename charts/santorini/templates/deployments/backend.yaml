@@ -20,6 +20,10 @@ spec:
         {{- include "common.labels.withoutName" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "common.santoriniName" . }}
+      {{- with .Values.santorini.tolerations }}
+      tolerations:
+      {{ toYaml . | nindent 8 }}
+      {{- end }}
       volumes:
         - name: shared-data
           emptyDir: { }

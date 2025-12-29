@@ -17,6 +17,10 @@ spec:
         {{- include "common.labels.withoutName" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "common.santoriniName" . }}
+      {{- with .Values.santorini.tolerations }}
+      tolerations:
+      {{ toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: main
           image: {{ template "frontend.image" . }}
