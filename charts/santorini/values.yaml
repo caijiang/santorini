@@ -14,8 +14,17 @@ santorini:
     host: ""
     # 证书颁发者
     issuerName: ""
-    # 单独安装 nacos, 前提是 mysql 是内置的
+    # 单独安装 nacos
+    # , 前提是 mysql 是内置的 这句话要取消
     enabled: true
+    # 支持外部 mysql
+    externalMysql: 
+      enabled: false
+      host: ""
+      port: 3306
+      name: "nacos"
+      username: "nacos"
+      password: ""
     image:
       registry: docker.io
       repository: nacos/nacos-server

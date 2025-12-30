@@ -1,0 +1,339 @@
+外部mysql的Secret稿子:
+  1: |
+    apiVersion: v1
+    data:
+      password: RVA=
+      sql: LyoKICogQ29weXJpZ2h0IDE5OTktMjAxOCBBbGliYWJhIEdyb3VwIEhvbGRpbmcgTHRkLgogKgogKiBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UsIFZlcnNpb24gMi4wICh0aGUgIkxpY2Vuc2UiKTsKICogeW91IG1heSBub3QgdXNlIHRoaXMgZmlsZSBleGNlcHQgaW4gY29tcGxpYW5jZSB3aXRoIHRoZSBMaWNlbnNlLgogKiBZb3UgbWF5IG9idGFpbiBhIGNvcHkgb2YgdGhlIExpY2Vuc2UgYXQKICoKICogICAgICBodHRwOi8vd3d3LmFwYWNoZS5vcmcvbGljZW5zZXMvTElDRU5TRS0yLjAKICoKICogVW5sZXNzIHJlcXVpcmVkIGJ5IGFwcGxpY2FibGUgbGF3IG9yIGFncmVlZCB0byBpbiB3cml0aW5nLCBzb2Z0d2FyZQogKiBkaXN0cmlidXRlZCB1bmRlciB0aGUgTGljZW5zZSBpcyBkaXN0cmlidXRlZCBvbiBhbiAiQVMgSVMiIEJBU0lTLAogKiBXSVRIT1VUIFdBUlJBTlRJRVMgT1IgQ09ORElUSU9OUyBPRiBBTlkgS0lORCwgZWl0aGVyIGV4cHJlc3Mgb3IgaW1wbGllZC4KICogU2VlIHRoZSBMaWNlbnNlIGZvciB0aGUgc3BlY2lmaWMgbGFuZ3VhZ2UgZ292ZXJuaW5nIHBlcm1pc3Npb25zIGFuZAogKiBsaW1pdGF0aW9ucyB1bmRlciB0aGUgTGljZW5zZS4KICovCgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwovKiAgIOihqOWQjeensCA9IGNvbmZpZ19pbmZvICAgICAgICAgICAgICAgICAgKi8KLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KQ1JFQVRFIFRBQkxFIGBjb25maWdfaW5mb2AgKAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGlkYCBiaWdpbnQoMjApIE5PVCBOVUxMIEFVVE9fSU5DUkVNRU5UIENPTU1FTlQgJ2lkJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBkYXRhX2lkYCB2YXJjaGFyKDI1NSkgTk9UIE5VTEwgQ09NTUVOVCAnZGF0YV9pZCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgZ3JvdXBfaWRgIHZhcmNoYXIoMTI4KSBERUZBVUxUIE5VTEwgQ09NTUVOVCAnZ3JvdXBfaWQnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGNvbnRlbnRgIGxvbmd0ZXh0IE5PVCBOVUxMIENPTU1FTlQgJ2NvbnRlbnQnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYG1kNWAgdmFyY2hhcigzMikgREVGQVVMVCBOVUxMIENPTU1FTlQgJ21kNScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgZ210X2NyZWF0ZWAgZGF0ZXRpbWUgTk9UIE5VTEwgREVGQVVMVCBDVVJSRU5UX1RJTUVTVEFNUCBDT01NRU5UICfliJvlu7rml7bpl7QnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGdtdF9tb2RpZmllZGAgZGF0ZXRpbWUgTk9UIE5VTEwgREVGQVVMVCBDVVJSRU5UX1RJTUVTVEFNUCBDT01NRU5UICfkv67mlLnml7bpl7QnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYHNyY191c2VyYCB0ZXh0IENPTU1FTlQgJ3NvdXJjZSB1c2VyJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBzcmNfaXBgIHZhcmNoYXIoNTApIERFRkFVTFQgTlVMTCBDT01NRU5UICdzb3VyY2UgaXAnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGFwcF9uYW1lYCB2YXJjaGFyKDEyOCkgREVGQVVMVCBOVUxMIENPTU1FTlQgJ2FwcF9uYW1lJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGB0ZW5hbnRfaWRgIHZhcmNoYXIoMTI4KSBERUZBVUxUICcnIENPTU1FTlQgJ+enn+aIt+Wtl+autScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgY19kZXNjYCB2YXJjaGFyKDI1NikgREVGQVVMVCBOVUxMIENPTU1FTlQgJ2NvbmZpZ3VyYXRpb24gZGVzY3JpcHRpb24nLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGNfdXNlYCB2YXJjaGFyKDY0KSBERUZBVUxUIE5VTEwgQ09NTUVOVCAnY29uZmlndXJhdGlvbiB1c2FnZScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgZWZmZWN0YCB2YXJjaGFyKDY0KSBERUZBVUxUIE5VTEwgQ09NTUVOVCAn6YWN572u55Sf5pWI55qE5o+P6L+wJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGB0eXBlYCB2YXJjaGFyKDY0KSBERUZBVUxUIE5VTEwgQ09NTUVOVCAn6YWN572u55qE57G75Z6LJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBjX3NjaGVtYWAgdGV4dCBDT01NRU5UICfphY3nva7nmoTmqKHlvI8nLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGVuY3J5cHRlZF9kYXRhX2tleWAgdmFyY2hhcigxMDI0KSBOT1QgTlVMTCBERUZBVUxUICcnIENPTU1FTlQgJ+WvhumSpScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBQUklNQVJZIEtFWSAoYGlkYCksCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBVTklRVUUgS0VZIGB1a19jb25maWdpbmZvX2RhdGFncm91cHRlbmFudGAgKGBkYXRhX2lkYCxgZ3JvdXBfaWRgLGB0ZW5hbnRfaWRgKQopIEVOR0lORT1Jbm5vREIgREVGQVVMVCBDSEFSU0VUPXV0ZjggQ09MTEFURT11dGY4X2JpbiBDT01NRU5UPSdjb25maWdfaW5mbyc7CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwovKiAgIOihqOWQjeensCA9IGNvbmZpZ19pbmZvICBzaW5jZSAyLjUuMCAgICAgICAgICAgICAgICAqLwovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwpDUkVBVEUgVEFCTEUgYGNvbmZpZ19pbmZvX2dyYXlgICgKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGlkYCBiaWdpbnQgdW5zaWduZWQgTk9UIE5VTEwgQVVUT19JTkNSRU1FTlQgQ09NTUVOVCAnaWQnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgZGF0YV9pZGAgdmFyY2hhcigyNTUpIE5PVCBOVUxMIENPTU1FTlQgJ2RhdGFfaWQnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgZ3JvdXBfaWRgIHZhcmNoYXIoMTI4KSBOT1QgTlVMTCBDT01NRU5UICdncm91cF9pZCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBjb250ZW50YCBsb25ndGV4dCBOT1QgTlVMTCBDT01NRU5UICdjb250ZW50JywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYG1kNWAgdmFyY2hhcigzMikgREVGQVVMVCBOVUxMIENPTU1FTlQgJ21kNScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBzcmNfdXNlcmAgdGV4dCBDT01NRU5UICdzcmNfdXNlcicsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBzcmNfaXBgIHZhcmNoYXIoMTAwKSBERUZBVUxUIE5VTEwgQ09NTUVOVCAnc3JjX2lwJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGdtdF9jcmVhdGVgIGRhdGV0aW1lKDMpIE5PVCBOVUxMIERFRkFVTFQgQ1VSUkVOVF9USU1FU1RBTVAoMykgQ09NTUVOVCAnZ210X2NyZWF0ZScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBnbXRfbW9kaWZpZWRgIGRhdGV0aW1lKDMpIE5PVCBOVUxMIERFRkFVTFQgQ1VSUkVOVF9USU1FU1RBTVAoMykgQ09NTUVOVCAnZ210X21vZGlmaWVkJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGFwcF9uYW1lYCB2YXJjaGFyKDEyOCkgREVGQVVMVCBOVUxMIENPTU1FTlQgJ2FwcF9uYW1lJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYHRlbmFudF9pZGAgdmFyY2hhcigxMjgpIERFRkFVTFQgJycgQ09NTUVOVCAndGVuYW50X2lkJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGdyYXlfbmFtZWAgdmFyY2hhcigxMjgpIE5PVCBOVUxMIENPTU1FTlQgJ2dyYXlfbmFtZScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBncmF5X3J1bGVgIHRleHQgTk9UIE5VTEwgQ09NTUVOVCAnZ3JheV9ydWxlJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGVuY3J5cHRlZF9kYXRhX2tleWAgdmFyY2hhcigyNTYpIE5PVCBOVUxMIERFRkFVTFQgJycgQ09NTUVOVCAnZW5jcnlwdGVkX2RhdGFfa2V5JywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgUFJJTUFSWSBLRVkgKGBpZGApLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBVTklRVUUgS0VZIGB1a19jb25maWdpbmZvZ3JheV9kYXRhZ3JvdXB0ZW5hbnRncmF5YCAoYGRhdGFfaWRgLGBncm91cF9pZGAsYHRlbmFudF9pZGAsYGdyYXlfbmFtZWApLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBLRVkgYGlkeF9kYXRhaWRfZ210X21vZGlmaWVkYCAoYGRhdGFfaWRgLGBnbXRfbW9kaWZpZWRgKSwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgS0VZIGBpZHhfZ210X21vZGlmaWVkYCAoYGdtdF9tb2RpZmllZGApCikgRU5HSU5FPUlubm9EQiBBVVRPX0lOQ1JFTUVOVD0xIERFRkFVTFQgQ0hBUlNFVD11dGY4IENPTU1FTlQ9J2NvbmZpZ19pbmZvX2dyYXknOwoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLyogICDooajlkI3np7AgPSBjb25maWdfdGFnc19yZWxhdGlvbiAgICAgICAgICovCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCkNSRUFURSBUQUJMRSBgY29uZmlnX3RhZ3NfcmVsYXRpb25gICgKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBpZGAgYmlnaW50KDIwKSBOT1QgTlVMTCBDT01NRU5UICdpZCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgdGFnX25hbWVgIHZhcmNoYXIoMTI4KSBOT1QgTlVMTCBDT01NRU5UICd0YWdfbmFtZScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgdGFnX3R5cGVgIHZhcmNoYXIoNjQpIERFRkFVTFQgTlVMTCBDT01NRU5UICd0YWdfdHlwZScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgZGF0YV9pZGAgdmFyY2hhcigyNTUpIE5PVCBOVUxMIENPTU1FTlQgJ2RhdGFfaWQnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGdyb3VwX2lkYCB2YXJjaGFyKDEyOCkgTk9UIE5VTEwgQ09NTUVOVCAnZ3JvdXBfaWQnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYHRlbmFudF9pZGAgdmFyY2hhcigxMjgpIERFRkFVTFQgJycgQ09NTUVOVCAndGVuYW50X2lkJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBuaWRgIGJpZ2ludCgyMCkgTk9UIE5VTEwgQVVUT19JTkNSRU1FTlQgQ09NTUVOVCAnbmlkLCDoh6rlop7plb/moIfor4YnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgUFJJTUFSWSBLRVkgKGBuaWRgKSwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFVOSVFVRSBLRVkgYHVrX2NvbmZpZ3RhZ3JlbGF0aW9uX2NvbmZpZ2lkdGFnYCAoYGlkYCxgdGFnX25hbWVgLGB0YWdfdHlwZWApLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgS0VZIGBpZHhfdGVuYW50X2lkYCAoYHRlbmFudF9pZGApCikgRU5HSU5FPUlubm9EQiBERUZBVUxUIENIQVJTRVQ9dXRmOCBDT0xMQVRFPXV0ZjhfYmluIENPTU1FTlQ9J2NvbmZpZ190YWdfcmVsYXRpb24nOwoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLyogICDooajlkI3np7AgPSBncm91cF9jYXBhY2l0eSAgICAgICAgICAgICAgICovCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCkNSRUFURSBUQUJMRSBgZ3JvdXBfY2FwYWNpdHlgICgKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBpZGAgYmlnaW50KDIwKSB1bnNpZ25lZCBOT1QgTlVMTCBBVVRPX0lOQ1JFTUVOVCBDT01NRU5UICfkuLvplK5JRCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgZ3JvdXBfaWRgIHZhcmNoYXIoMTI4KSBOT1QgTlVMTCBERUZBVUxUICcnIENPTU1FTlQgJ0dyb3VwIElE77yM56m65a2X56ym6KGo56S65pW05Liq6ZuG576kJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBxdW90YWAgaW50KDEwKSB1bnNpZ25lZCBOT1QgTlVMTCBERUZBVUxUICcwJyBDT01NRU5UICfphY3pop3vvIww6KGo56S65L2/55So6buY6K6k5YC8JywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGB1c2FnZWAgaW50KDEwKSB1bnNpZ25lZCBOT1QgTlVMTCBERUZBVUxUICcwJyBDT01NRU5UICfkvb/nlKjph48nLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYG1heF9zaXplYCBpbnQoMTApIHVuc2lnbmVkIE5PVCBOVUxMIERFRkFVTFQgJzAnIENPTU1FTlQgJ+WNleS4qumFjee9ruWkp+Wwj+S4iumZkO+8jOWNleS9jeS4uuWtl+iKgu+8jDDooajnpLrkvb/nlKjpu5jorqTlgLwnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYG1heF9hZ2dyX2NvdW50YCBpbnQoMTApIHVuc2lnbmVkIE5PVCBOVUxMIERFRkFVTFQgJzAnIENPTU1FTlQgJ+iBmuWQiOWtkOmFjee9ruacgOWkp+S4quaVsO+8jO+8jDDooajnpLrkvb/nlKjpu5jorqTlgLwnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYG1heF9hZ2dyX3NpemVgIGludCgxMCkgdW5zaWduZWQgTk9UIE5VTEwgREVGQVVMVCAnMCcgQ09NTUVOVCAn5Y2V5Liq6IGa5ZCI5pWw5o2u55qE5a2Q6YWN572u5aSn5bCP5LiK6ZmQ77yM5Y2V5L2N5Li65a2X6IqC77yMMOihqOekuuS9v+eUqOm7mOiupOWAvCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgbWF4X2hpc3RvcnlfY291bnRgIGludCgxMCkgdW5zaWduZWQgTk9UIE5VTEwgREVGQVVMVCAnMCcgQ09NTUVOVCAn5pyA5aSn5Y+Y5pu05Y6G5Y+y5pWw6YePJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBnbXRfY3JlYXRlYCBkYXRldGltZSBOT1QgTlVMTCBERUZBVUxUIENVUlJFTlRfVElNRVNUQU1QIENPTU1FTlQgJ+WIm+W7uuaXtumXtCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgZ210X21vZGlmaWVkYCBkYXRldGltZSBOT1QgTlVMTCBERUZBVUxUIENVUlJFTlRfVElNRVNUQU1QIENPTU1FTlQgJ+S/ruaUueaXtumXtCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBQUklNQVJZIEtFWSAoYGlkYCksCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBVTklRVUUgS0VZIGB1a19ncm91cF9pZGAgKGBncm91cF9pZGApCikgRU5HSU5FPUlubm9EQiBERUZBVUxUIENIQVJTRVQ9dXRmOCBDT0xMQVRFPXV0ZjhfYmluIENPTU1FTlQ9J+mbhue+pOOAgeWQhEdyb3Vw5a656YeP5L+h5oGv6KGoJzsKCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi8qICAg6KGo5ZCN56ewID0gaGlzX2NvbmZpZ19pbmZvICAgICAgICAgICAgICAqLwovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwpDUkVBVEUgVEFCTEUgYGhpc19jb25maWdfaW5mb2AgKAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBpZGAgYmlnaW50KDIwKSB1bnNpZ25lZCBOT1QgTlVMTCBDT01NRU5UICdpZCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYG5pZGAgYmlnaW50KDIwKSB1bnNpZ25lZCBOT1QgTlVMTCBBVVRPX0lOQ1JFTUVOVCBDT01NRU5UICduaWQsIOiHquWinuagh+ivhicsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGRhdGFfaWRgIHZhcmNoYXIoMjU1KSBOT1QgTlVMTCBDT01NRU5UICdkYXRhX2lkJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgZ3JvdXBfaWRgIHZhcmNoYXIoMTI4KSBOT1QgTlVMTCBDT01NRU5UICdncm91cF9pZCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGFwcF9uYW1lYCB2YXJjaGFyKDEyOCkgREVGQVVMVCBOVUxMIENPTU1FTlQgJ2FwcF9uYW1lJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgY29udGVudGAgbG9uZ3RleHQgTk9UIE5VTEwgQ09NTUVOVCAnY29udGVudCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYG1kNWAgdmFyY2hhcigzMikgREVGQVVMVCBOVUxMIENPTU1FTlQgJ21kNScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGdtdF9jcmVhdGVgIGRhdGV0aW1lIE5PVCBOVUxMIERFRkFVTFQgQ1VSUkVOVF9USU1FU1RBTVAgQ09NTUVOVCAn5Yib5bu65pe26Ze0JywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgZ210X21vZGlmaWVkYCBkYXRldGltZSBOT1QgTlVMTCBERUZBVUxUIENVUlJFTlRfVElNRVNUQU1QIENPTU1FTlQgJ+S/ruaUueaXtumXtCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYHNyY191c2VyYCB0ZXh0IENPTU1FTlQgJ3NvdXJjZSB1c2VyJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgc3JjX2lwYCB2YXJjaGFyKDUwKSBERUZBVUxUIE5VTEwgQ09NTUVOVCAnc291cmNlIGlwJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgb3BfdHlwZWAgY2hhcigxMCkgREVGQVVMVCBOVUxMIENPTU1FTlQgJ29wZXJhdGlvbiB0eXBlJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgdGVuYW50X2lkYCB2YXJjaGFyKDEyOCkgREVGQVVMVCAnJyBDT01NRU5UICfnp5/miLflrZfmrrUnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBlbmNyeXB0ZWRfZGF0YV9rZXlgIHZhcmNoYXIoMTAyNCkgTk9UIE5VTEwgREVGQVVMVCAnJyBDT01NRU5UICflr4bpkqUnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBwdWJsaXNoX3R5cGVgIHZhcmNoYXIoNTApICBERUZBVUxUICdmb3JtYWwnIENPTU1FTlQgJ3B1Ymxpc2ggdHlwZSBncmF5IG9yIGZvcm1hbCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGdyYXlfbmFtZWAgdmFyY2hhcig1MCkgIERFRkFVTFQgTlVMTCBDT01NRU5UICdncmF5IG5hbWUnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBleHRfaW5mb2AgIGxvbmd0ZXh0IERFRkFVTFQgTlVMTCBDT01NRU5UICdleHQgaW5mbycsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgUFJJTUFSWSBLRVkgKGBuaWRgKSwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBLRVkgYGlkeF9nbXRfY3JlYXRlYCAoYGdtdF9jcmVhdGVgKSwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBLRVkgYGlkeF9nbXRfbW9kaWZpZWRgIChgZ210X21vZGlmaWVkYCksCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgS0VZIGBpZHhfZGlkYCAoYGRhdGFfaWRgKQopIEVOR0lORT1Jbm5vREIgREVGQVVMVCBDSEFSU0VUPXV0ZjggQ09MTEFURT11dGY4X2JpbiBDT01NRU5UPSflpJrnp5/miLfmlLnpgKAnOwoKCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi8qICAg6KGo5ZCN56ewID0gdGVuYW50X2NhcGFjaXR5ICAgICAgICAgICAgICAqLwovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwpDUkVBVEUgVEFCTEUgYHRlbmFudF9jYXBhY2l0eWAgKAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBpZGAgYmlnaW50KDIwKSB1bnNpZ25lZCBOT1QgTlVMTCBBVVRPX0lOQ1JFTUVOVCBDT01NRU5UICfkuLvplK5JRCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYHRlbmFudF9pZGAgdmFyY2hhcigxMjgpIE5PVCBOVUxMIERFRkFVTFQgJycgQ09NTUVOVCAnVGVuYW50IElEJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgcXVvdGFgIGludCgxMCkgdW5zaWduZWQgTk9UIE5VTEwgREVGQVVMVCAnMCcgQ09NTUVOVCAn6YWN6aKd77yMMOihqOekuuS9v+eUqOm7mOiupOWAvCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYHVzYWdlYCBpbnQoMTApIHVuc2lnbmVkIE5PVCBOVUxMIERFRkFVTFQgJzAnIENPTU1FTlQgJ+S9v+eUqOmHjycsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYG1heF9zaXplYCBpbnQoMTApIHVuc2lnbmVkIE5PVCBOVUxMIERFRkFVTFQgJzAnIENPTU1FTlQgJ+WNleS4qumFjee9ruWkp+Wwj+S4iumZkO+8jOWNleS9jeS4uuWtl+iKgu+8jDDooajnpLrkvb/nlKjpu5jorqTlgLwnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBtYXhfYWdncl9jb3VudGAgaW50KDEwKSB1bnNpZ25lZCBOT1QgTlVMTCBERUZBVUxUICcwJyBDT01NRU5UICfogZrlkIjlrZDphY3nva7mnIDlpKfkuKrmlbAnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBtYXhfYWdncl9zaXplYCBpbnQoMTApIHVuc2lnbmVkIE5PVCBOVUxMIERFRkFVTFQgJzAnIENPTU1FTlQgJ+WNleS4quiBmuWQiOaVsOaNrueahOWtkOmFjee9ruWkp+Wwj+S4iumZkO+8jOWNleS9jeS4uuWtl+iKgu+8jDDooajnpLrkvb/nlKjpu5jorqTlgLwnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBtYXhfaGlzdG9yeV9jb3VudGAgaW50KDEwKSB1bnNpZ25lZCBOT1QgTlVMTCBERUZBVUxUICcwJyBDT01NRU5UICfmnIDlpKflj5jmm7Tljoblj7LmlbDph48nLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBnbXRfY3JlYXRlYCBkYXRldGltZSBOT1QgTlVMTCBERUZBVUxUIENVUlJFTlRfVElNRVNUQU1QIENPTU1FTlQgJ+WIm+W7uuaXtumXtCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGdtdF9tb2RpZmllZGAgZGF0ZXRpbWUgTk9UIE5VTEwgREVGQVVMVCBDVVJSRU5UX1RJTUVTVEFNUCBDT01NRU5UICfkv67mlLnml7bpl7QnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFBSSU1BUlkgS0VZIChgaWRgKSwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBVTklRVUUgS0VZIGB1a190ZW5hbnRfaWRgIChgdGVuYW50X2lkYCkKKSBFTkdJTkU9SW5ub0RCIERFRkFVTFQgQ0hBUlNFVD11dGY4IENPTExBVEU9dXRmOF9iaW4gQ09NTUVOVD0n56ef5oi35a656YeP5L+h5oGv6KGoJzsKCgpDUkVBVEUgVEFCTEUgYHRlbmFudF9pbmZvYCAoCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgaWRgIGJpZ2ludCgyMCkgTk9UIE5VTEwgQVVUT19JTkNSRU1FTlQgQ09NTUVOVCAnaWQnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGtwYCB2YXJjaGFyKDEyOCkgTk9UIE5VTEwgQ09NTUVOVCAna3AnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYHRlbmFudF9pZGAgdmFyY2hhcigxMjgpIGRlZmF1bHQgJycgQ09NTUVOVCAndGVuYW50X2lkJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGB0ZW5hbnRfbmFtZWAgdmFyY2hhcigxMjgpIGRlZmF1bHQgJycgQ09NTUVOVCAndGVuYW50X25hbWUnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYHRlbmFudF9kZXNjYCB2YXJjaGFyKDI1NikgREVGQVVMVCBOVUxMIENPTU1FTlQgJ3RlbmFudF9kZXNjJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBjcmVhdGVfc291cmNlYCB2YXJjaGFyKDMyKSBERUZBVUxUIE5VTEwgQ09NTUVOVCAnY3JlYXRlX3NvdXJjZScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgZ210X2NyZWF0ZWAgYmlnaW50KDIwKSBOT1QgTlVMTCBDT01NRU5UICfliJvlu7rml7bpl7QnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYGdtdF9tb2RpZmllZGAgYmlnaW50KDIwKSBOT1QgTlVMTCBDT01NRU5UICfkv67mlLnml7bpl7QnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgUFJJTUFSWSBLRVkgKGBpZGApLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgVU5JUVVFIEtFWSBgdWtfdGVuYW50X2luZm9fa3B0ZW5hbnRpZGAgKGBrcGAsYHRlbmFudF9pZGApLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgS0VZIGBpZHhfdGVuYW50X2lkYCAoYHRlbmFudF9pZGApCikgRU5HSU5FPUlubm9EQiBERUZBVUxUIENIQVJTRVQ9dXRmOCBDT0xMQVRFPXV0ZjhfYmluIENPTU1FTlQ9J3RlbmFudF9pbmZvJzsKCkNSRUFURSBUQUJMRSBgdXNlcnNgICgKICAgICAgICAgICAgICAgICAgICAgICAgIGB1c2VybmFtZWAgdmFyY2hhcig1MCkgTk9UIE5VTEwgUFJJTUFSWSBLRVkgQ09NTUVOVCAndXNlcm5hbWUnLAogICAgICAgICAgICAgICAgICAgICAgICAgYHBhc3N3b3JkYCB2YXJjaGFyKDUwMCkgTk9UIE5VTEwgQ09NTUVOVCAncGFzc3dvcmQnLAogICAgICAgICAgICAgICAgICAgICAgICAgYGVuYWJsZWRgIGJvb2xlYW4gTk9UIE5VTEwgQ09NTUVOVCAnZW5hYmxlZCcKKTsKCkNSRUFURSBUQUJMRSBgcm9sZXNgICgKICAgICAgICAgICAgICAgICAgICAgICAgIGB1c2VybmFtZWAgdmFyY2hhcig1MCkgTk9UIE5VTEwgQ09NTUVOVCAndXNlcm5hbWUnLAogICAgICAgICAgICAgICAgICAgICAgICAgYHJvbGVgIHZhcmNoYXIoNTApIE5PVCBOVUxMIENPTU1FTlQgJ3JvbGUnLAogICAgICAgICAgICAgICAgICAgICAgICAgVU5JUVVFIElOREVYIGBpZHhfdXNlcl9yb2xlYCAoYHVzZXJuYW1lYCBBU0MsIGByb2xlYCBBU0MpIFVTSU5HIEJUUkVFCik7CgpDUkVBVEUgVEFCTEUgYHBlcm1pc3Npb25zYCAoCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgcm9sZWAgdmFyY2hhcig1MCkgTk9UIE5VTEwgQ09NTUVOVCAncm9sZScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgcmVzb3VyY2VgIHZhcmNoYXIoMTI4KSBOT1QgTlVMTCBDT01NRU5UICdyZXNvdXJjZScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBgYWN0aW9uYCB2YXJjaGFyKDgpIE5PVCBOVUxMIENPTU1FTlQgJ2FjdGlvbicsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBVTklRVUUgSU5ERVggYHVrX3JvbGVfcGVybWlzc2lvbmAgKGByb2xlYCxgcmVzb3VyY2VgLGBhY3Rpb25gKSBVU0lORyBCVFJFRQopOwoK
+    kind: Secret
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/version: 0.2.0
+        helm.sh/chart: santorini-0.2.3
+      name: release-name-santorini-santorini-nacos
+    type: Opaque
+外部mysql的部署稿子:
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: release-name-santorini-santorini-nacos
+        app.kubernetes.io/version: 0.2.0
+        helm.sh/chart: santorini-0.2.3
+      name: release-name-santorini-santorini-nacos
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/instance: RELEASE-NAME
+          app.kubernetes.io/name: release-name-santorini-santorini-nacos
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: release-name-santorini-santorini-nacos
+            app.kubernetes.io/version: 0.2.0
+            helm.sh/chart: santorini-0.2.3
+        spec:
+          containers:
+            - env:
+                - name: MYSQL_SERVICE_HOST
+                  value: mydatabase
+                - name: MYSQL_SERVICE_DB_NAME
+                  value: dbName
+                - name: MYSQL_SERVICE_PORT
+                  value: "3306"
+                - name: MYSQL_SERVICE_USER
+                  value: eNacos
+                - name: MYSQL_SERVICE_DB_PARAM
+                  value: characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
+                - name: MYSQL_SERVICE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: password
+                      name: release-name-santorini-santorini-nacos
+                      optional: false
+                - name: NACOS_SERVER_PORT
+                  value: "8080"
+                - name: NACOS_APPLICATION_PORT
+                  value: "8848"
+                - name: MODE
+                  value: standalone
+                - name: PREFER_HOST_MODE
+                  value: hostname
+                - name: TZ
+                  value: Asia/Shanghai
+                - name: SPRING_DATASOURCE_PLATFORM
+                  value: mysql
+                - name: NACOS_AUTH_USER_AGENT_AUTH_WHITE_ENABLE
+                  value: "false"
+                - name: NACOS_AUTH_ENABLE
+                  value: "true"
+                - name: NACOS_AUTH_TOKEN
+                  value: SecretKey012345678901234567890123456789012345678901234567890123456789
+                - name: NACOS_AUTH_IDENTITY_KEY
+                  value: example
+                - name: NACOS_AUTH_IDENTITY_VALUE
+                  value: example
+              envFrom: null
+              image: docker.io/nacos/nacos-server:v3.0.2
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 8
+                httpGet:
+                  path: /
+                  port: http
+                initialDelaySeconds: 120
+                periodSeconds: 30
+                successThreshold: 1
+                timeoutSeconds: 3
+              name: main
+              ports:
+                - containerPort: 9848
+                  name: grpc
+                  protocol: TCP
+                - containerPort: 8080
+                  name: http
+                  protocol: TCP
+                - containerPort: 8848
+                  name: server
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 8
+                httpGet:
+                  path: /
+                  port: http
+                initialDelaySeconds: 120
+                periodSeconds: 30
+                successThreshold: 1
+                timeoutSeconds: 3
+              resources:
+                limits:
+                  cpu: 250m
+                  memory: 1024Mi
+                requests:
+                  cpu: 125m
+                  memory: 512Mi
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - |
+                  echo "Running init SQL...MYSQL_CREATE_USERNAME:${MYSQL_CREATE_USERNAME},MYSQL_CREATE_DATABASE:${MYSQL_CREATE_DATABASE}"
+                  export SQL_C="CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+                  export SQL_G="GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';"
+                  if [ ${MYSQL_CREATE_DATABASE} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;"; fi
+                  if [ ${MYSQL_CREATE_USERNAME} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "$SQL_C"; fi
+                  if [ ${MYSQL_CREATE_USERNAME} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "$SQL_G"; fi
+                  mysql --force -h $MYSQL_HOST -u $MYSQL_USER --port=$MYSQL_PORT -p${MYSQL_PASSWORD} $MYSQL_DATABASE < /san/sql.sql
+              env:
+                - name: MYSQL_ROOT_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: mysql-root-password
+                      name: RELEASE-NAME-mysql
+                      optional: true
+                - name: MYSQL_CREATE_USERNAME
+                  value: false
+                - name: MYSQL_CREATE_DATABASE
+                  value: false
+                - name: MYSQL_USER
+                  value: eNacos
+                - name: MYSQL_DATABASE
+                  value: dbName
+                - name: MYSQL_HOST
+                  value: mydatabase
+                - name: MYSQL_PORT
+                  value: "3306"
+                - name: MYSQL_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: password
+                      name: release-name-santorini-santorini-nacos
+                      optional: false
+              envFrom:
+                - configMapRef:
+                    name: release-name-santorini-santorini
+                    optional: false
+              image: mysql:8.0.27
+              imagePullPolicy: IfNotPresent
+              name: init-db
+              volumeMounts:
+                - mountPath: /san
+                  name: sql
+          volumes:
+            - emptyDir: {}
+              name: shared-data
+            - name: sql
+              secret:
+                items:
+                  - key: sql
+                    path: sql.sql
+                secretName: release-name-santorini-santorini-nacos
+默认情况的部署稿子:
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: release-name-santorini-santorini-nacos
+        app.kubernetes.io/version: 0.2.0
+        helm.sh/chart: santorini-0.2.3
+      name: release-name-santorini-santorini-nacos
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/instance: RELEASE-NAME
+          app.kubernetes.io/name: release-name-santorini-santorini-nacos
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: release-name-santorini-santorini-nacos
+            app.kubernetes.io/version: 0.2.0
+            helm.sh/chart: santorini-0.2.3
+        spec:
+          containers:
+            - env:
+                - name: MYSQL_SERVICE_HOST
+                  valueFrom:
+                    configMapKeyRef:
+                      key: MYSQL_HOST
+                      name: release-name-santorini-santorini
+                - name: MYSQL_SERVICE_DB_NAME
+                  value: nacos
+                - name: MYSQL_SERVICE_PORT
+                  valueFrom:
+                    configMapKeyRef:
+                      key: MYSQL_PORT
+                      name: release-name-santorini-santorini
+                - name: MYSQL_SERVICE_USER
+                  value: nacos
+                - name: MYSQL_SERVICE_DB_PARAM
+                  value: characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
+                - name: MYSQL_SERVICE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: password
+                      name: release-name-santorini-santorini-nacos
+                      optional: false
+                - name: NACOS_SERVER_PORT
+                  value: "8080"
+                - name: NACOS_APPLICATION_PORT
+                  value: "8848"
+                - name: MODE
+                  value: standalone
+                - name: PREFER_HOST_MODE
+                  value: hostname
+                - name: TZ
+                  value: Asia/Shanghai
+                - name: SPRING_DATASOURCE_PLATFORM
+                  value: mysql
+                - name: NACOS_AUTH_USER_AGENT_AUTH_WHITE_ENABLE
+                  value: "false"
+                - name: NACOS_AUTH_ENABLE
+                  value: "true"
+                - name: NACOS_AUTH_TOKEN
+                  value: SecretKey012345678901234567890123456789012345678901234567890123456789
+                - name: NACOS_AUTH_IDENTITY_KEY
+                  value: example
+                - name: NACOS_AUTH_IDENTITY_VALUE
+                  value: example
+              envFrom: null
+              image: docker.io/nacos/nacos-server:v3.0.2
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 8
+                httpGet:
+                  path: /
+                  port: http
+                initialDelaySeconds: 120
+                periodSeconds: 30
+                successThreshold: 1
+                timeoutSeconds: 3
+              name: main
+              ports:
+                - containerPort: 9848
+                  name: grpc
+                  protocol: TCP
+                - containerPort: 8080
+                  name: http
+                  protocol: TCP
+                - containerPort: 8848
+                  name: server
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 8
+                httpGet:
+                  path: /
+                  port: http
+                initialDelaySeconds: 120
+                periodSeconds: 30
+                successThreshold: 1
+                timeoutSeconds: 3
+              resources:
+                limits:
+                  cpu: 250m
+                  memory: 1024Mi
+                requests:
+                  cpu: 125m
+                  memory: 512Mi
+          initContainers:
+            - command:
+                - sh
+                - -c
+                - |
+                  echo "Running init SQL...MYSQL_CREATE_USERNAME:${MYSQL_CREATE_USERNAME},MYSQL_CREATE_DATABASE:${MYSQL_CREATE_DATABASE}"
+                  export SQL_C="CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+                  export SQL_G="GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';"
+                  if [ ${MYSQL_CREATE_DATABASE} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;"; fi
+                  if [ ${MYSQL_CREATE_USERNAME} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "$SQL_C"; fi
+                  if [ ${MYSQL_CREATE_USERNAME} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "$SQL_G"; fi
+                  mysql --force -h $MYSQL_HOST -u $MYSQL_USER --port=$MYSQL_PORT -p${MYSQL_PASSWORD} $MYSQL_DATABASE < /san/sql.sql
+              env:
+                - name: MYSQL_ROOT_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: mysql-root-password
+                      name: RELEASE-NAME-mysql
+                      optional: true
+                - name: MYSQL_CREATE_USERNAME
+                  value: true
+                - name: MYSQL_CREATE_DATABASE
+                  value: true
+                - name: MYSQL_USER
+                  value: nacos
+                - name: MYSQL_DATABASE
+                  value: nacos
+                - name: MYSQL_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: password
+                      name: release-name-santorini-santorini-nacos
+                      optional: false
+              envFrom:
+                - configMapRef:
+                    name: release-name-santorini-santorini
+                    optional: false
+              image: mysql:8.0.27
+              imagePullPolicy: IfNotPresent
+              name: init-db
+              volumeMounts:
+                - mountPath: /san
+                  name: sql
+          volumes:
+            - emptyDir: {}
+              name: shared-data
+            - name: sql
+              secret:
+                items:
+                  - key: sql
+                    path: sql.sql
+                secretName: release-name-santorini-santorini-nacos

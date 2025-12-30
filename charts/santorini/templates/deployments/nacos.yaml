@@ -47,13 +47,19 @@ spec:
                   key: mysql-root-password
                   optional: true
             - name: MYSQL_CREATE_USERNAME
-              value: "true"
+              value: {{ ternary "false" "true" .Values.santorini.nacos.externalMysql.enabled }}
             - name: MYSQL_CREATE_DATABASE
-              value: "true"
+              value: {{ ternary "false" "true" .Values.santorini.nacos.externalMysql.enabled }}
             - name: MYSQL_USER
-              value: "nacos"
+              value: {{ ternary .Values.santorini.nacos.externalMysql.username "nacos" .Values.santorini.nacos.externalMysql.enabled }}
             - name: MYSQL_DATABASE
-              value: "nacos"
+              value: {{ ternary .Values.santorini.nacos.externalMysql.name "nacos" .Values.santorini.nacos.externalMysql.enabled }}
+          {{- if .Values.santorini.nacos.externalMysql.enabled }}
+            - name: MYSQL_HOST
+              value: {{ .Values.santorini.nacos.externalMysql.host | required "必须提供 santorini.nacos.externalMysql.host" }}
+            - name: MYSQL_PORT
+              value: "{{ .Values.santorini.nacos.externalMysql.port | default 3306 }}"
+          {{- end }}
             - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -70,12 +76,22 @@ spec:
               if [ ${MYSQL_CREATE_DATABASE} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;"; fi
               if [ ${MYSQL_CREATE_USERNAME} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "$SQL_C"; fi
               if [ ${MYSQL_CREATE_USERNAME} = "true" ]; then mysql -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} -e "$SQL_G"; fi
-              mysql --force -h $MYSQL_HOST -u $MYSQL_ROOT_USERNAME --port=$MYSQL_PORT -p${MYSQL_ROOT_PASSWORD} $MYSQL_DATABASE < /san/sql.sql
+              mysql --force -h $MYSQL_HOST -u $MYSQL_USER --port=$MYSQL_PORT -p${MYSQL_PASSWORD} $MYSQL_DATABASE < /san/sql.sql
       containers:
         - name: main
           image: {{ template "nacos.image" . }}
           imagePullPolicy: {{ .Values.santorini.nacos.image.pullPolicy | quote }}
           env:
+          {{- if .Values.santorini.nacos.externalMysql.enabled }}
+            - name: MYSQL_SERVICE_HOST
+              value: {{ .Values.santorini.nacos.externalMysql.host | required "必须提供 santorini.nacos.externalMysql.host" }}
+            - name: MYSQL_SERVICE_DB_NAME
+              value: {{ .Values.santorini.nacos.externalMysql.name | default "nacos" }}
+            - name: MYSQL_SERVICE_PORT
+              value: "{{ .Values.santorini.nacos.externalMysql.port | default 3306 }}"
+            - name: MYSQL_SERVICE_USER
+              value: {{ .Values.santorini.nacos.externalMysql.username | default "nacos" }}
+          {{- else }}
             - name: MYSQL_SERVICE_HOST
               valueFrom:
                 configMapKeyRef:
@@ -90,6 +106,7 @@ spec:
                   key: MYSQL_PORT
             - name: MYSQL_SERVICE_USER
               value: "nacos"
+          {{- end }}
             - name: MYSQL_SERVICE_DB_PARAM
               value: "characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true"
             - name: MYSQL_SERVICE_PASSWORD

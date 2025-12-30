@@ -1,0 +1,81 @@
+suite: nacos 测试
+# templates:
+#   - deployments/nacos.yaml
+#   - config/nacos_secret.yaml
+tests:
+  - it: 默认情况的部署稿子
+    set:
+      domain: not.com
+      masterEmail: foo@bar.com
+      santorini:
+        manager: ADMIN
+    templates:
+      - deployments/nacos.yaml
+    asserts:
+      # - exists:
+      #   documentSelector:
+      #     path: kind
+      #     value: Secret
+      #   path: "$.data.password"
+      # - exists:
+      #   documentSelector:
+      #     path: kind
+      #     value: Secret
+      #   path: "$.data.sql"  
+      - matchSnapshot: {}
+  - it: 默认情况的Secret稿子
+    set:
+      domain: not.com
+      masterEmail: foo@bar.com
+      santorini:
+        manager: ADMIN
+    templates:
+      - config/nacos_secret.yaml
+    asserts:
+      - exists:
+          path: "$.data.password"
+      - exists:
+          path: "$.data.sql"  
+      # - matchSnapshot: 
+      #   documentSelector:
+      #     path: $.kind
+      #     value: Deployment
+  - it: 外部mysql的部署稿子
+    set:
+      domain: not.com
+      masterEmail: foo@bar.com
+      santorini:
+        manager: ADMIN
+        nacos:
+          externalMysql:
+            enabled: true
+            username: eNacos
+            name: dbName
+            password: EP  
+            host: mydatabase
+    templates:
+      - deployments/nacos.yaml
+    asserts:
+      - matchSnapshot: {}
+  - it: 外部mysql的Secret稿子
+    set:
+      domain: not.com
+      masterEmail: foo@bar.com
+      # santorini.nacos.externalMysql.password
+      santorini:
+        manager: ADMIN
+        nacos:
+          externalMysql:
+            enabled: true
+            username: eNacos
+            name: dbName
+            password: EP
+            host: mydatabase
+    templates:
+      - config/nacos_secret.yaml
+    asserts:
+      # - exists:
+      #     path: "$.data.password"
+      # - exists:
+      #     path: "$.data.sql"  
+      - matchSnapshot: {}
