@@ -47,9 +47,9 @@ spec:
                   key: mysql-root-password
                   optional: true
             - name: MYSQL_CREATE_USERNAME
-              value: {{ ternary "false" "true" .Values.santorini.nacos.externalMysql.enabled }}
+              value: "{{ ternary false true .Values.santorini.nacos.externalMysql.enabled }}"
             - name: MYSQL_CREATE_DATABASE
-              value: {{ ternary "false" "true" .Values.santorini.nacos.externalMysql.enabled }}
+              value: "{{ ternary false true .Values.santorini.nacos.externalMysql.enabled }}"
             - name: MYSQL_USER
               value: {{ ternary .Values.santorini.nacos.externalMysql.username "nacos" .Values.santorini.nacos.externalMysql.enabled }}
             - name: MYSQL_DATABASE
