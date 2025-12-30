@@ -1,6 +1,7 @@
 import { useNamespacesQuery } from '../apis/kubernetes/common';
 import { CUEnv, useEnvsQuery } from '../apis/env';
 import { useCurrentLoginUserQuery } from '@private-everest/app-support';
+import { useMemo } from 'react';
 
 export function useEnvs(): CUEnv[] | undefined {
   const { data: currentUser } = useCurrentLoginUserQuery(undefined);
@@ -14,9 +15,11 @@ export function useEnvs(): CUEnv[] | undefined {
       skip: !loginAsManager,
     }
   );
-  const ids = data
-    ?.filter((it) => !!it?.metadata?.name)
-    ?.map((it) => it.metadata!!);
+  const ids = useMemo(() => {
+    return data
+      ?.filter((it) => !!it?.metadata?.name)
+      ?.map((it) => it.metadata!!);
+  }, [data]);
   // ?.map(it=>it)
   // 2 种情况跳过 获取
   const skipQueryEnvs =
@@ -25,18 +28,20 @@ export function useEnvs(): CUEnv[] | undefined {
   const { data: ee } = useEnvsQuery(ids, {
     skip: skipQueryEnvs,
   });
-  // 如果存在 data 而且存在 ee, 同时 ee 并不包含 data 则添加一条
-  if (ids && ee) {
-    const notInEE = ids
-      .filter((it) => ee.every((e1) => e1.id != it.name))
-      .map((it) => ({
-        id: it.name!!,
-        name: it.name!!,
-        production: false,
-      }));
-    return [...ee, ...notInEE];
-  }
-  return ee;
+  return useMemo(() => {
+    if (ids && ee) {
+      // 如果存在 data 而且存在 ee, 同时 ee 并不包含 data 则添加一条
+      const notInEE = ids
+        .filter((it) => ee.every((e1) => e1.id != it.name))
+        .map((it) => ({
+          id: it.name!!,
+          name: it.name!!,
+          production: false,
+        }));
+      return [...ee, ...notInEE];
+    }
+    return ee;
+  }, [ids, ee]);
 }
 
 /**
