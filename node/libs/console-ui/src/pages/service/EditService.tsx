@@ -15,7 +15,7 @@ export default () => {
   const location = useLocation();
   useEffect(() => {
     setSharePageContainerProps({ title: '编辑服务' });
-  }, [location]);
+  }, [location.pathname]);
 
   return (
     <ServiceForm

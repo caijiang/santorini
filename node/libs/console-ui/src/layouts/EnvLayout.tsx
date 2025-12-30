@@ -21,7 +21,7 @@ export default () => {
   const location = useLocation();
   useEffect(() => {
     setSharePageContainerProps(undefined);
-  }, [location]);
+  }, [location.pathname]);
   if (data === undefined) {
     return (
       <PageContainer>

@@ -8,7 +8,7 @@ export default () => {
   const location = useLocation();
   useEffect(() => {
     setSharePageContainerProps({ title: '服务发布历史' });
-  }, [location]);
+  }, [location.pathname]);
 
   return <DeploymentHistory serviceId={data.id} />;
 };
