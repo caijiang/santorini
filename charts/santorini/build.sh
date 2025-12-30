@@ -20,4 +20,10 @@ else
   helm dependency build ${SCRIPT_DIR}
 fi
 
+mkdir -p ${SCRIPT_DIR}/files
+
+if [ ! -f "${SCRIPT_DIR}/files/nacos_3.0.2.sql" ]; then
+  wget -O ${SCRIPT_DIR}/files/nacos_3.0.2.sql https://raw.githubusercontent.com/alibaba/nacos/3.0.2/distribution/conf/mysql-schema.sql
+fi
+
 helm unittest ${SCRIPT_DIR}
