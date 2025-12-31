@@ -19,7 +19,7 @@ enum class ResourceType(val fields: List<ResourceFieldDefinition>) {
     ),
     NacosAuth(
         listOf(
-            ResourceFieldDefinition("server-addr", "服务地址", true, false, "host:ip 的形式"),
+            ResourceFieldDefinition("server-addr", "服务地址", true, false, "host:port 的形式"),
             ResourceFieldDefinition("username", "用户名", false, false),
             ResourceFieldDefinition("password", "密码", false, true),
             ResourceFieldDefinition("access-key", "access-key", false, false),
@@ -31,7 +31,7 @@ enum class ResourceType(val fields: List<ResourceFieldDefinition>) {
     ),
     RocketMQ(
         listOf(
-            ResourceFieldDefinition("name-server", "Name Server", true, false, "host:ip 的形式"),
+            ResourceFieldDefinition("name-server", "Name Server", true, false, "host:port 的形式"),
             ResourceFieldDefinition("access-key", "access-key", false, false),
             ResourceFieldDefinition("secret-key", "secret-key", false, true),
         )

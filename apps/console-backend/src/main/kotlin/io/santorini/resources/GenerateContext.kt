@@ -20,6 +20,14 @@ interface GenerateContext {
 object GenerateContextHome {
     fun contextFor(type: ServiceType): GenerateContext {
         if (type == ServiceType.JVM) return JvmGenerateContext()
-        throw IllegalArgumentException("Unsupported type of service:$type")
+        return object : GenerateContext {
+            override fun addResource(resource: SantoriniResource, slotName: String?) {
+                throw IllegalArgumentException("Unsupported type of service:$type")
+            }
+
+            override fun toEnvResult(): Map<String, String> {
+                throw IllegalArgumentException("Unsupported type of service:$type")
+            }
+        }
     }
 }
