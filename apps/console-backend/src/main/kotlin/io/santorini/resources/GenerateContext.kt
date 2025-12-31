@@ -25,9 +25,7 @@ object GenerateContextHome {
                 throw IllegalArgumentException("Unsupported type of service:$type")
             }
 
-            override fun toEnvResult(): Map<String, String> {
-                throw IllegalArgumentException("Unsupported type of service:$type")
-            }
+            override fun toEnvResult(): Map<String, String> = mapOf()
         }
     }
 }
