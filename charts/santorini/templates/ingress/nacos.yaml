@@ -1,9 +1,4 @@
 {{- if .Values.santorini.nacos.enabled }}
-{{ $defaultIssuerName := (include "santorini.issuer" .) }}
-{{- $defaultHost := printf "nacos918.%s" .Values.domain -}}
-{{/*# 定义 host 名字*/}}
-{{- $hostName := .Values.santorini.nacos.host | default $defaultHost -}}
-{{- $issuerName := .Values.santorini.nacos.issuerName | default $defaultIssuerName -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -13,17 +8,17 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /
     # add an annotation indicating the issuer to use.
-    cert-manager.io/cluster-issuer: {{ $issuerName }}
+    {{ include "ingress.certManagerIssuerName" (list . .Values.santorini.nacos) }}
   labels:
     {{- include "common.labels.withoutName" . | nindent 4 }}
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - {{ $hostName }}
-      secretName: "{{ include "common.santoriniNacosName" . }}-tls"
+        - {{ include "ingress.hostName" (list . .Values.santorini.nacos "nacos918" ) }}
+      secretName: {{ include "ingress.secretName" (list . .Values.santorini.nacos "nacos918" ) }}
   rules:
-    - host: {{ $hostName }}
+    - host: {{ include "ingress.hostName" (list . .Values.santorini.nacos "nacos918" ) }}
       http:
         paths:
           - path: /

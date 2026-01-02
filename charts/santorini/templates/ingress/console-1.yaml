@@ -1,8 +1,3 @@
-{{ $defaultIssuerName := (include "santorini.issuer" .) }}
-{{- $defaultHost := printf "op.%s" .Values.domain -}}
-{{/*# 定义 host 名字*/}}
-{{- $hostName := .Values.santorini.host | default $defaultHost -}}
-{{- $issuerName := .Values.santorini.issuerName | default $defaultIssuerName -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -11,7 +6,7 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     # nginx.ingress.kubernetes.io/rewrite-target: /
     # add an annotation indicating the issuer to use.
-    cert-manager.io/cluster-issuer: {{ $issuerName }}
+    {{ include "ingress.certManagerIssuerName" (list . .Values.santorini) }}
     # nginx.ingress.kubernetes.io/canary: "true"
     # nginx.ingress.kubernetes.io/canary-by-header: "sec-fetch-mode"
     # nginx.ingress.kubernetes.io/canary-by-header-value: "navigate"
@@ -22,10 +17,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - {{ $hostName }}
-      secretName: "{{ include "common.names.fullname" . }}-console-tls"
+        - {{ include "ingress.hostName" (list . .Values.santorini "op" ) }}
+      secretName: {{ include "ingress.secretName" (list . .Values.santorini "op" ) }}
   rules:
-    - host: {{ $hostName }}
+    - host: {{ include "ingress.hostName" (list . .Values.santorini "op" ) }}
       http:
         paths:
           - path: /

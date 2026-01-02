@@ -14,6 +14,10 @@ santorini:
     host: ""
     # 证书颁发者
     issuerName: ""
+    # 证书名称
+    secretName: ""
+    # 跳过签名
+    skipIssue: false
     # 单独安装 nacos
     # , 前提是 mysql 是内置的 这句话要取消
     enabled: true
@@ -210,6 +214,10 @@ santorini:
   host: ""
   # 证书颁发者
   issuerName: ""
+  # 证书名称
+  secretName: ""
+  # 跳过签名
+  skipIssue: false
   feishu:
     # 飞书应用的 id
     id: ""
@@ -221,28 +229,26 @@ santorini:
 dashboard:
   # 是否暴露 dashboard 服务
   expose: false
-  entrances:
-    one:
-      # dashboard 访问的域名, 默认是 dashboard.domain
-      domain: ""
-      # 签发者名字，默认会使用自动生成的签发者，如果域名不在管辖范围就另外找个签发者
-      issuerName: ""
-    two:
-      domain: ""
-      issuerName: ""
+  # dashboard 访问的域名, 默认是 dashboard.domain
+  host: ""
+  # 签发者名字，默认会使用自动生成的签发者，如果域名不在管辖范围就另外找个签发者
+  issuerName: ""
+  # 证书名称
+  secretName: ""
+  # 跳过签名
+  skipIssue: false
 
 longhorn:
   # 是否暴露 longhorn 服务
   expose: false
-  entrances:
-    one:
-      # longhorn 访问的域名, 默认是 longhorn.domain
-      domain: ""
-      # 签发者名字，默认会使用自动生成的签发者，如果域名不在管辖范围就另外找个签发者
-      issuerName: ""
-    two:
-      domain: ""
-      issuerName: ""
+  # longhorn 访问的域名, 默认是 longhorn.domain
+  host: ""
+  # 签发者名字，默认会使用自动生成的签发者，如果域名不在管辖范围就另外找个签发者
+  issuerName: ""
+  # 证书名称
+  secretName: ""
+  # 跳过签名
+  skipIssue: false
 
 # 这里的值都可以传递到子 chart 中
 # https://news.broadcom.com/app-dev/broadcom-introduces-bitnami-secure-images-for-production-ready-containerized-applications

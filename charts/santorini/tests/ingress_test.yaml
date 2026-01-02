@@ -1,0 +1,58 @@
+suite: ingress 测试
+# 在这个提交之前 dashboard 跟 nacos,主站 的模板语法并不相同
+tests:
+  - it: 缺省的 dashboard
+    templates:
+      - dashboard.yaml
+    set:
+      santorini:
+        manager: admin
+      domain: example.com
+      dashboard:
+        expose: true
+    asserts:
+      - matchSnapshot: {}
+  # 老版本
+  # - it: 手动设置过的
+  #   templates:
+  #     - dashboard.yaml
+  #   set:
+  #     santorini:
+  #       manager: admin
+  #     domain: example.com
+  #     dashboard:
+  #       entrances:
+  #         one:
+  #           domain: custom-dashboard.example.com
+  #           issuerName: custom-issuer
+  #       expose: true
+  #   asserts:
+  #     - matchSnapshot: {}
+  # 新版本
+  - it: 手动设置过的
+    templates:
+      - dashboard.yaml
+    set:
+      santorini:
+        manager: admin
+      domain: example.com
+      dashboard:
+        host: custom-dashboard.example.com
+        issuerName: custom-issuer
+        expose: true
+    asserts:
+      - matchSnapshot: {}
+  - it: 跳过签发
+    templates:
+      - dashboard.yaml
+    set:
+      santorini:
+        manager: admin
+      domain: example.com
+      dashboard:
+        host: custom-dashboard.example.com
+        issuerName: custom-issuer
+        skipIssue: true
+        expose: true
+    asserts:
+      - matchSnapshot: {}

@@ -76,9 +76,34 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end }}
 
-{{/*定义一个模板，可以获取 dashboard 的地址*/}}
-{{- define "santorini.host.dashboard" -}}
-{{- .Values.dashboard.entrances.one.domain | default (printf "dashboard.%s" .Values.domain) }}
+{{/*定义一个模板 可以获取其host名称，如果未曾提供，则根据 */}}
+{{- define "ingress.hostName" -}}
+{{- $ctx := index . 1 -}}
+{{- $defaultName := index . 2 -}}
+{{- $root := index . 0 -}}
+{{- $defaultHostName := printf "%s.%s" $defaultName $root.Values.domain -}}
+{{- $ctx.host| default $defaultHostName -}}
+{{- end -}}
+
+{{- define "ingress.certManagerIssuerName" -}}
+{{- $root := index . 0 -}}
+{{- $ctx := index . 1 -}}
+{{- $defaultIssuerName := (include "santorini.issuer" $root) -}}
+{{- $issuerName := $ctx.issuerName | default (include "santorini.issuer" $root) -}}
+{{- if not $ctx.skipIssue -}}
+{{- printf "cert-manager.io/cluster-issuer: %s" $issuerName -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "ingress.secretName" -}}
+{{- $ctx := index . 1 -}}
+{{- $defaultName := index . 2 -}}
+{{- $root := index . 0 -}}
+{{- if $ctx.secretName -}}
+{{- $ctx.secretName -}}
+{{- else -}}
+{{- printf "%s-tls" (include "ingress.hostName" (list $root $ctx $defaultName)) -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
