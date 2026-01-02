@@ -70,17 +70,21 @@ function generateIngressAnnotations(
   instance: CUEditableIngress,
   host: HostSummary
 ) {
+  const v1 = _.transform(
+    instance.annotations ?? [],
+    (obj, it) => {
+      obj[`nginx.ingress.kubernetes.io/${it.name}`] = it.value;
+    },
+    {} as {
+      [key: string]: string;
+    }
+  );
+  if (!host.issuerName) {
+    return v1;
+  }
   return {
-    ..._.transform(
-      instance.annotations ?? [],
-      (obj, it) => {
-        obj[`nginx.ingress.kubernetes.io/${it.name}`] = it.value;
-      },
-      {} as {
-        [key: string]: string;
-      }
-    ),
-    'cert-manager.io/cluster-issuer': host.issuerName!!,
+    ...v1,
+    'cert-manager.io/cluster-issuer': host.issuerName,
   };
 }
 

@@ -19,6 +19,7 @@ export const serviceIdColumn = {
       toInnaNameRule(63 - '.deployment'.length),
     ],
   },
+  hideInSearch: true,
 };
 export const serviceNameColumn = {
   dataIndex: 'name',
@@ -34,6 +35,7 @@ export const serviceNameColumn = {
   formItemProps: {
     rules: [{ required: true }, { max: 50 }],
   },
+  hideInSearch: true,
 };
 
 export const serviceTypeColumn = {
@@ -51,4 +53,5 @@ export const serviceTypeColumn = {
     rules: [{ required: true }],
   },
   valueEnum: toProSchemaValueEnumMap(io.santorini.model.ServiceType.values()),
+  hideInSearch: true,
 };

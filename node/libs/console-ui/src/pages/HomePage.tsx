@@ -45,9 +45,16 @@ export default () => {
       <ProTable<ServiceConfigData>
         headerTitle={'服务配置'}
         rowKey={'id'}
-        search={false}
         request={toKtorRequest<ServiceConfigData>('/services')}
         columns={[
+          {
+            hideInTable: true,
+            hideInForm: true,
+            hideInDescriptions: true,
+            hideInSetting: true,
+            dataIndex: 'keyword',
+            title: '关键字',
+          },
           serviceIdColumn,
           serviceTypeColumn,
           serviceNameColumn,

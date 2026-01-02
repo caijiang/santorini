@@ -19,7 +19,7 @@ export function toKtorRequest<
   // , sorter, filter
   const uri = '/api' + requestUri;
   return async (params) => {
-    const { pageSize, current, keyword, ...otherParams } = params;
+    const { pageSize, current, ...otherParams } = params;
     const moreParams =
       otherParams && _.keys(otherParams).length > 0
         ? customParams

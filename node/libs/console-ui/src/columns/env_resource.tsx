@@ -86,5 +86,6 @@ export const resourceTypeToColumns = (
       : undefined,
     valueType: !field.secret ? 'text' : 'password',
     tooltip: field.tooltip,
+    copyable: true,
   }));
 };
