@@ -15,12 +15,6 @@ suspend fun HttpClient.addServiceMeta(data: ServiceMetaData) {
             mergeJson(
                 data, """
   {
-    "resources":{
-     "cpu": {
-      "requestMillis":100,
-      "limitMillis":1000
-     }
-    }
   }
 """
             )

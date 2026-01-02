@@ -18,12 +18,14 @@ import io.santorini.OAuthPlatform
 import io.santorini.OAuthPlatformUserData
 import io.santorini.OAuthPlatformUserDataAuditResult
 import io.santorini.saveUserData
+import io.santorini.schema.ComputeResourceCpu
+import io.santorini.schema.ComputeResourceMemory
+import io.santorini.schema.ComputeResources
 import io.santorini.schema.UserRoleService
 import me.jiangcai.cr.Deployable
 import org.koin.ktor.ext.inject
 import java.util.*
 import kotlin.uuid.ExperimentalUuidApi
-
 
 private val logger = KotlinLogging.logger {}
 fun Application.mockUserModule() {
@@ -138,4 +140,15 @@ fun mockDeploymentServicePreDeployWorkFineWith(
     } returns nodeList
 
     every { mockKubernetesClient.nodes() } returns x
+}
+
+fun mockComputeResources(): ComputeResources {
+    return ComputeResources(
+        ComputeResourceCpu(
+            100, 200
+        ),
+        ComputeResourceMemory(
+            128, 1024
+        )
+    )
 }

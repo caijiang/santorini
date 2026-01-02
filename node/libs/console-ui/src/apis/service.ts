@@ -23,16 +23,6 @@ export function generateDemoService(): ServiceConfigData {
     id: `demo-service-${rand}`,
     name: '样例服务',
     type: 'JVM',
-    resources: {
-      cpu: {
-        requestMillis: 100,
-        limitMillis: 500,
-      },
-      memory: {
-        requestMiB: 32,
-        limitMiB: 64,
-      },
-    },
     ports: [
       {
         number: 80,
@@ -65,6 +55,27 @@ interface ILifecycle {
   startupProbe?: IProbe;
 }
 
+/**
+ * cpu: request: 1000 millis limit: 1500 millis memory: request: 512 mebibytes limit: 2048 mebibytes
+ * 计算资源
+ */
+export interface ComputeResources {
+  /**
+   * https://kubernetes.io/zh-cn/docs/concepts/configuration/manage-resources-containers/#meaning-of-cpu
+   */
+  cpu: {
+    requestMillis: number;
+    limitMillis: number;
+  };
+  /**
+   * https://kubernetes.io/zh-cn/docs/concepts/configuration/manage-resources-containers/#meaning-of-memory
+   */
+  memory: {
+    requestMiB: number;
+    limitMiB: number;
+  };
+}
+
 export interface ServiceConfigData {
   /**
    * https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/names/#dns-label-names
@@ -75,25 +86,6 @@ export interface ServiceConfigData {
    */
   name: string;
   type: ServiceType;
-  /**
-   * cpu: request: 1000 millis limit: 1500 millis memory: request: 512 mebibytes limit: 2048 mebibytes
-   */
-  resources: {
-    /**
-     * https://kubernetes.io/zh-cn/docs/concepts/configuration/manage-resources-containers/#meaning-of-cpu
-     */
-    cpu: {
-      requestMillis: number;
-      limitMillis: number;
-    };
-    /**
-     * https://kubernetes.io/zh-cn/docs/concepts/configuration/manage-resources-containers/#meaning-of-memory
-     */
-    memory: {
-      requestMiB: number;
-      limitMiB: number;
-    };
-  };
   // image: string;
   ports: {
     number: number;
@@ -112,6 +104,8 @@ export interface DeploymentDeployData {
   imageTag?: string;
   pullSecretName?: string[];
   resourcesSupply?: Record<string, string>;
+  resources: ComputeResources;
+  environmentVariables?: Record<string, string>;
   /**
    * 部署时服务的镜像
    */

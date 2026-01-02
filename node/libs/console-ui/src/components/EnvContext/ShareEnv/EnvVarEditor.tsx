@@ -9,6 +9,13 @@ import * as React from 'react';
 import { useEnvContext } from '../../../layouts/EnvLayout';
 import { useCreateEnvVarMutation } from '../../../apis/env';
 
+interface EnvVarEditor {
+  /**
+   * 是否开启敏感字段，默认开启
+   */
+  enableSecret?: false;
+}
+
 // 新增 用该 api 可以获取yaml
 // 编辑, 可将 IngressPath 转变成 这个玩意儿, 也可以生成编辑的 yaml
 /**
@@ -16,9 +23,9 @@ import { useCreateEnvVarMutation } from '../../../apis/env';
  * @constructor
  */
 const EnvVarEditor: React.FC<
-  Exclude<ModalFormProps, 'onFinish' | 'clearOnDestroy'>
-> = ({ ...props }) => {
-  const { data: env } = useEnvContext();
+  EnvVarEditor & Exclude<ModalFormProps, 'clearOnDestroy'>
+> = ({ onFinish, enableSecret, ...props }) => {
+  const ec = useEnvContext();
   const { message } = App.useApp();
   const [api] = useCreateEnvVarMutation();
   // 我们不应该允许编辑 非托管的案例
@@ -28,9 +35,12 @@ const EnvVarEditor: React.FC<
     <ModalForm
       clearOnDestroy
       onFinish={async (input) => {
+        if (onFinish) {
+          return onFinish(input);
+        }
         try {
           await api({
-            env: env.id,
+            env: ec.data.id,
             var: {
               name: input['name']!!,
               secret: input['secret'] == true,
@@ -56,7 +66,9 @@ const EnvVarEditor: React.FC<
           },
         ]}
       />
-      <ProFormSwitch name={'secret'} label={'敏感变量'} />
+      {enableSecret !== false && (
+        <ProFormSwitch name={'secret'} label={'敏感变量'} />
+      )}
       <ProFormText name={'value'} label={'环境变量值'} />
     </ModalForm>
   );

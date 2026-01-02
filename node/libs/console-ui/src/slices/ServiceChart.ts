@@ -1,4 +1,4 @@
-import { Chart, ChartProps, Size } from 'cdk8s';
+import { Chart, ChartProps } from 'cdk8s';
 import { Construct } from 'constructs';
 import * as kplus from 'cdk8s-plus-33';
 import { ServiceConfigData } from '../apis/service';
@@ -99,7 +99,7 @@ export class ServiceChart extends Chart {
       containers: [
         {
           image: this.toImage(creatorProps),
-          resources: this.toResource(service),
+          // resources: this.toResource(service),
           ports: this.toPorts(service),
         },
       ],
@@ -114,20 +114,6 @@ export class ServiceChart extends Chart {
     }
     return deployData.imageRepository;
   }
-
-  private toResource({ resources }: ServiceConfigData) {
-    return {
-      cpu: {
-        request: kplus.Cpu.millis(resources.cpu.requestMillis),
-        limit: kplus.Cpu.millis(resources.cpu.limitMillis),
-      },
-      memory: {
-        request: Size.mebibytes(resources.memory.requestMiB),
-        limit: Size.mebibytes(resources.memory.limitMiB),
-      },
-    };
-  }
-
   private toPorts({ ports }: ServiceConfigData) {
     return ports.map((it) => ({
       ...it,

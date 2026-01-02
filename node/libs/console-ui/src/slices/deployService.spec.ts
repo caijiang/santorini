@@ -7,20 +7,21 @@ import { isAction } from '@reduxjs/toolkit';
 import { deployToKubernetes } from './deployService';
 import { deploymentApi } from '../apis/deployment';
 
+const mockResources = {
+  cpu: {
+    requestMillis: 100,
+    limitMillis: 200,
+  },
+  memory: {
+    requestMiB: 32,
+    limitMiB: 64,
+  },
+};
+
 const demoServiceData = {
   id: 'demo',
   name: '范本服务',
   type: 'JVM',
-  resources: {
-    cpu: {
-      requestMillis: 100,
-      limitMillis: 200,
-    },
-    memory: {
-      requestMiB: 32,
-      limitMiB: 64,
-    },
-  },
   ports: [
     {
       number: 80,
@@ -184,6 +185,7 @@ describe('部署服务', () => {
         env,
         deployData: {
           imageRepository: 'myImage',
+          resources: mockResources,
         },
       });
       // console.warn('action:', action);
@@ -212,22 +214,14 @@ describe('部署服务', () => {
       env,
       lastDeploy: {
         imageRepository: 'myOldImage',
+        resources: mockResources,
         serviceDataSnapshot: JSON.stringify({
           ...demoServiceData,
-          resources: {
-            cpu: {
-              requestMillis: 99, // 新的会是 99
-              limitMillis: 200,
-            },
-            memory: {
-              requestMiB: 32,
-              limitMiB: 64,
-            },
-          },
         }),
       },
       deployData: {
         imageRepository: 'myImage',
+        resources: mockResources,
       },
     });
     const dispatch = vi.fn((arg) => {

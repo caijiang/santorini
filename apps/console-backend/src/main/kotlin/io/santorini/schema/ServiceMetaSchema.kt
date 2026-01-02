@@ -269,7 +269,7 @@ class ServiceMetaService(
         return mergeJson(detail.first, detail.second)
     }
 
-    suspend fun read(id: String): Pair<ServiceMetaData, String>? {
+    private suspend fun read(id: String): Pair<ServiceMetaData, String>? {
         return dbQuery {
             ServiceMetas.selectAll()
                 .where {

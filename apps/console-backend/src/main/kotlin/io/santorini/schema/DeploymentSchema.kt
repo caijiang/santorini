@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
+@file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class, ExperimentalSerializationApi::class)
 
 package io.santorini.schema
 
@@ -21,8 +21,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.FixedOffsetTimeZone
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.timestamp
@@ -63,16 +65,44 @@ data class PreDeployResult(
     val successfulEnvs: List<String>? = null,
 )
 
+
+@Serializable
+data class ComputeResourceCpu(
+    val requestMillis: Int,
+    val limitMillis: Int,
+)
+
+@Serializable
+data class ComputeResourceMemory(
+    val requestMiB: Int,
+    val limitMiB: Int,
+)
+
+@Serializable
+data class ComputeResources(
+    val cpu: ComputeResourceCpu,
+    val memory: ComputeResourceMemory,
+)
+
 /**
  * 这是作为可重复部署的数据
  */
 @Serializable
+@JsonIgnoreUnknownKeys
 data class DeploymentDeployData(
     val imageRepository: String,
     val imageTag: String? = null,
     val pullSecretName: List<String>? = null,
     // ResourceRequirement-> type-name ; 没有名字那就""
     val resourcesSupply: Map<String, String>? = null,
+    /**
+     * 资源是必备的
+     */
+    val resources: ComputeResources,
+    /**
+     * 自定义环境变量，它的优先级较高，
+     */
+    val environmentVariables: Map<String, String>? = null,
     /**
      * 只存在输出中
      */
@@ -152,6 +182,8 @@ class DeploymentService(
         val imageTag = varchar("image_tag", 50).nullable()
         val pullSecretName = jsonb<List<String>>("pull_secret_name", Json).nullable()
         val resourcesSupply = jsonb<Map<String, String>>("resources_supply", Json).nullable()
+        val resources = jsonb<ComputeResources>("resources", Json)
+        val environmentVariables = jsonb<Map<String, String>>("environment_variables", Json).nullable()
         val targetGeneration = long("target_generation").nullable()
         val digest = varchar("digest", 71).index()
 
@@ -307,6 +339,8 @@ class DeploymentService(
                 it[digest] = imageInfo.first
                 it[pullSecretName] = data.pullSecretName
                 it[resourcesSupply] = data.resourcesSupply
+                it[Deployments.resources] = data.resources
+                it[environmentVariables] = data.environmentVariables
                 it[serviceDataSnapshot] = snapshot
                 it[expiredVersion] = false
                 it[completed] = false
@@ -331,6 +365,8 @@ class DeploymentService(
                         it[Deployments.imageTag],
                         it[Deployments.pullSecretName],
                         it[Deployments.resourcesSupply],
+                        it[Deployments.resources],
+                        it[Deployments.environmentVariables],
                         it[Deployments.serviceDataSnapshot],
                         it[Deployments.targetGeneration],
                     )

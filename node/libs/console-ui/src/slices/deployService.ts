@@ -83,6 +83,16 @@ export function imageRule(
           serviceId,
           envId,
           data: {
+            resources: {
+              cpu: {
+                requestMillis: 1,
+                limitMillis: 2,
+              },
+              memory: {
+                requestMiB: 1,
+                limitMiB: 2,
+              },
+            },
             pullSecretName,
             imageRepository: st[0],
             imageTag: st.length > 1 ? st[1] : undefined,

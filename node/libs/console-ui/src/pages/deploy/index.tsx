@@ -2,6 +2,8 @@ import {
   PageContainer,
   ProForm,
   ProFormDependency,
+  ProFormDigitRange,
+  ProFormField,
   ProFormSelect,
   ProFormText,
 } from '@ant-design/pro-components';
@@ -19,6 +21,7 @@ import { dispatchAsyncThunkActionThrowIfError } from '../../common/rtk';
 import ResourceRequirementFormField from '../../components/deploy/ResourceRequirementFormField';
 import { useLastReleaseQuery } from '../../apis/deployment';
 import { useDockerConfigJsonSecretNamesQuery } from '../../apis/env';
+import EnvironmentVariablesEditor from '../../components/form/EnvironmentVariablesEditor';
 
 export default () => {
   // 作为一个部署服务的专用页面
@@ -50,15 +53,35 @@ export default () => {
                 (lastReleaseSummary.imageTag
                   ? `:${lastReleaseSummary.imageTag}`
                   : ''),
+              cpu: [
+                lastReleaseSummary.resources.cpu.requestMillis,
+                lastReleaseSummary.resources.cpu.limitMillis,
+              ],
+              memory: [
+                lastReleaseSummary.resources.memory.requestMiB,
+                lastReleaseSummary.resources.memory.limitMiB,
+              ],
             }
           }
           onFinish={async ({ image, ...other }) => {
             const st = (image as string).split(':', 2);
+            const cpu = other.cpu as number[];
+            const memory = other.memory as number[];
             const action = deployToKubernetes({
               service: service!!,
               env: env!!,
               deployData: {
                 ...other,
+                resources: {
+                  cpu: {
+                    requestMillis: cpu[0],
+                    limitMillis: cpu[1],
+                  },
+                  memory: {
+                    requestMiB: memory[0],
+                    limitMiB: memory[1],
+                  },
+                },
                 imageRepository: st[0],
                 imageTag: st.length > 1 ? st[1] : undefined,
               },
@@ -102,6 +125,52 @@ export default () => {
               />
             )}
           </ProFormDependency>
+
+          <ProFormDigitRange
+            name={'cpu'}
+            tooltip={
+              <a
+                target={'_blank'}
+                href={
+                  'https://kubernetes.io/zh-cn/docs/concepts/configuration/manage-resources-containers/#meaning-of-cpu'
+                }
+              >
+                millis也可以称之为毫核
+              </a>
+            }
+            label={'CPU资源'}
+            fieldProps={{
+              min: 1,
+              suffix: 'Millis',
+            }}
+            rules={[{ required: true, message: '请输入有效的CPU资源' }]}
+          />
+          <ProFormDigitRange
+            name={'memory'}
+            tooltip={
+              <a
+                target={'_blank'}
+                href={
+                  'https://kubernetes.io/zh-cn/docs/concepts/configuration/manage-resources-containers/#meaning-of-memory'
+                }
+              >
+                详细参考
+              </a>
+            }
+            label={'内存资源'}
+            fieldProps={{
+              min: 1,
+              suffix: '兆',
+            }}
+            rules={[{ required: true, message: '请输入有效的内存资源' }]}
+          />
+          <ProFormField
+            name={'environmentVariables'}
+            label={'环境变量'}
+            tooltip={'具备最高的优先级'}
+          >
+            <EnvironmentVariablesEditor />
+          </ProFormField>
 
           {service?.requirements?.map((rr) => (
             <ResourceRequirementFormField

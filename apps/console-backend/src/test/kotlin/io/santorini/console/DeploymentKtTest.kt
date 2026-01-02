@@ -23,6 +23,7 @@ import io.santorini.kubernetes.*
 import io.santorini.model.*
 import io.santorini.schema.*
 import io.santorini.service.ImageService
+import io.santorini.test.mockComputeResources
 import io.santorini.test.mockDeploymentServicePreDeployWorkFineWith
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
@@ -66,12 +67,6 @@ class DeploymentKtTest {
                 mergeJson(
                     deployDemoService, """
   {
-    "resources":{
-     "cpu": {
-      "requestMillis":100,
-      "limitMillis":1000
-     }
-    }
   }
 """
                 )
@@ -109,6 +104,7 @@ class DeploymentKtTest {
 
         val deployData = DeploymentDeployData(
             imageRepository = "image-repository",
+            resources = mockComputeResources(),
         )
 
         manager.post("https://localhost/deployments/deploy/${deployTargetEnv.id}/${deployDemoService.id}") {

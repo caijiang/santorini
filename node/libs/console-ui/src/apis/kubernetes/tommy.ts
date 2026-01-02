@@ -295,14 +295,20 @@ export default {
                     },
                   },
                 ],
+                env: deployData.environmentVariables
+                  ? _.map(deployData.environmentVariables, (value, name) => ({
+                      name,
+                      value,
+                    }))
+                  : undefined,
                 resources: {
                   requests: {
-                    cpu: service.resources.cpu.requestMillis + 'm',
-                    memory: service.resources.memory.requestMiB + 'Mi',
+                    cpu: deployData.resources.cpu.requestMillis + 'm',
+                    memory: deployData.resources.memory.requestMiB + 'Mi',
                   },
                   limits: {
-                    cpu: service.resources.cpu.limitMillis + 'm',
-                    memory: service.resources.memory.limitMiB + 'Mi',
+                    cpu: deployData.resources.cpu.limitMillis + 'm',
+                    memory: deployData.resources.memory.limitMiB + 'Mi',
                   },
                 },
                 securityContext: {
