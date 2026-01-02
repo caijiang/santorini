@@ -106,6 +106,8 @@ export default () => {
     <>
       {reason && <Alert type={'error'} message={reason} />}
       <ProCard
+        collapsible
+        defaultCollapsed
         title={'Ingress'}
         loading={!ingresses}
         extra={

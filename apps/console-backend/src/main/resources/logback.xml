@@ -13,4 +13,5 @@
     <logger name="Exposed" level="trace"/>
     <logger name="io.santorini.kubernetes" level="debug"/>
     <logger name="io.santorini.schema" level="debug"/>
+    <logger name="io.santorini.console" level="debug"/>
 </configuration>

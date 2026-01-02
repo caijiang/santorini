@@ -33,6 +33,17 @@ class EnvResource {
     @Serializable
     data class Id(val parent: EnvResource = EnvResource(), val id: String)
 
+    /**
+     * 公共共享环境支持获取
+     */
+    @Resource("{id}/shareEnvs")
+    @Serializable
+    data class ShareEnv(val parent: EnvResource = EnvResource(), val id: String) {
+        @Resource("{name}")
+        @Serializable
+        data class One(val id: String, val parent: ShareEnv = ShareEnv(id = id), val name: String)
+    }
+
     @Resource("{id}/resources")
     @Serializable
     data class Resources(
@@ -46,6 +57,13 @@ class EnvResource {
         data class One(val id: String, val parent: Resources = Resources(id = id), val resourceName: String)
     }
 }
+
+@Serializable
+data class EnvShareEnv(
+    val name: String,
+    val value: String? = null,
+    val secret: Boolean,
+)
 
 class EnvService(database: Database) {
     object Envs : IdTable<String>() {

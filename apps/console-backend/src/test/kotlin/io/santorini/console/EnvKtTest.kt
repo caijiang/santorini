@@ -1,3 +1,5 @@
+@file:Suppress("TestFunctionName", "NonAsciiCharacters")
+
 package io.santorini.console
 
 import io.fabric8.kubernetes.client.KubernetesClient
@@ -15,12 +17,11 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.verify
 import io.santorini.consoleModuleEntry
-import io.santorini.kubernetes.applyStringConfig
-import io.santorini.kubernetes.applyStringSecret
-import io.santorini.kubernetes.deleteConfigMapAndSecret
-import io.santorini.kubernetes.findResourcesInNamespace
+import io.santorini.kubernetes.*
 import io.santorini.model.ResourceType
 import io.santorini.schema.EnvData
+import io.santorini.test.mockThatConfigMapNameWill
+import io.santorini.test.mockThatSecretNameWill
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
 import kotlin.test.Test
@@ -32,7 +33,7 @@ import kotlin.test.assertEquals
 class EnvKtTest {
 
     @Test
-    fun testRoot() = testApplication {
+    fun 环境以及环境资源测试() = testApplication {
         val kubernetesClient = mockk<KubernetesClient>(relaxed = true)
         application {
             consoleModuleEntry(kubernetesClient = kubernetesClient)
@@ -194,6 +195,30 @@ class EnvKtTest {
                 id, resourceData.name,
             )
         }
+
+        //<editor-fold desc="namespace共享环境变量">
+        println("开始测试namespace共享环境变量")
+        mockThatSecretNameWill(kubernetesClient, id, Share_Env_Config_Name)
+        mockThatConfigMapNameWill(kubernetesClient, id, Share_Env_Config_Name)
+        c.get("https://localhost/envs/$id/shareEnvs").apply {
+            status shouldBe HttpStatusCode.OK
+            body<List<String>>() shouldHaveSize 0
+        }
+        val envName = "OPP"
+        mockkStatic(KubernetesClient::updateOne)
+        every {
+            kubernetesClient.updateOne(any(), any(), any(), any(), any())
+        } answers {}
+        c.put("https://localhost/envs/$id/shareEnvs/$envName") {
+            contentType(ContentType.Application.Json)
+            setBody("welcome")
+        }.apply {
+            status shouldBe HttpStatusCode.NoContent
+        }
+        verify(exactly = 1) {
+            kubernetesClient.updateOne(id, Share_Env_Config_Name, false, envName, "welcome")
+        }
+        //</editor-fold>
     }
 
 }

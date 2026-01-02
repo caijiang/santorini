@@ -10,6 +10,7 @@ import {useEnvContext} from '../layouts/EnvLayout';
 import ServiceDeployedStatusForEnv from '../components/ServiceDeployedStatusForEnv';
 import DashboardLink from '../components/DashboardLink';
 import RocketForm from '../components/EnvContext/rollout/RocketForm';
+import ShareEnv from '../components/EnvContext/ShareEnv';
 
 /**
  * 环境首页,展示环境直接相关的资源
@@ -22,6 +23,8 @@ export default () => {
   } = useEnvContext();
   return (
     <>
+      <ShareEnv />
+      <Divider size={'small'} />
       <Ingresses />
       <Divider size={'small'} />
       <Resources />

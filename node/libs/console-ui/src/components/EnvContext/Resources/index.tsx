@@ -25,6 +25,8 @@ export default () => {
   return (
     <>
       <ProCard
+        collapsible
+        defaultCollapsed
         title={'环境资源'}
         extra={
           <NavLink to={`/envFor/${env.id}/addResource`}>

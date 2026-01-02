@@ -1,3 +1,5 @@
+@file:Suppress("TestFunctionName", "NonAsciiCharacters")
+
 package io.santorini.console
 
 import io.kotest.matchers.collections.shouldContain
@@ -23,7 +25,7 @@ import kotlin.test.Test
  */
 class ServiceKtTest {
     @Test
-    fun testRoot() = testApplication {
+    fun 服务单元测试() = testApplication {
         application {
             consoleModule()
             mockUserModule()

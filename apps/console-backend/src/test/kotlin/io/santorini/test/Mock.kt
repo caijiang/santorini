@@ -4,6 +4,7 @@ package io.santorini.test
 
 import io.fabric8.kubernetes.api.model.*
 import io.fabric8.kubernetes.client.KubernetesClient
+import io.fabric8.kubernetes.client.dsl.MixedOperation
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation
 import io.fabric8.kubernetes.client.dsl.Resource
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -57,6 +58,46 @@ fun Application.mockUserModule() {
             call.respond(HttpStatusCode.OK)
         }
     }
+}
+
+fun mockThatConfigMapNameWill(
+    mockKubernetesClient: KubernetesClient,
+    namespace: String,
+    name: String,
+    configMap: ConfigMap? = null,
+) {
+    val gettable = mockk<Resource<ConfigMap>>()
+    every { gettable.get() } returns configMap
+
+    val nameable = mockk<NonNamespaceOperation<ConfigMap, ConfigMapList, Resource<ConfigMap>>>()
+    every {
+        nameable.withName(name)
+    } returns gettable
+
+    val configmaps = mockk<MixedOperation<ConfigMap, ConfigMapList, Resource<ConfigMap>>>()
+    every { configmaps.inNamespace(namespace) } returns nameable
+
+    every { mockKubernetesClient.configMaps() } returns configmaps
+}
+
+fun mockThatSecretNameWill(
+    mockKubernetesClient: KubernetesClient,
+    namespace: String,
+    name: String,
+    secret: Secret? = null,
+) {
+    val gettable = mockk<Resource<Secret>>()
+    every { gettable.get() } returns secret
+
+    val nameable = mockk<NonNamespaceOperation<Secret, SecretList, Resource<Secret>>>()
+    every {
+        nameable.withName(name)
+    } returns gettable
+
+    val configmaps = mockk<MixedOperation<Secret, SecretList, Resource<Secret>>>()
+    every { configmaps.inNamespace(namespace) } returns nameable
+
+    every { mockKubernetesClient.secrets() } returns configmaps
 }
 
 /**

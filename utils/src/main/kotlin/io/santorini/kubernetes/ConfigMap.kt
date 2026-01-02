@@ -1,9 +1,50 @@
 package io.santorini.kubernetes
 
+import io.fabric8.kubernetes.api.model.ConfigMap
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder
 import io.fabric8.kubernetes.api.model.SecretBuilder
 import io.fabric8.kubernetes.client.KubernetesClient
 import java.util.*
+
+internal fun KubernetesClient.updateOneConfigMap(
+    namespace: String,
+    configName: String,
+    name: String,
+    value: String
+): ConfigMap {
+    val wn = configMaps().inNamespace(namespace).withName(configName)
+    val current = wn.get()
+    if (current != null) {
+        current.data[name] = value
+        return configMaps().resource(current).update()
+    } else {
+        return configMaps().resource(
+            ConfigMapBuilder()
+                .withNewMetadata()
+                .withNamespace(namespace)
+                .withName(configName)
+                .addToLabels("santorini.io/manageable", "true")
+                .endMetadata()
+                .addToData(name, value)
+                .build()
+        ).create()
+    }
+}
+
+internal fun KubernetesClient.removeOneConfigMape(
+    namespace: String,
+    configName: String,
+    name: String,
+) {
+    val wn = configMaps().inNamespace(namespace).withName(configName)
+    val current = wn.get()
+    if (current == null) {
+        return
+    } else {
+        current.data.remove(name)
+        configMaps().resource(current).update()
+    }
+}
 
 fun KubernetesClient.deleteConfigMapAndSecret(namespace: String, name: String) {
     configMaps().inNamespace(namespace)

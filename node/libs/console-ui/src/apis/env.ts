@@ -28,27 +28,57 @@ export interface SantoriniResourceData extends X {
   type: string;
 }
 
+interface EnvVar {
+  name: string;
+  value?: string;
+  secret: boolean;
+}
+
 export const envApi = createApi({
   reducerPath: 'consoleEnvApi',
   baseQuery: stBaseQuery,
-  tagTypes: ['env', 'resources'],
+  tagTypes: ['Envs', 'Resources', 'ShareEnvVars'],
   endpoints: (build) => {
     return {
+      //<editor-fold desc="共享环境变量">
+      shareEnvVars: build.query<EnvVar[], string>({
+        providesTags: ['ShareEnvVars'],
+        query: (arg) => `/envs/${arg}/shareEnvs`,
+      }),
+      createEnvVar: build.mutation<undefined, { env: string; var: EnvVar }>({
+        invalidatesTags: ['ShareEnvVars'],
+        query: ({ env, var: { name, value, secret } }) => ({
+          url: `/envs/${env}/shareEnvs/${name}`,
+          method: 'PUT',
+          params: secret ? { secret: 'true' } : undefined,
+          body: value,
+        }),
+      }),
+      deleteEnvVar: build.mutation<undefined, { env: string; var: EnvVar }>({
+        invalidatesTags: ['ShareEnvVars'],
+        query: ({ env, var: { name, secret } }) => ({
+          url: `/envs/${env}/shareEnvs/${name}`,
+          method: 'DELETE',
+          params: secret ? { secret: 'true' } : undefined,
+        }),
+      }),
+      //</editor-fold>
       dockerConfigJsonSecretNames: build.query<string[], string>({
         query: (arg) => `/dockerConfigJsonSecretNames/${arg}`,
       }),
+      //<editor-fold desc="环境资源">
       resources: build.query<
         SantoriniResourceData[],
         { envId: string; params?: any }
       >({
-        providesTags: ['resources'],
+        providesTags: ['Resources'],
         query: ({ envId, params }) => ({
           url: `/envs/${envId}/resources`,
           params,
         }),
       }),
       createResource: build.mutation<undefined, { envId: string; data: any }>({
-        invalidatesTags: ['resources'],
+        invalidatesTags: ['Resources'],
         query: ({ envId, data }) => ({
           url: `/envs/${envId}/resources`,
           method: 'POST',
@@ -59,19 +89,21 @@ export const envApi = createApi({
         undefined,
         { envId: string; name: string }
       >({
-        invalidatesTags: ['resources'],
+        invalidatesTags: ['Resources'],
         query: ({ envId, name }) => ({
           url: `/envs/${envId}/resources/${name}`,
           method: 'DELETE',
         }),
       }),
+      //</editor-fold>
+      //<editor-fold desc="环境以及属性的自身管理">
       updateEnv: build.mutation<undefined, any>({
-        invalidatesTags: ['env'],
+        invalidatesTags: ['Envs'],
         query: (arg) => ({ url: '/envs', method: 'POST', body: arg }),
       }),
       // queryFn
       envs: build.query<CUEnv[] | undefined, IObjectMeta[] | undefined, Env[]>({
-        providesTags: ['env'],
+        providesTags: ['Envs'],
         query: (arg) => ({
           url: arg
             ? `/envs/batch/${arg?.map((it) => it.name!!)?.join(',') ?? '99999'}`
@@ -106,6 +138,7 @@ export const envApi = createApi({
         //   });
         // },
       }),
+      //</editor-fold>
     };
   },
 });
@@ -117,4 +150,7 @@ export const {
   useCreateResourceMutation,
   useDeleteResourceMutation,
   useDockerConfigJsonSecretNamesQuery,
+  useShareEnvVarsQuery,
+  useCreateEnvVarMutation,
+  useDeleteEnvVarMutation,
 } = envApi;
