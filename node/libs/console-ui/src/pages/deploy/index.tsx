@@ -114,13 +114,7 @@ export default () => {
                 label={'部署镜像'}
                 rules={[
                   { required: true },
-                  imageRule(
-                    serviceId!!,
-                    envId!!,
-                    pullSecretName,
-                    dispatch,
-                    (msg) => message.warning(msg)
-                  ),
+                  imageRule(serviceId!!, envId!!, pullSecretName, dispatch),
                 ]}
               />
             )}

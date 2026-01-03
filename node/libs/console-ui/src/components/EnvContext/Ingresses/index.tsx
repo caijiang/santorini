@@ -17,13 +17,19 @@ import {
   Empty,
   Popconfirm,
   Skeleton,
+  Typography,
 } from 'antd';
 import { ProCard, ProList } from '@ant-design/pro-components';
 import { IngressPath, ingressPathKey, toHttpPaths } from './df';
 import Backend from './Backend';
 import IngressAnnotation from './IngressAnnotation';
 import PathEditor from './PathEditor';
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  LinkOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 import yamlGenerator from '../../../apis/kubernetes/yamlGenerator';
 
 function toHostSummary(ingress: IIngress): HostSummary {
@@ -135,7 +141,17 @@ export default () => {
 
               return {
                 key: host.hostname,
-                label: host.hostname,
+                label: (
+                  <Typography>
+                    <Typography.Text copyable>{host.hostname}</Typography.Text>
+                    <Typography.Link
+                      target={'_blank'}
+                      href={`https://${host.hostname}`}
+                    >
+                      <LinkOutlined />
+                    </Typography.Link>
+                  </Typography>
+                ),
                 children: (
                   <ProList<IngressPath>
                     dataSource={listData}
