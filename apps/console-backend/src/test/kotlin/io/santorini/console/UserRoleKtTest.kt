@@ -20,15 +20,15 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.santorini.LoginUserData
+import io.santorini.console.model.PageResult
+import io.santorini.console.schema.EnvData
+import io.santorini.console.schema.ServiceMetaData
+import io.santorini.console.schema.UserData
 import io.santorini.consoleModuleEntry
 import io.santorini.kubernetes.*
 import io.santorini.model.Lifecycle
-import io.santorini.model.PageResult
 import io.santorini.model.ServiceRole
 import io.santorini.model.ServiceType
-import io.santorini.schema.EnvData
-import io.santorini.schema.ServiceMetaData
-import io.santorini.schema.UserData
 import io.santorini.test.mockUserModule
 import io.santorini.tools.addServiceMeta
 import io.santorini.tools.createStandardClient
@@ -159,6 +159,28 @@ class UserRoleKtTest {
             manager.get("https://localhost/users/${userData.id}/envs").apply {
                 status shouldBe HttpStatusCode.OK
                 body<List<String>>() shouldBe listOf(envId)
+            }
+            user.get("https://localhost/envs").apply {
+                status shouldBe HttpStatusCode.OK
+                body<List<EnvData>>().map { it.id } shouldBe listOf(envId)
+            }
+        }
+
+        withClue("但只能查看授权过的那个") {
+            manager.post("https://localhost/envs") {
+                contentType(ContentType.Application.Json)
+                setBody(EnvData(id = envId + "2", name = "test", production = true))
+            }.apply {
+                status shouldBe HttpStatusCode.OK
+            }
+
+            manager.get("https://localhost/users/${userData.id}/envs").apply {
+                status shouldBe HttpStatusCode.OK
+                body<List<String>>() shouldBe listOf(envId)
+            }
+            user.get("https://localhost/envs").apply {
+                status shouldBe HttpStatusCode.OK
+                body<List<EnvData>>().map { it.id } shouldBe listOf(envId)
             }
         }
 

@@ -1,0 +1,59 @@
+### 获取 token 400 https://docs.gitea.com/api/1.25/#tag/user/operation/userCreateToken
+POST https://gitea.com/api/v1/users/{{giteaUser}}/tokens
+Authorization: Basic {{giteaUser}} {{giteaPassword}}
+Content-Type: application/json
+
+{
+  "name": "santorini",
+  "scopes": [
+    "all"
+  ]
+}
+
+### https://docs.gitea.com/api/1.25/#tag/organization/operation/orgGet
+GET https://gitea.com/api/v1/orgs/{{owner}}
+
+### https://docs.gitea.com/api/1.25/#tag/repository/operation/repoSearch
+#GET https://gitea.com/api/v1/repos/search?uid=
+
+### https://docs.gitea.com/api/1.25/#tag/organization/operation/createOrgRepo
+POST https://gitea.com/api/v1/orgs/{{owner}}/repos
+Content-Type: application/json
+Authorization: token {{giteaToken}}
+
+{
+  "name": "t0",
+  "private": true
+}
+
+### https://docs.gitea.com/api/1.25/#tag/repository/operation/repoGetWikiPages 404
+GET https://gitea.com/api/v1/repos/{{owner}}/t0/wiki/pages
+Authorization: token {{giteaToken}}
+
+### https://docs.gitea.com/api/1.25/#tag/repository/operation/rejectRepoTransfer content_base64
+POST https://gitea.com/api/v1/repos/{{owner}}/t0/wiki/new
+Authorization: token {{giteaToken}}
+Content-Type: application/json
+
+{
+  "message": "# Title",
+  "title": "中文呢"
+}
+
+### https://docs.gitea.com/api/1.25/#tag/repository/operation/repoCreateWikiPage
+GET https://gitea.com/api/v1/repos/{{owner}}/t0/wiki/page/%E4%B8%AD%E6%96%87%E5%91%A2
+Authorization: token {{giteaToken}}
+
+### https://docs.gitea.com/api/1.25/#tag/repository/operation/repoGetWikiPage
+DELETE https://gitea.com/api/v1/repos/{{owner}}/t0/wiki/page/unnamed
+Authorization: token {{giteaToken}}
+
+### https://docs.gitea.com/api/1.25/#tag/repository/operation/repoGetWikiPage
+PATCH https://gitea.com/api/v1/repos/{{owner}}/t0/wiki/page/%E4%B8%AD%E6%96%87%E5%91%A2
+Authorization: token {{giteaToken}}
+Content-Type: application/json
+
+{
+  "message": "string",
+  "title": ""
+}

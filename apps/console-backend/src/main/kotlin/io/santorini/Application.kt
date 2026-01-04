@@ -12,7 +12,7 @@ import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.santorini.console.configureConsole
-import io.santorini.schema.*
+import io.santorini.console.schema.*
 import io.santorini.scope.AppBackgroundScope
 import io.santorini.service.ImageService
 import io.santorini.well.StatusException

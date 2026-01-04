@@ -11,9 +11,9 @@ import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
+import io.santorini.console.model.GrantAuthorities
+import io.santorini.console.schema.UserRoleService
 import io.santorini.kubernetes.findOrCreateServiceAccount
-import io.santorini.model.GrantAuthorities
-import io.santorini.schema.UserRoleService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable

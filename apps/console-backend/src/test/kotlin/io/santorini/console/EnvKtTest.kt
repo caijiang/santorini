@@ -16,10 +16,10 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.verify
+import io.santorini.console.schema.EnvData
 import io.santorini.consoleModuleEntry
 import io.santorini.kubernetes.*
 import io.santorini.model.ResourceType
-import io.santorini.schema.EnvData
 import io.santorini.test.mockThatConfigMapNameWill
 import io.santorini.test.mockThatSecretNameWill
 import io.santorini.test.mockUserModule

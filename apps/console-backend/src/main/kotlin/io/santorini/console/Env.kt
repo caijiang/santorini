@@ -12,9 +12,9 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.santorini.OAuthPlatformUserDataAuditResult
+import io.santorini.console.schema.*
 import io.santorini.kubernetes.*
 import io.santorini.model.ResourceType
-import io.santorini.schema.*
 import io.santorini.withAuthorization
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
@@ -52,8 +52,8 @@ internal fun Application.configureConsoleEnv(kubernetesClient: KubernetesClient)
             withAuthorization {
                 logger.info {
                     "Fetching batches...:$it"
-                }
-                call.respond(service.read(null))
+                }// 获取当前可以看得
+                call.respond(service.read(userRoleService.value.toUserEnvs(it.id)))
             }
         }
         patch<EnvResource.Id> {

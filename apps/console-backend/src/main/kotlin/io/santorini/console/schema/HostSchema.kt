@@ -1,10 +1,10 @@
 @file:OptIn(ExperimentalTime::class)
 
-package io.santorini.schema
+package io.santorini.console.schema
 
 import io.ktor.resources.*
-import io.santorini.model.Pageable
-import io.santorini.schema.ServiceMetaService.ServiceMetas
+import io.santorini.console.model.Pageable
+import io.santorini.console.schema.ServiceMetaService.ServiceMetas
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable

@@ -18,10 +18,10 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.santorini.LoginUserData
+import io.santorini.console.schema.*
 import io.santorini.consoleModuleEntry
 import io.santorini.kubernetes.*
 import io.santorini.model.*
-import io.santorini.schema.*
 import io.santorini.service.ImageService
 import io.santorini.test.mockComputeResources
 import io.santorini.test.mockDeploymentServicePreDeployWorkFineWith

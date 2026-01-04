@@ -1,4 +1,4 @@
-package io.santorini.model
+package io.santorini.console.model
 
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.jdbc.Query

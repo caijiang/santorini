@@ -6,8 +6,8 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import io.santorini.console.schema.HostData
 import io.santorini.consoleModule
-import io.santorini.schema.HostData
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
 import kotlin.test.Test

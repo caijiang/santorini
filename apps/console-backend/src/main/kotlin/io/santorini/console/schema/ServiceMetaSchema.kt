@@ -1,13 +1,19 @@
 @file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 
-package io.santorini.schema
+package io.santorini.console.schema
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.resources.*
-import io.santorini.model.*
+import io.santorini.console.model.PageRequest
+import io.santorini.console.model.PageResult
+import io.santorini.console.model.Pageable
+import io.santorini.console.model.mapToPage
+import io.santorini.model.Lifecycle
+import io.santorini.model.ResourceRequirement
+import io.santorini.model.ServiceType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable

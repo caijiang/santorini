@@ -2,8 +2,8 @@ package io.santorini.service
 
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.ktor.client.*
+import io.santorini.console.schema.DeploymentDeployData
 import io.santorini.kubernetes.findDockerConfigJson
-import io.santorini.schema.DeploymentDeployData
 import kotlinx.serialization.json.Json
 import me.jiangcai.cr.ContainerRegistry
 import me.jiangcai.cr.Deployable

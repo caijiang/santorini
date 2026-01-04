@@ -1,4 +1,4 @@
-package io.santorini.resources
+package io.santorini.console.resources
 
 import io.santorini.kubernetes.SantoriniResource
 import io.santorini.model.ServiceType

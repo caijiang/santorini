@@ -10,11 +10,11 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import io.santorini.console.model.PageResult
+import io.santorini.console.schema.ServiceMetaData
 import io.santorini.consoleModule
 import io.santorini.model.Lifecycle
-import io.santorini.model.PageResult
 import io.santorini.model.ServiceType
-import io.santorini.schema.ServiceMetaData
 import io.santorini.test.mockUserModule
 import io.santorini.tools.addServiceMeta
 import io.santorini.tools.createStandardClient

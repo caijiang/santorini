@@ -1,4 +1,4 @@
-package io.santorini.resources
+package io.santorini.console.resources
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
@@ -11,20 +11,11 @@ import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 @JsonIgnoreUnknownKeys
-data class NacosAuthResourceData(
-    @SerialName("server-addr")
-    val serverAddr: String,
-    val username: String? = null,
-    val password: String? = null,
+data class RocketMQResourceData(
+    @SerialName("name-server")
+    val nameServer: String,
     @SerialName("access-key")
     val accessKey: String? = null,
     @SerialName("secret-key")
     val secretKey: String? = null,
-)
-
-@OptIn(ExperimentalSerializationApi::class)
-@Serializable
-@JsonIgnoreUnknownKeys
-data class NacosNamespaceResourceData(
-    val namespace: String
 )

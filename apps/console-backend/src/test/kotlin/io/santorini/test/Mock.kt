@@ -17,11 +17,11 @@ import io.mockk.mockk
 import io.santorini.OAuthPlatform
 import io.santorini.OAuthPlatformUserData
 import io.santorini.OAuthPlatformUserDataAuditResult
+import io.santorini.console.schema.ComputeResourceCpu
+import io.santorini.console.schema.ComputeResourceMemory
+import io.santorini.console.schema.ComputeResources
+import io.santorini.console.schema.UserRoleService
 import io.santorini.saveUserData
-import io.santorini.schema.ComputeResourceCpu
-import io.santorini.schema.ComputeResourceMemory
-import io.santorini.schema.ComputeResources
-import io.santorini.schema.UserRoleService
 import me.jiangcai.cr.Deployable
 import org.koin.ktor.ext.inject
 import java.util.*
@@ -104,7 +104,7 @@ fun mockThatSecretNameWill(
 
 /**
  * 其实更好的做法是模拟响应的 node
- * 确保 [io.santorini.schema.DeploymentService.preDeploy] 工作顺利
+ * 确保 [io.santorini.console.schema.DeploymentService.preDeploy] 工作顺利
  */
 fun mockDeploymentServicePreDeployWorkFineWith(
     mockKubernetesClient: KubernetesClient,

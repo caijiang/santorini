@@ -4,8 +4,8 @@ import io.kotest.matchers.shouldBe
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.santorini.schema.ServiceMetaData
-import io.santorini.schema.mergeJson
+import io.santorini.console.schema.ServiceMetaData
+import io.santorini.console.schema.mergeJson
 
 
 suspend fun HttpClient.addServiceMeta(data: ServiceMetaData) {

@@ -8,9 +8,9 @@ import io.ktor.server.resources.*
 import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.santorini.schema.HostData
-import io.santorini.schema.HostResource
-import io.santorini.schema.HostService
+import io.santorini.console.schema.HostData
+import io.santorini.console.schema.HostResource
+import io.santorini.console.schema.HostService
 import io.santorini.withAuthorization
 import org.koin.ktor.ext.inject
 

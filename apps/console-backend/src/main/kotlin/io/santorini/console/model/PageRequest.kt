@@ -1,4 +1,4 @@
-package io.santorini.model
+package io.santorini.console.model
 
 /**
  * @author CJ

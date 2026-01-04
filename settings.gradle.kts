@@ -44,3 +44,5 @@ include("share:santorini-model")
 findProject(":share:santorini-model")?.name = "santorini-model"
 include("libs")
 include("libs:container-registry")
+include("libs:gitea-wiki")
+findProject(":libs:gitea-wiki")?.name = "gitea-wiki"

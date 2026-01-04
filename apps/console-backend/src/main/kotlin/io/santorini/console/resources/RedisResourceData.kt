@@ -1,4 +1,4 @@
-package io.santorini.resources
+package io.santorini.console.resources
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable

@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package io.santorini.schema
+package io.santorini.console.schema
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.resources.*

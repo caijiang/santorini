@@ -1,15 +1,16 @@
 @file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 
-package io.santorini.schema
+package io.santorini.console.schema
 
 import io.fabric8.kubernetes.api.model.ServiceAccount
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.ktor.resources.*
 import io.santorini.*
+import io.santorini.console.model.*
+import io.santorini.console.schema.ServiceMetaService.ServiceMetas
+import io.santorini.console.schema.UserRoleService.UserEnvs.env
 import io.santorini.kubernetes.*
-import io.santorini.model.*
-import io.santorini.schema.ServiceMetaService.ServiceMetas
-import io.santorini.schema.UserRoleService.UserEnvs.env
+import io.santorini.model.ServiceRole
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.FixedOffsetTimeZone

@@ -12,7 +12,7 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.santorini.OAuthPlatformUserDataAuditResult
-import io.santorini.schema.*
+import io.santorini.console.schema.*
 import io.santorini.withAuthorization
 import org.koin.ktor.ext.inject
 import kotlin.uuid.ExperimentalUuidApi

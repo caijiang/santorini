@@ -11,10 +11,10 @@ import io.ktor.server.resources.post
 import io.ktor.server.resources.put
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.santorini.schema.DeploymentDeployData
-import io.santorini.schema.DeploymentResource
-import io.santorini.schema.DeploymentService
-import io.santorini.schema.PreDeployResult
+import io.santorini.console.schema.DeploymentDeployData
+import io.santorini.console.schema.DeploymentResource
+import io.santorini.console.schema.DeploymentService
+import io.santorini.console.schema.PreDeployResult
 import io.santorini.withAuthorization
 import java.util.*
 import kotlin.uuid.ExperimentalUuidApi

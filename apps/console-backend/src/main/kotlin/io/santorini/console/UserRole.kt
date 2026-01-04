@@ -8,9 +8,9 @@ import io.ktor.server.resources.*
 import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.santorini.console.schema.UserResource
+import io.santorini.console.schema.UserRoleService
 import io.santorini.model.ServiceRole
-import io.santorini.schema.UserResource
-import io.santorini.schema.UserRoleService
 import io.santorini.withAuthorization
 import org.koin.ktor.ext.inject
 import kotlin.uuid.ExperimentalUuidApi
