@@ -13,7 +13,6 @@ import io.santorini.console.schema.UserRoleService
 import io.santorini.model.ServiceRole
 import io.santorini.withAuthorization
 import org.koin.ktor.ext.inject
-import kotlin.uuid.ExperimentalUuidApi
 
 //每当用户登陆后，就会被记录下来
 //每当新增一个服务单元，那么就会增加
@@ -25,7 +24,6 @@ import kotlin.uuid.ExperimentalUuidApi
 
 private val logger = KotlinLogging.logger {}
 
-@OptIn(ExperimentalUuidApi::class)
 internal fun Application.configureConsoleUser() {
     val service = inject<UserRoleService>().value
 

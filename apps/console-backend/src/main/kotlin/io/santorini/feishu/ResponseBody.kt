@@ -1,6 +1,5 @@
 package io.santorini.feishu
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonIgnoreUnknownKeys
@@ -8,7 +7,6 @@ import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 /**
  * @author CJ
  */
-@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 @JsonIgnoreUnknownKeys
 data class ResponseBody<T>(
@@ -17,6 +15,7 @@ data class ResponseBody<T>(
     val message: String? = null,
     val data: T? = null
 ) {
+    @Suppress("unused")
     fun makeSureSuccess() {
         if (!success)
             throw Exception("$code: $message")

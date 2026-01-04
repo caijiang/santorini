@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class, ExperimentalUuidApi::class, ExperimentalSerializationApi::class)
-
 package io.santorini.console.schema
 
 import io.fabric8.kubernetes.client.KubernetesClient
@@ -25,7 +23,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.FixedOffsetTimeZone
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonIgnoreUnknownKeys
@@ -39,8 +36,6 @@ import org.jetbrains.exposed.v1.json.jsonb
 import java.util.*
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 

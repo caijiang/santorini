@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
-
 package io.santorini.console.schema
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -28,8 +26,6 @@ import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.jsonb
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 
@@ -40,7 +36,6 @@ import kotlin.uuid.toJavaUuid
 
 private val logger = KotlinLogging.logger {}
 
-@Suppress("OPT_IN_USAGE")
 @Serializable
 @JsonIgnoreUnknownKeys
 data class ServiceMetaData(

@@ -19,6 +19,7 @@ tasks.withType<KotlinCompilationTask<*>> {
     compilerOptions {
         optIn.add("kotlin.time.ExperimentalTime")
         optIn.add("kotlin.uuid.ExperimentalUuidApi")
+        optIn.add("kotlinx.serialization.ExperimentalSerializationApi")
 //        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 }

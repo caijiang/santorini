@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package io.santorini.console.schema
 
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -15,7 +13,6 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import kotlin.time.ExperimentalTime
 
 private val logger = KotlinLogging.logger {}
 

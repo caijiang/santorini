@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package io.santorini.console
 
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -15,7 +13,6 @@ import io.santorini.OAuthPlatformUserDataAuditResult
 import io.santorini.console.schema.*
 import io.santorini.withAuthorization
 import org.koin.ktor.ext.inject
-import kotlin.uuid.ExperimentalUuidApi
 
 private val logger = KotlinLogging.logger {}
 

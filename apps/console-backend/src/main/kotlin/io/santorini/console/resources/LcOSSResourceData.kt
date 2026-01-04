@@ -1,6 +1,5 @@
 package io.santorini.console.resources
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonIgnoreUnknownKeys
@@ -8,7 +7,6 @@ import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 /**
  * @author CJ
  */
-@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 @JsonIgnoreUnknownKeys
 data class LcOSSResourceData(

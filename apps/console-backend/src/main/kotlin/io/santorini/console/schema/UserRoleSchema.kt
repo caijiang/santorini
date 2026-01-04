@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
-
 package io.santorini.console.schema
 
 import io.fabric8.kubernetes.api.model.ServiceAccount
@@ -29,7 +27,6 @@ import org.jetbrains.exposed.v1.json.jsonb
 import java.util.*
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid

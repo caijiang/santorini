@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package io.santorini.console.schema
 
 import io.ktor.resources.*
@@ -16,7 +14,6 @@ import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 @Serializable
 data class HostData(

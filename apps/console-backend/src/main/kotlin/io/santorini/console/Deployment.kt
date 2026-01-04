@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package io.santorini.console
 
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -17,7 +15,6 @@ import io.santorini.console.schema.DeploymentService
 import io.santorini.console.schema.PreDeployResult
 import io.santorini.withAuthorization
 import java.util.*
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 import org.koin.ktor.ext.get as koinGet
 

@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package io.santorini
 
 import common.LoginUser
@@ -18,7 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.get
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 
