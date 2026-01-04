@@ -10,14 +10,17 @@ import {
 } from '@private-everest/app-support';
 import { common } from '@private-everest/generated-common';
 import logo from '../assets/logo.svg';
+import { DashboardOutlined } from '@ant-design/icons';
+import { useAppNameQuery } from '@santorini/console-ui';
 
 export default () => {
   const location = useLocation();
   const r = useMainMenu(modules);
   const { data: currentUser } = useCurrentLoginUserQuery(undefined);
+  const { data: title } = useAppNameQuery(undefined);
   return (
     <ProLayout
-      title="Santorini"
+      title={title || 'Santorini'}
       siderWidth={177}
       logo={logo}
       breadcrumbRender={(items) => {
@@ -39,6 +42,7 @@ export default () => {
         children: [
           {
             name: '首页',
+            icon: <DashboardOutlined />,
             path: '/',
           },
           ...r,

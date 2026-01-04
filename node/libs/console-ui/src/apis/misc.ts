@@ -6,6 +6,9 @@ export const miscApi = createApi({
   baseQuery: stBaseQuery,
   endpoints: (build) => {
     return {
+      appName: build.query<string, undefined>({
+        query: () => ({ url: '/appName', responseHandler: 'text' }),
+      }),
       dashboardHost: build.query<string | undefined, undefined>({
         query: () => ({
           url: '/dashboardHost',
@@ -22,4 +25,8 @@ export const miscApi = createApi({
   },
 });
 
-export const { useEmbedNacosServerAddrQuery, useDashboardHostQuery } = miscApi;
+export const {
+  useEmbedNacosServerAddrQuery,
+  useDashboardHostQuery,
+  useAppNameQuery,
+} = miscApi;

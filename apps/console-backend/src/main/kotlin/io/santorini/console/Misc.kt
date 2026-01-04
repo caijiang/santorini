@@ -39,6 +39,9 @@ internal fun Application.configureConsoleMisc(kubernetesClient: KubernetesClient
                 call.respond(HttpStatusCode.OK)
             }
         }
+        get("/appName") {
+            call.respond(System.getenv("APPNAME") ?: "Santorini")
+        }
         // 获取内置的 nacos 地址
         get("/embedNacosServerAddr") {
             val root = kubernetesClient.currentPod().rootOwner(kubernetesClient)

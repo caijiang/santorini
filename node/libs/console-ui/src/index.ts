@@ -9,10 +9,12 @@ import { listenerMiddleware } from './module-private';
 import { kubeServiceApi } from './apis/kubernetes/service';
 import { ingressApi } from './apis/kubernetes/ingress';
 import { hostApi } from './apis/host';
-import { miscApi } from './apis/misc';
+import { miscApi, useAppNameQuery } from './apis/misc';
 import { userApi } from './apis/user';
 import { kubePodsApi } from './apis/kubernetes/pods';
 import { deploymentApi } from './apis/deployment';
+
+export { useAppNameQuery };
 
 export default {
   middlewares: [
