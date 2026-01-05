@@ -303,8 +303,7 @@ fun KubernetesClient.makesureRightServiceRoles(
     root: HasMetadata,
     serviceAccountName: String,
     namespace: String,
-    serviceId: String,
-    roles: List<ServiceRole>
+    servicesRoles: Map<String, List<ServiceRole>>
 ) {
     val instance = root.metadata.labels["app.kubernetes.io/instance"] ?: throw Exception("顶级元素不包含实例信息")
     // 角色 -> 基本权限 -> 特殊权限
@@ -321,23 +320,25 @@ fun KubernetesClient.makesureRightServiceRoles(
                         && it.namespace == this.namespace
             }
         }
-    //
+    // 这些 Binding 分别代表什么; Pair null 表示无关, ServiceRole null 表示 基础权限
     val currentMore = current.associateWith {
         moreX(this, it)
     }
 
-    val target = (roles + null).map { serviceId to it }
+    // 目标权限组
+    val target = servicesRoles.flatMap { entry ->
+        (entry.value + null).map { entry.key to it }
+    }
 
     currentMore.filterValues {
         // 空或者不在目标范围的
         it == null || !target.contains(it)
     }.forEach { (k, _) ->
-        logger.debug {
+        logger.warn {
             "RB:${k.metadata} 不应该存在,准备移除"
         }
         rbac().roleBindings().resource(k).delete()
     }
-
     target.filter { !currentMore.containsValue(it) }
         .forEach {
             logger.debug {

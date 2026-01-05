@@ -2,6 +2,7 @@ package io.santorini.console.schema
 
 import io.fabric8.kubernetes.api.model.ServiceAccount
 import io.fabric8.kubernetes.client.KubernetesClient
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.resources.*
 import io.santorini.*
 import io.santorini.console.model.*
@@ -30,6 +31,8 @@ import kotlin.time.ExperimentalTime
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
+
+private val logger = KotlinLogging.logger {}
 
 @Serializable
 data class UserDataSimple(
@@ -372,16 +375,21 @@ class UserRoleService(
     }
 
     private suspend fun kubernetesRoles(userId: Uuid, removeEnv: String? = null) {
+        logger.info {
+            "重新整理用户:$userId 的权限"
+        }
         val userData = userById(userId.toJavaUuid()) ?: return
         val root = kubernetesClient.currentPod().rootOwner()
         removeEnv?.let {
+            logger.info {
+                "移除其在环境 $removeEnv 的所有权限"
+            }
             kubernetesClient.removeAllServiceRolesFromNamespace(root, userData.serviceAccountName, it)
         }
         // 获取每一组权限，检查是否符合要求，应加则加，应减则减
-        val envs = dbQuery {
-            UserEnvs.select(env)
-                .where { UserEnvs.user eq userId.toJavaUuid() }
-                .map { it[env].value }
+        val envs = toUserEnvs(userId)
+        logger.info {
+            "其 sa:${userData.serviceAccountName} 其具备以下环境权限:$envs"
         }
         val serviceRoles = dbQuery {
             UserServiceRoles.select(UserServiceRoles.service, UserServiceRoles.role)
@@ -392,10 +400,9 @@ class UserRoleService(
         }
 
         envs.forEach { envId ->
+            logger.info { "确保其具备环境:$envId 权限,以及 各服务身份:$serviceRoles" }
             kubernetesClient.makesureRightEnvRoles(root, userData.serviceAccountName, envId)
-            serviceRoles.forEach { (t, u) ->
-                kubernetesClient.makesureRightServiceRoles(root, userData.serviceAccountName, envId, t, u)
-            }
+            kubernetesClient.makesureRightServiceRoles(root, userData.serviceAccountName, envId, serviceRoles)
         }
     }
 
