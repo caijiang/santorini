@@ -40,6 +40,10 @@ class JvmGenerateContext : GenerateContext {
                 } else {
                     systemProperties["spring.cloud.nacos.username"] = data.username ?: ""
                     systemProperties["spring.cloud.nacos.password"] = data.password ?: ""
+                    systemProperties["spring.cloud.nacos.discovery.username"] = data.username ?: ""
+                    systemProperties["spring.cloud.nacos.discovery.password"] = data.password ?: ""
+                    systemProperties["spring.cloud.nacos.config.username"] = data.username ?: ""
+                    systemProperties["spring.cloud.nacos.config.password"] = data.password ?: ""
                 }
             }
 
