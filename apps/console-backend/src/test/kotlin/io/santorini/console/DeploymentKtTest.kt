@@ -293,7 +293,7 @@ class DeploymentKtTest {
                     anyNullable()
                 )
             } answers {}
-            every { kubernetesClient.makesureRightServiceRoles(any(), any(), any(), any(), any()) } answers {}
+            every { kubernetesClient.makesureRightServiceRoles(any(), any(), any(), any()) } answers {}
             every { kubernetesClient.makesureRightEnvRoles(anyNullable(), any(), any()) } answers {}
 
             val pod = mockk<Pod>(relaxed = true)

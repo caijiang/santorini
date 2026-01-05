@@ -139,7 +139,7 @@ class UserRoleKtTest {
         mockkStatic(kubernetesClient::makesureRightEnvRoles)
 
         every { kubernetesClient.removeAllServiceRolesFromNamespace(any(), anyNullable(), anyNullable()) } answers {}
-        every { kubernetesClient.makesureRightServiceRoles(any(), any(), any(), any(), any()) } answers {}
+        every { kubernetesClient.makesureRightServiceRoles(any(), any(), any(), any()) } answers {}
         every { kubernetesClient.makesureRightEnvRoles(any(), any(), any()) } answers {}
         manager.post("https://localhost/users/${userData.id}/envs") {
             contentType(ContentType.Application.Json)
