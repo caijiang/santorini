@@ -34,25 +34,14 @@ fun Application.mockUserModule() {
         get("/mockUser/{audit?}") {
             logger.info { "视图伪装成用户: ${call.pathParameters["audit"]}" }
 
-            val sa = ServiceAccountBuilder()
-                .withNewMetadata()
-                .withName(UUID.randomUUID().toString().replace("-", "").substring(0, 8))
-                .endMetadata()
-                .build()
+            val sa = mockServiceAccount()
 
             // 这里是模拟飞书授权登录的场景
             val user = userService.oAuthPlatformUserDataToSiteUserData(
-                object : OAuthPlatformUserData {
-                    override val platform: OAuthPlatform
-                        get() = OAuthPlatform.Feishu
-                    override val stablePk: String
-                        get() = UUID.randomUUID().toString().replace("-", "").substring(0, 8)
-                    override val name: String
-                        get() = "测试" + UUID.randomUUID().toString().replace("-", "").substring(0, 4)
-                    override val avatarUrl: String
-                        get() = "https://abc.com"
-                }, call.pathParameters["audit"]?.let { OAuthPlatformUserDataAuditResult.valueOf(it) }
-                    ?: OAuthPlatformUserDataAuditResult.User, sa
+                mockOAuthPlatformUserData(),
+                call.pathParameters["audit"]?.let { OAuthPlatformUserDataAuditResult.valueOf(it) }
+                    ?: OAuthPlatformUserDataAuditResult.User,
+                sa
             )
             call.saveUserData(
                 user.copy(platformAccessToken = "AGT")
@@ -61,6 +50,23 @@ fun Application.mockUserModule() {
         }
     }
 }
+
+fun mockOAuthPlatformUserData() = object : OAuthPlatformUserData {
+    override val platform: OAuthPlatform
+        get() = OAuthPlatform.Feishu
+    override val stablePk: String
+        get() = UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+    override val name: String
+        get() = "测试" + UUID.randomUUID().toString().replace("-", "").substring(0, 4)
+    override val avatarUrl: String
+        get() = "https://abc.com"
+}
+
+fun mockServiceAccount(): ServiceAccount = ServiceAccountBuilder()
+    .withNewMetadata()
+    .withName(UUID.randomUUID().toString().replace("-", "").substring(0, 8))
+    .endMetadata()
+    .build()
 
 fun mockThatConfigMapNameWill(
     mockKubernetesClient: KubernetesClient,

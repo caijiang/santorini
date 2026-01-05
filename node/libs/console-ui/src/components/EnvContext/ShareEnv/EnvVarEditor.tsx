@@ -9,7 +9,7 @@ import * as React from 'react';
 import { useEnvContext } from '../../../layouts/EnvLayout';
 import { useCreateEnvVarMutation } from '../../../apis/env';
 
-interface EnvVarEditor {
+interface EnvVarEditorProps {
   /**
    * 是否开启敏感字段，默认开启
    */
@@ -23,7 +23,7 @@ interface EnvVarEditor {
  * @constructor
  */
 const EnvVarEditor: React.FC<
-  EnvVarEditor & Exclude<ModalFormProps, 'clearOnDestroy'>
+  EnvVarEditorProps & Exclude<ModalFormProps, 'clearOnDestroy'>
 > = ({ onFinish, enableSecret, ...props }) => {
   const ec = useEnvContext();
   const { message } = App.useApp();

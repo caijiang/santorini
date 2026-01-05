@@ -31,6 +31,17 @@ class EnvResource {
     data class Id(val parent: EnvResource = EnvResource(), val id: String)
 
     /**
+     * wiki 操作
+     */
+    @Resource("{id}/wikis")
+    @Serializable
+    data class Wiki(val parent: EnvResource = EnvResource(), val id: String) {
+        @Resource("{title}")
+        @Serializable
+        data class One(val id: String, val parent: Wiki = Wiki(id = id), val title: String)
+    }
+
+    /**
      * 公共共享环境支持获取
      */
     @Resource("{id}/shareEnvs")

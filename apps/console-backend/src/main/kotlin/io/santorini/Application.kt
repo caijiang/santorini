@@ -121,6 +121,9 @@ fun Application.consoleModuleEntry(
             single {
                 UserRoleService(database, get(), get(), get())
             }
+            single {
+                EnvWikiService(database)
+            }
         })
     }
     monitor.subscribe(ApplicationStarted) {

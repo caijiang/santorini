@@ -55,6 +55,7 @@ export default () => {
               valueType: 'option',
               render: (_, entity) => [
                 <Popconfirm
+                  key="delete"
                   onConfirm={async () => {
                     try {
                       await removeApi({
