@@ -62,6 +62,10 @@ class JvmGenerateContext : GenerateContext {
                 systemProperties["spring.data.redis.port"] = data.port
                 systemProperties["spring.data.redis.username"] = data.username
                 systemProperties["spring.data.redis.password"] = data.password
+                systemProperties["spring.redis.host"] = data.host
+                systemProperties["spring.redis.port"] = data.port
+                systemProperties["spring.redis.username"] = data.username
+                systemProperties["spring.redis.password"] = data.password
             }
 
             ResourceType.RocketMQ -> {
