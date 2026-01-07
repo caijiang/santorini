@@ -15,6 +15,7 @@ import { kubePodsApi } from './apis/kubernetes/pods';
 import { deploymentApi } from './apis/deployment';
 import { envWikiApi } from './apis/envWiki';
 import publicRoutes from './publicRoutes';
+import { kubeHpaApi } from './apis/kubernetes/hpa';
 
 export { useAppNameQuery };
 
@@ -23,6 +24,7 @@ export default {
     tokenApi.middleware,
     commonApi.middleware,
     kubeServiceApi.middleware,
+    kubeHpaApi.middleware,
     ingressApi.middleware,
     deploymentApi.middleware,
     envApi.middleware,
@@ -38,6 +40,7 @@ export default {
     [tokenApi.reducerPath]: tokenApi.reducer,
     [commonApi.reducerPath]: commonApi.reducer,
     [kubeServiceApi.reducerPath]: kubeServiceApi.reducer,
+    [kubeHpaApi.reducerPath]: kubeHpaApi.reducer,
     [ingressApi.reducerPath]: ingressApi.reducer,
     [deploymentApi.reducerPath]: deploymentApi.reducer,
     [envApi.reducerPath]: envApi.reducer,

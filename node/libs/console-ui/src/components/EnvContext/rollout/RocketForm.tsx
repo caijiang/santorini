@@ -1,7 +1,7 @@
 import { RocketOutlined } from '@ant-design/icons';
 import { ModalForm, ProFormText } from '@ant-design/pro-components';
 import { ServiceConfigData, useServiceByIdQuery } from '../../../apis/service';
-import { Alert, App, Button, Spin } from 'antd';
+import { Alert, App, Button, Spin, Typography } from 'antd';
 import * as React from 'react';
 import { useEnvContext } from '../../../layouts/EnvLayout';
 import {
@@ -87,6 +87,18 @@ const RocketForm: React.FC<RocketFormProps> = ({
         label={'发布标签'}
         name={'tag'}
         rules={[{ required: true }, { min: 2 }, tagRule]}
+      />
+      <Alert
+        message={
+          <Typography>
+            <Typography.Text strong underline>
+              绝对
+            </Typography.Text>
+            不会重新拉取已存在的镜像标签！
+          </Typography>
+        }
+        type={'warning'}
+        showIcon
       />
     </ModalForm>
   );

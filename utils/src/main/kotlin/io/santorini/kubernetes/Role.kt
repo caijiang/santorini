@@ -367,7 +367,7 @@ fun KubernetesClient.makesureRightServiceRoles(
         }
 }
 
-private const val serviceRoleDataVersion = "4"
+private const val serviceRoleDataVersion = "5"
 private fun findOrCreateRole(
     namespace: String,
     root: HasMetadata,
@@ -417,6 +417,13 @@ private fun findOrCreateRoleImpl(
 private fun buildRole(builder: RoleBuilder, serviceId: String, role: ServiceRole?): Role {
     if (role == null) {
         return builder.addToRules(
+            PolicyRule(
+                listOf("autoscaling"),
+                null,
+                listOf(serviceId),
+                listOf("horizontalpodautoscalers"),
+                listOf("list", "get")
+            ),
             PolicyRule(listOf(""), null, listOf(serviceId), listOf("services"), listOf("list", "get")),
             PolicyRule(
                 listOf("apps"),
@@ -429,6 +436,13 @@ private fun buildRole(builder: RoleBuilder, serviceId: String, role: ServiceRole
     }
     if (role == ServiceRole.Owner) {
         return builder.addToRules(
+            PolicyRule(
+                listOf("autoscaling"),
+                null,
+                listOf(serviceId),
+                listOf("horizontalpodautoscalers"),
+                listOf("create", "update", "delete", "patch")
+            ),
             // pod 名字随机的，没有办法了，只能按照 k8s 的设计哲学 广权但自律
             PolicyRule(
                 listOf(""), null, listOf(), listOf("pods/exec"), listOf("create", "get", "list")

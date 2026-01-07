@@ -12,6 +12,7 @@ import DashboardLink from '../components/DashboardLink';
 import RocketForm from '../components/EnvContext/rollout/RocketForm';
 import ShareEnv from '../components/EnvContext/ShareEnv';
 import EnvWikis from '../components/EnvContext/EnvWikis';
+import HpaEditor from '../components/EnvContext/hpa/HpaEditor';
 
 /**
  * 环境首页,展示环境直接相关的资源
@@ -20,7 +21,7 @@ import EnvWikis from '../components/EnvContext/EnvWikis';
  */
 export default () => {
   const {
-    data: { id },
+    data: { id, production },
   } = useEnvContext();
   return (
     <>
@@ -73,6 +74,7 @@ export default () => {
                 历史
               </NavLink>,
               <RocketForm key={'rock'} service={entity}></RocketForm>,
+              production && <HpaEditor service={entity} key={'hpa'} />,
             ],
           },
         ]}
