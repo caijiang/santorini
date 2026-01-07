@@ -51,9 +51,4 @@ public class Demos {
         KubernetesClient client = new KubernetesClientBuilder().build();
         Utils.findResourcesInNamespace(client, "test-ns", null);
     }
-
-    public static void case5() {
-        KubernetesClient client = new KubernetesClientBuilder().build();
-        Utils.applyStringSecret(client, "test-ns", "test-secret", Map.of("foo", "bar", "foo2", "bar222"));
-    }
 }

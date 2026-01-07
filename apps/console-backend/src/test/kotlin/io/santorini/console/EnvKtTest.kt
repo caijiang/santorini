@@ -18,8 +18,11 @@ import io.mockk.mockkStatic
 import io.mockk.verify
 import io.santorini.console.schema.EnvData
 import io.santorini.consoleModuleEntry
-import io.santorini.kubernetes.*
+import io.santorini.kubernetes.createEnvResourceInPlain
+import io.santorini.kubernetes.createEnvResourceInSecret
+import io.santorini.kubernetes.updateOne
 import io.santorini.model.ResourceType
+import io.santorini.service.KubernetesClientService
 import io.santorini.test.mockThatConfigMapNameWill
 import io.santorini.test.mockThatSecretNameWill
 import io.santorini.test.mockUserModule
@@ -35,8 +38,10 @@ class EnvKtTest {
     @Test
     fun 环境以及环境资源测试() = testApplication {
         val kubernetesClient = mockk<KubernetesClient>(relaxed = true)
+        val clientService = mockk<KubernetesClientService>(relaxed = true)
+        every { clientService.kubernetesClient } returns kubernetesClient
         application {
-            consoleModuleEntry(kubernetesClient = kubernetesClient)
+            consoleModuleEntry(kubernetesClient = kubernetesClient, kubernetesClientService = clientService)
             mockUserModule()
         }
 
@@ -91,9 +96,8 @@ class EnvKtTest {
             }
         }
 
-        mockkStatic(KubernetesClient::findResourcesInNamespace)
         every {
-            kubernetesClient.findResourcesInNamespace(id, anyNullable())
+            clientService.findResourcesInNamespace(id, anyNullable())
         } returns listOf()
         c.get("https://localhost/envs/$id/resources").apply {
             status shouldBe HttpStatusCode.OK
@@ -102,7 +106,7 @@ class EnvKtTest {
             }
         }
         verify(exactly = 1) {
-            kubernetesClient.findResourcesInNamespace(id, null)
+            clientService.findResourcesInNamespace(id, null)
         }
         c.get("https://localhost/envs/$id/resources?type=${ResourceType.Mysql}").apply {
             status shouldBe HttpStatusCode.OK
@@ -111,7 +115,7 @@ class EnvKtTest {
             }
         }
         verify(exactly = 1) {
-            kubernetesClient.findResourcesInNamespace(id, ResourceType.Mysql)
+            clientService.findResourcesInNamespace(id, ResourceType.Mysql)
         }
         c.post("https://localhost/envs/$id/resources") {
             contentType(ContentType.Application.Json)
@@ -128,13 +132,13 @@ class EnvKtTest {
             }
         }
 
-        mockkStatic(KubernetesClient::applyStringSecret)
-        mockkStatic(KubernetesClient::applyStringConfig)
+        mockkStatic(KubernetesClient::createEnvResourceInSecret)
+        mockkStatic(KubernetesClient::createEnvResourceInPlain)
         every {
-            kubernetesClient.applyStringConfig(any(), any(), any(), any())
+            kubernetesClient.createEnvResourceInPlain(any(), any(), any())
         } answers {}
         every {
-            kubernetesClient.applyStringSecret(any(), any(), any(), any())
+            kubernetesClient.createEnvResourceInSecret(any(), any(), any())
         } answers {}
 
         val resourceData = SantoriniResourceData(
@@ -157,11 +161,12 @@ class EnvKtTest {
         }
 
         verify(exactly = 1) {
-            kubernetesClient.applyStringSecret(
-                id, resourceData.name, mapOf(
+            clientService.createEnvResourceInSecret(
+                id, mapOf(
                     "password" to resourceData.properties["password"]!!,
                 ), mapOf(
                     "santorini.io/manageable" to "true",
+                    "santorini.io/id" to resourceData.name,
                     "santorini.io/resource-type" to resourceData.type.name,
                     "santorini.io/description" to resourceData.description!!,
                 )
@@ -169,29 +174,29 @@ class EnvKtTest {
         }
 
         verify(exactly = 1) {
-            kubernetesClient.applyStringConfig(
-                id, resourceData.name, mapOf(
+            clientService.createEnvResourceInPlain(
+                id, mapOf(
                     "username" to "username",
                     "host" to "host",
                     "port" to "port",
                     "database" to "database",
                 ), mapOf(
                     "santorini.io/manageable" to "true",
+                    "santorini.io/id" to resourceData.name,
                     "santorini.io/resource-type" to resourceData.type.name,
                     "santorini.io/description" to resourceData.description!!,
                 )
             )
         }
 
-        mockkStatic(KubernetesClient::deleteConfigMapAndSecret)
         every {
-            kubernetesClient.deleteConfigMapAndSecret(any(), any())
+            clientService.removeResource(any(), any())
         } answers {}
         c.delete("https://localhost/envs/$id/resources/${resourceData.name}").apply {
             status shouldBe HttpStatusCode.OK
         }
         verify(exactly = 1) {
-            kubernetesClient.deleteConfigMapAndSecret(
+            clientService.removeResource(
                 id, resourceData.name,
             )
         }

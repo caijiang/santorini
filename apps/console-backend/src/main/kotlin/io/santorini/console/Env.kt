@@ -13,8 +13,10 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.santorini.OAuthPlatformUserDataAuditResult
 import io.santorini.console.schema.*
-import io.santorini.kubernetes.*
+import io.santorini.kubernetes.removeOne
+import io.santorini.kubernetes.updateOne
 import io.santorini.model.ResourceType
+import io.santorini.service.KubernetesClientService
 import io.santorini.withAuthorization
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
@@ -37,9 +39,25 @@ internal const val Share_Env_Config_Name = "santorini-env-share"
  */
 internal fun Application.configureConsoleEnv(kubernetesClient: KubernetesClient) {
     val service = inject<EnvService>().value
+    val clientService = inject<KubernetesClientService>().value
     val userRoleService = inject<UserRoleService>()
     // 一般人员可以读取 env
     routing {
+        //<editor-fold desc="管理环境自身">
+        post<EnvResource> {
+            withAuthorization({
+                it.audit == OAuthPlatformUserDataAuditResult.Manager
+            }) {
+                val data = call.receive<EnvData>()
+                logger.info { "Posting envs...:$data" }
+                if (data.id.isNullOrBlank()) {
+                    call.respond(HttpStatusCode.BadRequest)
+                } else {
+                    service.createOrUpdate(data)
+                    call.respond(HttpStatusCode.OK)
+                }
+            }
+        }
         get<EnvResource.Batch> {
             withAuthorization { _ ->
                 logger.info {
@@ -66,9 +84,11 @@ internal fun Application.configureConsoleEnv(kubernetesClient: KubernetesClient)
                 call.respond(HttpStatusCode.OK)
             }
         }
+        //</editor-fold>
+        //<editor-fold desc="管理环境资源">
         get<EnvResource.Resources> {
             withAuthorization { _ ->
-                val list = kubernetesClient.findResourcesInNamespace(it.id, it.type)
+                val list = clientService.findResourcesInNamespace(it.id, it.type)
                     .filter { r -> it.name.isNullOrBlank() || it.name == r.name }
                     .map { SantoriniResourceData(it.type, it.name, it.description, it.publicProperties) }
                 call.respond(list)
@@ -78,7 +98,7 @@ internal fun Application.configureConsoleEnv(kubernetesClient: KubernetesClient)
             withAuthorization { _ ->
                 val data = call.receive<SantoriniResourceData>()
                 // 不支持修改
-                if (kubernetesClient.findResourcesInNamespace(it.id, data.type).any { it.name == data.name }) {
+                if (clientService.findResourcesInNamespace(it.id, data.type).any { it.name == data.name }) {
                     call.respond(HttpStatusCode.BadRequest)
                 } else {
                     try {
@@ -86,6 +106,7 @@ internal fun Application.configureConsoleEnv(kubernetesClient: KubernetesClient)
                             *listOfNotNull(
                                 "santorini.io/manageable" to "true",
                                 "santorini.io/resource-type" to data.type.name,
+                                "santorini.io/id" to data.name,
                                 data.description?.let { "santorini.io/description" to it }).toTypedArray()
                         )
                         // 添加配置或者添加 Secret
@@ -100,9 +121,8 @@ internal fun Application.configureConsoleEnv(kubernetesClient: KubernetesClient)
                             it.name to value!!
                         }.let { configData ->
                             if (configData.isNotEmpty()) {
-                                kubernetesClient.applyStringConfig(
-                                    it.id, data.name, configData,
-                                    labels
+                                clientService.createEnvResourceInPlain(
+                                    it.id, configData, labels
                                 )
                             }
                         }
@@ -117,9 +137,8 @@ internal fun Application.configureConsoleEnv(kubernetesClient: KubernetesClient)
                             it.name to value!!
                         }.let { secretData ->
                             if (secretData.isNotEmpty()) {
-                                kubernetesClient.applyStringSecret(
-                                    it.id, data.name, secretData,
-                                    labels
+                                clientService.createEnvResourceInSecret(
+                                    it.id, secretData, labels
                                 )
                             }
                         }
@@ -136,24 +155,11 @@ internal fun Application.configureConsoleEnv(kubernetesClient: KubernetesClient)
             withAuthorization({
                 it.audit == OAuthPlatformUserDataAuditResult.Manager
             }) { _ ->
-                kubernetesClient.deleteConfigMapAndSecret(it.id, it.resourceName)
+                clientService.removeResource(it.id, it.resourceName)
                 call.respond(HttpStatusCode.OK)
             }
         }
-        post<EnvResource> {
-            withAuthorization({
-                it.audit == OAuthPlatformUserDataAuditResult.Manager
-            }) {
-                val data = call.receive<EnvData>()
-                logger.info { "Posting envs...:$data" }
-                if (data.id.isNullOrBlank()) {
-                    call.respond(HttpStatusCode.BadRequest)
-                } else {
-                    service.createOrUpdate(data)
-                    call.respond(HttpStatusCode.OK)
-                }
-            }
-        }
+        //</editor-fold>
         //<editor-fold desc="公共环境变量处理">
         get<EnvResource.ShareEnv> {
             withAuthorization({ inSiteUserData ->

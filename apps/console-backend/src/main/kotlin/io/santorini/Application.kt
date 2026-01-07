@@ -13,8 +13,10 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.santorini.console.configureConsole
 import io.santorini.console.schema.*
+import io.santorini.kubernetes.KubernetesClientServiceImpl
 import io.santorini.scope.AppBackgroundScope
 import io.santorini.service.ImageService
+import io.santorini.service.KubernetesClientService
 import io.santorini.well.StatusException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -80,6 +82,7 @@ fun Application.consoleModuleEntry(
         }
     },
     kubernetesClient: KubernetesClient = KubernetesClientBuilder().build(),
+    kubernetesClientService: KubernetesClientService = KubernetesClientServiceImpl(kubernetesClient),
     audit: OAuthPlatformUserDataAudit = EnvOAuthPlatformUserDataAudit,
     database: Database = Database.connect(
         url = EnvMysqlData.url ?: "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1",
@@ -94,6 +97,9 @@ fun Application.consoleModuleEntry(
     install(Koin) {
         slf4jLogger()
         modules(module {
+            single {
+                kubernetesClientService
+            }
             single {
                 httpClient
             }

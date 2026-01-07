@@ -48,11 +48,4 @@ object Utils {
         type: ResourceType? = null
     ): List<SantoriniResource> = client.findResourcesInNamespace(namespace, type)
 
-    @JvmStatic
-    fun applyStringSecret(
-        client: KubernetesClient = KubernetesClientBuilder().build(),
-        namespace: String,
-        name: String,
-        data: Map<String, String>
-    ) = client.applyStringSecret(namespace, name, data)
 }
