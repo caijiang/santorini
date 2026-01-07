@@ -45,7 +45,7 @@ rules:
   - apiGroups: [ "autoscaling" ]
     resources: [ "horizontalpodautoscalers" ]
     resourceNames: [ ]
-    verbs: [ "list" ]
+    verbs: [ "list","get","create", "update", "delete", "patch" ]
   - apiGroups: [ "" ]
     resources: [ "namespaces" ]
     resourceNames: [ ]
