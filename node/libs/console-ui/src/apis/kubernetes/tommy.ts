@@ -260,6 +260,19 @@ export default {
             },
           },
           spec: {
+            tolerations: [
+              // 容忍度
+              {
+                key: 'focus.santorini.io/namespace',
+                value: env.id,
+                operator: 'Equal',
+              },
+              {
+                key: 'focus.santorini.io/service',
+                value: service.id,
+                operator: 'Equal',
+              },
+            ],
             automountServiceAccountToken: false,
             imagePullSecrets: deployData.pullSecretName?.map((it) => ({
               name: it,
