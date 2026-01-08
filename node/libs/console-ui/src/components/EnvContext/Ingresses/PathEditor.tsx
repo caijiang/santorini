@@ -138,7 +138,6 @@ const PathEditor: React.FC<
   return (
     <ModalForm
       initialValues={currentResult?.instance}
-      clearOnDestroy
       onFinish={async (input) => {
         const instance = input as CUEditableIngress;
         if (!data) {
