@@ -19,8 +19,15 @@ import kotlin.time.Clock
 data class HostData(
     val hostname: String,
     val issuerName: String? = null,
-    val secretName: String,
-)
+    val secretName: String? = null,
+) {
+    fun cleanShot(): HostData {
+        return copy(
+            issuerName = if (issuerName?.isBlank() == true) null else issuerName,
+            secretName = if (secretName?.isBlank() == true) null else secretName
+        )
+    }
+}
 
 @Resource("/hosts")
 @Serializable
@@ -45,7 +52,7 @@ class HostService(database: Database) {
          */
         override val id = varchar("hostname", 63).entityId()
         val issuerName = varchar("issuer_name", 63).nullable()
-        val secretName = varchar("secret_name", 63)
+        val secretName = varchar("secret_name", 63).nullable()
 
         // timestamp(6) | NULL
         val createTime = timestamp("create_time")

@@ -1,3 +1,5 @@
+// noinspection HttpUrlsUsage
+
 import { IIngress } from 'kubernetes-models/networking.k8s.io/v1';
 import { HostSummary, useSyncHostMutation } from '../../../apis/host';
 import { CUEnv } from '../../../apis/env';
@@ -46,13 +48,20 @@ function toHostSummary(ingress: IIngress): HostSummary {
 // 其实通过 hook 也能做到。。。
 function useIngresses(env: CUEnv): {
   ingresses: IIngress[] | undefined;
-  hostList: HostSummary[] | undefined;
   reason?: string;
+  /**
+   * 所有域名
+   */
+  allHostNames: string[] | undefined;
+  /**
+   * 有证书的
+   */
+  hostNamesWithTl: string[] | undefined;
 } {
   const { data: ingresses } = useIngressesQuery(env);
   const [api] = useSyncHostMutation();
   const [reason, setReason] = useState<string>();
-  const hostList = useMemo(() => {
+  const mResult = useMemo(() => {
     setReason(undefined);
     try {
       return distinct(ingresses);
@@ -62,6 +71,10 @@ function useIngresses(env: CUEnv): {
       return undefined;
     }
   }, [ingresses]);
+  // 不止是支持 没有签证的，也支持没有 tls的
+  // const { allHost, hostsWithTls:hostList }
+  const hostList = mResult?.hostsSyncWithServer;
+  // console.debug('hostsWithTls:', hostList);
   useEffect(() => {
     if (hostList) {
       api(hostList)
@@ -75,7 +88,8 @@ function useIngresses(env: CUEnv): {
   return {
     ingresses,
     reason,
-    hostList,
+    allHostNames: mResult?.allHostNames,
+    hostNamesWithTl: mResult?.hostNamesWithTl,
   };
 }
 
@@ -83,12 +97,11 @@ function distinct(ingresses: IIngress[] | undefined) {
   // 这里找到一个处理口子
   // 形成 hostname->pair[issuerName,secretName]
   if (!ingresses) return undefined;
-  const hosts = ingresses
-    .map(toHostSummary)
-    .filter((it) => it.issuerName && it.secretName);
+  const hostSummaries = ingresses.map(toHostSummary);
+  const allHosts = hostSummaries;
 
-  const grouped = _.groupBy(hosts, (it) => it.hostname);
-  return _.keys(grouped).map((name) => {
+  const grouped = _.groupBy(hostSummaries, (it) => it.hostname);
+  const hostsSyncWithServer = _.keys(grouped).map((name) => {
     const list = grouped[name];
     const list2 = _.uniqBy(list, (item) =>
       JSON.stringify([item.issuerName, item.secretName])
@@ -100,6 +113,13 @@ function distinct(ingresses: IIngress[] | undefined) {
     }
     return list2[0];
   });
+  return {
+    allHostNames: _.uniq(allHosts.map((it) => it.hostname)),
+    hostNamesWithTl: _.uniq(
+      allHosts.filter((it) => it.secretName).map((it) => it.hostname)
+    ),
+    hostsSyncWithServer: hostsSyncWithServer,
+  };
 }
 
 export default () => {
@@ -107,7 +127,8 @@ export default () => {
   const { message } = App.useApp();
   const [editApi] = useEditIngressMutation();
   const [removeApi] = useRemoveIngressMutation();
-  const { ingresses, reason, hostList } = useIngresses(data);
+  const { ingresses, reason, allHostNames, hostNamesWithTl } =
+    useIngresses(data);
   return (
     <>
       {reason && <Alert type={'error'} message={reason} />}
@@ -128,28 +149,39 @@ export default () => {
           />
         }
       >
-        {(!ingresses || !hostList) && <Skeleton />}
-        {ingresses && hostList && hostList.length == 0 && <Empty />}
-        {ingresses && hostList && hostList.length > 0 && (
+        {(!ingresses || !allHostNames) && <Skeleton />}
+        {ingresses && allHostNames && allHostNames.length == 0 && <Empty />}
+        {ingresses && allHostNames && allHostNames.length > 0 && (
           <Collapse
-            items={hostList.map((host) => {
+            items={allHostNames.map((hostName) => {
               const listData = ingresses
                 .filter((it) =>
-                  it.spec?.rules?.some((that) => that.host == host.hostname)
+                  it.spec?.rules?.some((that) => that.host == hostName)
                 )
                 .flatMap(toHttpPaths); // 把不同 path的平铺开
+              const tlsHost = hostNamesWithTl?.includes(hostName);
 
               return {
-                key: host.hostname,
+                key: hostName,
                 label: (
                   <Typography>
-                    <Typography.Text copyable>{host.hostname}</Typography.Text>
-                    <Typography.Link
-                      target={'_blank'}
-                      href={`https://${host.hostname}`}
-                    >
-                      <LinkOutlined />
-                    </Typography.Link>
+                    <Typography.Text copyable>{hostName}</Typography.Text>
+                    {/*{看看没有证书}*/}
+                    {(tlsHost && (
+                      <Typography.Link
+                        target={'_blank'}
+                        href={`https://${hostName}`}
+                      >
+                        <LinkOutlined />
+                      </Typography.Link>
+                    )) || (
+                      <Typography.Link
+                        target={'_blank'}
+                        href={`http://${hostName}`}
+                      >
+                        <LinkOutlined />
+                      </Typography.Link>
+                    )}
                   </Typography>
                 ),
                 children: (

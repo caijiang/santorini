@@ -27,7 +27,7 @@ internal fun Application.configureConsoleHost() {
                 }
                 // 因为这玩意儿是一成不变的，所以只能新增，无法修改
                 try {
-                    val data = call.receiveNullable<List<HostData>>()
+                    val data = call.receiveNullable<List<HostData>>()?.map { it.cleanShot() }
                     if (data.isNullOrEmpty()) {
                         call.respond(0)
                     } else {
@@ -35,6 +35,7 @@ internal fun Application.configureConsoleHost() {
                     }
 
                 } catch (e: Exception) {
+                    logger.warn(e) { "无法同步 hosts:$it" }
                     call.respond(HttpStatusCode.BadRequest)
                 }
             }
@@ -42,7 +43,7 @@ internal fun Application.configureConsoleHost() {
         post<HostResource> {
             withAuthorization {
                 try {
-                    service.create(call.receive<HostData>())
+                    service.create(call.receive<HostData>().cleanShot())
                     call.respond(HttpStatusCode.OK)
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.BadRequest)

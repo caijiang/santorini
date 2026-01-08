@@ -10,6 +10,7 @@ import io.santorini.console.schema.HostData
 import io.santorini.consoleModule
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 
 private val logger = KotlinLogging.logger {}
@@ -61,6 +62,40 @@ class HostKtTest {
         c.post("https://localhost/hosts/sync") {
             contentType(ContentType.Application.Json)
             setBody(listOf(demoHost.copy(issuerName = "vvv"), demoHost2))
+        }.apply {
+            status shouldBe HttpStatusCode.BadRequest
+        }
+
+        val inputData = HostData("hhh3")
+        val json = Json.encodeToString(inputData)
+        Json.decodeFromString<HostData>(json) shouldBe inputData
+
+        val listInputData = listOf(
+            demoHost,
+            demoHost2,
+            HostData("hhh3"),
+            HostData("hhh4", secretName = "secret"),
+            HostData("hhh5", issuerName = "secret")
+        )
+        val listJson = Json.encodeToString(listInputData)
+        Json.decodeFromString<List<HostData>>(listJson) shouldBe listInputData
+
+        HostData("hhh55", issuerName = "").cleanShot() shouldBe HostData("hhh55")
+
+        c.post("https://localhost/hosts/sync") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                listInputData
+            )
+        }.apply {
+            status shouldBe HttpStatusCode.OK
+        }
+
+        c.post("https://localhost/hosts/sync") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                inputData
+            )
         }.apply {
             status shouldBe HttpStatusCode.BadRequest
         }

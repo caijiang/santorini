@@ -60,12 +60,24 @@ export default () => {
         name={'hostname'}
         rules={[{ required: true }]}
       />
-      <ProFormDependency name={['hostname']}>
-        {({ hostname }) => (
+      <ProFormText
+        name={'issuerName'}
+        label={'签名者'}
+        initialValue={defaultName}
+        rules={[toInnaNameRule(63)]}
+        tooltip={'若已获得证书则无需签名'}
+      />
+      <ProFormDependency name={['hostname', 'issuerName']}>
+        {({ hostname, issuerName }) => (
           <ProFormText
             label={'证书存储名称'}
             name={'secretName'}
-            rules={[{ required: true }, toInnaNameRule(63)]}
+            rules={[
+              toInnaNameRule(63),
+              issuerName && issuerName.length > 0
+                ? { required: true }
+                : undefined,
+            ].filter((it) => !!it)}
             tooltip={
               <Typography.Paragraph style={{ color: 'white' }}>
                 若使用签名服务生成则无需讲究，唯一即可; 若已获取证书则需手工导入
@@ -93,13 +105,6 @@ export default () => {
           />
         )}
       </ProFormDependency>
-      <ProFormText
-        name={'issuerName'}
-        label={'签名者'}
-        initialValue={defaultName}
-        rules={[toInnaNameRule(63)]}
-        tooltip={'若已获得证书则无需签名'}
-      />
     </ModalForm>
   );
 };
