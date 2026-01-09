@@ -1,5 +1,10 @@
-import { RocketOutlined } from '@ant-design/icons';
-import { ModalForm, ProFormText } from '@ant-design/pro-components';
+import { ExclamationCircleOutlined, RocketOutlined } from '@ant-design/icons';
+import {
+  ModalForm,
+  ProFormDependency,
+  ProFormSwitch,
+  ProFormText,
+} from '@ant-design/pro-components';
 import { ServiceConfigData, useServiceByIdQuery } from '../../../apis/service';
 import { Alert, App, Button, Spin, Typography } from 'antd';
 import * as React from 'react';
@@ -11,6 +16,7 @@ import {
 import { dispatchAsyncThunkActionThrowIfError } from '../../../common/rtk';
 import { useDispatch } from 'react-redux';
 import { useLastReleaseQuery } from '../../../apis/deployment';
+import PreAuthorize from '../../../tor/PreAuthorize';
 
 interface RocketFormProps {
   service: ServiceConfigData;
@@ -82,12 +88,32 @@ const RocketForm: React.FC<RocketFormProps> = ({
       <Alert
         message={`上次发布的标签为:${lastReleaseSummary.imageTag ?? 'latest'}`}
       />
+      <PreAuthorize haveAnyRole={['manager', 'root']}>
+        <ProFormSwitch
+          name={'experiment'}
+          tooltip={'允许跳过预检'}
+          label={
+            <Typography.Text style={{ color: 'red' }}>
+              <ExclamationCircleOutlined />
+              打开专家模式
+            </Typography.Text>
+          }
+        />
+      </PreAuthorize>
       <ProFormText label={'镜像地址'} name={'repository'} readonly />
-      <ProFormText
-        label={'发布标签'}
-        name={'tag'}
-        rules={[{ required: true }, { min: 2 }, tagRule]}
-      />
+      <ProFormDependency name={['experiment']}>
+        {({ experiment }) => (
+          <ProFormText
+            label={'发布标签'}
+            name={'tag'}
+            rules={
+              experiment
+                ? [{ required: true }, { min: 2 }]
+                : [{ required: true }, { min: 2 }, tagRule]
+            }
+          />
+        )}
+      </ProFormDependency>
       <Alert
         message={
           <Typography>

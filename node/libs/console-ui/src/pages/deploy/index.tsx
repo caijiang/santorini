@@ -5,6 +5,7 @@ import {
   ProFormDigitRange,
   ProFormField,
   ProFormSelect,
+  ProFormSwitch,
   ProFormText,
 } from '@ant-design/pro-components';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -16,12 +17,14 @@ import {
 import { arrayToProSchemaValueEnumMap } from '../../common/ktor';
 import { useDispatch } from 'react-redux';
 import { deployToKubernetes, imageRule } from '../../slices/deployService';
-import { App } from 'antd';
+import { App, Typography } from 'antd';
 import { dispatchAsyncThunkActionThrowIfError } from '../../common/rtk';
 import ResourceRequirementFormField from '../../components/deploy/ResourceRequirementFormField';
 import { useLastReleaseQuery } from '../../apis/deployment';
 import { useDockerConfigJsonSecretNamesQuery } from '../../apis/env';
 import EnvironmentVariablesEditor from '../../components/form/EnvironmentVariablesEditor';
+import PreAuthorize from '../../tor/PreAuthorize';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 export default () => {
   // 作为一个部署服务的专用页面
@@ -98,6 +101,18 @@ export default () => {
             }
           }}
         >
+          <PreAuthorize haveAnyRole={['manager', 'root']}>
+            <ProFormSwitch
+              name={'experiment'}
+              tooltip={'允许跳过预检'}
+              label={
+                <Typography.Text style={{ color: 'red' }}>
+                  <ExclamationCircleOutlined />
+                  打开专家模式
+                </Typography.Text>
+              }
+            />
+          </PreAuthorize>
           <ProFormSelect
             mode={'multiple'}
             name={'pullSecretName'}
@@ -107,15 +122,24 @@ export default () => {
               secrets && arrayToProSchemaValueEnumMap((it) => it, secrets)
             }
           />
-          <ProFormDependency name={['pullSecretName']}>
-            {({ pullSecretName }) => (
+          <ProFormDependency name={['pullSecretName', 'experiment']}>
+            {({ pullSecretName, experiment }) => (
               <ProFormText
                 name={'image'}
                 label={'部署镜像'}
-                rules={[
-                  { required: true },
-                  imageRule(serviceId!!, envId!!, pullSecretName, dispatch),
-                ]}
+                rules={
+                  experiment
+                    ? [{ required: true }]
+                    : [
+                        { required: true },
+                        imageRule(
+                          serviceId!!,
+                          envId!!,
+                          pullSecretName,
+                          dispatch
+                        ),
+                      ]
+                }
               />
             )}
           </ProFormDependency>
