@@ -98,7 +98,7 @@ internal fun Application.configureConsoleEnv(kubernetesClient: KubernetesClient)
             withAuthorization { _ ->
                 val data = call.receive<SantoriniResourceData>()
                 // 不支持修改
-                if (clientService.findResourcesInNamespace(it.id, data.type).any { it.name == data.name }) {
+                if (clientService.findResourcesInNamespace(it.id).any { it.name == data.name }) {
                     call.respond(HttpStatusCode.BadRequest)
                 } else {
                     try {
