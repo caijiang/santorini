@@ -13,6 +13,7 @@ const ResourceDetail = lazy(() => import('./pages/envFor/ResourceDetail'));
 const LoongCollector = lazy(() => import('./pages/support/LoongCollector'));
 
 const Users = lazy(() => import('./pages/users'));
+const CustomMenu = lazy(() => import('./pages/CustomMenu'));
 
 const EnvServiceLayout = lazy(() => import('./layouts/EnvServiceLayout'));
 const Pods = lazy(() => import('./pages/envFor/service/Pods'));
@@ -99,5 +100,9 @@ export default [
   {
     path: 'users',
     element: <Users />,
+  },
+  {
+    path: 'customMenu',
+    element: <CustomMenu />,
   },
 ];

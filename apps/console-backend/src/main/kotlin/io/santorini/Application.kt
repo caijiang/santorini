@@ -113,6 +113,9 @@ fun Application.consoleModuleEntry(
                 imageServiceLoader(it)
             }
             single {
+                SystemStringService(database)
+            }
+            single {
                 EnvService(database)
             }
             single {

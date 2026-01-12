@@ -16,6 +16,7 @@ import { deploymentApi } from './apis/deployment';
 import { envWikiApi } from './apis/envWiki';
 import publicRoutes from './publicRoutes';
 import { kubeHpaApi } from './apis/kubernetes/hpa';
+import { advancedApi } from './apis/advanced';
 
 export { useAppNameQuery };
 
@@ -26,6 +27,7 @@ export default {
     kubeServiceApi.middleware,
     kubeHpaApi.middleware,
     ingressApi.middleware,
+    advancedApi.middleware,
     deploymentApi.middleware,
     envApi.middleware,
     envWikiApi.middleware,
@@ -42,6 +44,7 @@ export default {
     [kubeServiceApi.reducerPath]: kubeServiceApi.reducer,
     [kubeHpaApi.reducerPath]: kubeHpaApi.reducer,
     [ingressApi.reducerPath]: ingressApi.reducer,
+    [advancedApi.reducerPath]: advancedApi.reducer,
     [deploymentApi.reducerPath]: deploymentApi.reducer,
     [envApi.reducerPath]: envApi.reducer,
     [envWikiApi.reducerPath]: envWikiApi.reducer,
