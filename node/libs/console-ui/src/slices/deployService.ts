@@ -22,6 +22,10 @@ export interface ServiceDeployToKubernetesProps {
    * 非首次部署的话还有这个，表示上次部署的情况
    */
   lastDeploy?: DeploymentDeployData;
+  /**
+   * 不要使用最新代码改动
+   */
+  doNotUseLatestCode?: boolean;
 }
 
 /**
@@ -180,6 +184,7 @@ export const deployToKubernetes = createAsyncThunk(
             ...input,
             service: JSON.parse(lastDeploy.serviceDataSnapshot),
             deployData: lastDeploy,
+            doNotUseLatestCode: true,
           })
         : undefined;
       console.debug('thisTimeVersion:', thisTimeVersion);

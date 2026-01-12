@@ -86,7 +86,14 @@ const RocketForm: React.FC<RocketFormProps> = ({
       }}
     >
       <Alert
-        message={`上次发布的标签为:${lastReleaseSummary.imageTag ?? 'latest'}`}
+        message={
+          <Typography>
+            上次发布的标签为:
+            <Typography.Text copyable>
+              {lastReleaseSummary.imageTag ?? 'latest'}
+            </Typography.Text>
+          </Typography>
+        }
       />
       <PreAuthorize haveAnyRole={['manager', 'root']}>
         <ProFormSwitch

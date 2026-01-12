@@ -19,3 +19,10 @@
 - [✅] 节点隔离：有时候我们会要求某节点专门为环境提供计算服务，我们应当给节点设置【污点】环境专属；而通过 santorini
   部署的部署物天生具备该污点接受性
 - [ ] 服务可以关注（关注的排前面)
+- [ ] 按热键一般是/(github就是这样)打开搜索页面，当前页面有什么就搜什么
+- [ ] 专家模式必须可以部署！即便拿不到镜像信息
+- [ ] 允许自定义主菜单
+- [ ] JVM 专用的其他 JAVA_OPTS
+- [ ] 怎么样让 nacos 走服务 ip 而非pod
+  ip https://nacos.io/docs/latest/ecology/use-nacos-controller-to-sync-service/?spm=5238cd80.12e1854c.0.0.62f53bc31BS8o5
+  能够实现的

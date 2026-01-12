@@ -108,6 +108,7 @@ function generateIngressPath(instance: CUEditableIngress) {
   };
 }
 
+// noinspection JSUnusedLocalSymbols
 export default {
   createIngress: (env, instance, hosts) => {
     const host = hosts.find((it) => it.hostname == instance.host)!!;
@@ -225,6 +226,18 @@ export default {
     return YAML.stringify(ingress.toJSON());
   },
   serviceInstance: ({ service, env, deployData }) => {
+    // const podLabels = {
+    //   ...{
+    //     'app.kubernetes.io/name': service.id,
+    //   },
+    //   ...(doNotUseLatestCode
+    //     ? {}
+    //     : { 'santorini.io/manageable': 'true' }),
+    // };
+    const podLabels = {
+      'app.kubernetes.io/name': service.id,
+      'santorini.io/manageable': 'true',
+    };
     const deployment = new Deployment({
       metadata: {
         labels: {
@@ -255,9 +268,7 @@ export default {
         },
         template: {
           metadata: {
-            labels: {
-              'app.kubernetes.io/name': service.id,
-            },
+            labels: podLabels,
           },
           spec: {
             tolerations: [
@@ -336,7 +347,7 @@ export default {
                 readinessProbe: service.lifecycle?.readinessProbe,
                 livenessProbe: service.lifecycle?.livenessProbe,
                 startupProbe: service.lifecycle?.startupProbe,
-                // readinessProbe
+                // terminationMessagePath: '/logs/termination-log',
               },
             ],
             terminationGracePeriodSeconds:

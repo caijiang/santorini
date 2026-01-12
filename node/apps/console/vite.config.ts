@@ -2,14 +2,17 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+const target = process.env['TARGET'] ?? 'op.k8s.mingshz.com';
+console.log(`use https://${target} as backend.`);
+
 export default defineConfig(() => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/apps/santorini',
   server: {
     proxy: {
-      '/kubernetes': 'https://op.k8s.mingshz.com',
+      '/kubernetes': `https://${target}`,
       '/': {
-        target: 'https://op.k8s.mingshz.com',
+        target: `https://${target}`,
         changeOrigin: true,
         // undefined -> 继续转发
         bypass: (req) => {

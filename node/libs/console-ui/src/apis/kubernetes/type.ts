@@ -9,6 +9,16 @@ export interface NamespaceWithLabelSelectors {
   labelSelectors?: string[];
 }
 
+export function toPodsLabelSelectors({
+  name,
+  labelSelectors,
+}: NamespaceWithLabelSelectors): string {
+  const s1 = name ? [`app.kubernetes.io/name=${name}`] : [];
+  const s2 = labelSelectors ?? ['santorini.io/manageable=true'];
+  // const s2 = labelSelectors ?? []; // 之前的版本没有给 pod添加这个 label
+  return [...s1, ...s2].join(',');
+}
+
 export interface NamespacedNamedResource {
   namespace?: string;
   name?: string;
