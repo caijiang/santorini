@@ -323,8 +323,9 @@ export default {
                   ? _.map(deployData.environmentVariables, (value, name) => ({
                       name,
                       value,
-                    }))
-                  : undefined,
+                    }))?.filter((it) => it.name !== 'JAVA_OPTS')
+                  : // 因为 JVM 的 JAVA_OPTS 是需要叠加的
+                    undefined,
                 resources: {
                   requests: {
                     cpu: deployData.resources.cpu.requestMillis + 'm',

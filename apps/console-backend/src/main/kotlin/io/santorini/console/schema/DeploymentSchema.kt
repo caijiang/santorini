@@ -327,8 +327,12 @@ class DeploymentService(
             }
             val imageInfo = if (data.experiment == true) null else imageService.toImageInfo(deploy.envId, data)
                 ?: throw IllegalArgumentException("无法获取镜像")
-
-            kubernetesClient.applyStringSecret(deploy.envId, deploy.serverId + "-env", context.toEnvResult())
+            val resultRelaxEnv = context.toEnvResult()
+            kubernetesClient.applyStringSecret(
+                deploy.envId,
+                deploy.serverId + "-env",
+                resultRelaxEnv.mergeWithCustom(data.environmentVariables)
+            )
 
             Deployments.insertAndGetId {
                 it[service] = deploy.serverId
@@ -560,5 +564,21 @@ class DeploymentService(
                     toDeploymentDataInList(it)
                 }
         }
+    }
+}
+
+/**
+ * 需要考虑到一些环境变量是可以累加的
+ */
+private fun Map<String, String>.mergeWithCustom(environmentVariables: Map<String, String>?): Map<String, String> {
+    if (environmentVariables.isNullOrEmpty()) return this
+    return this.mapValues {
+        // appendable
+        if (it.key == "JAVA_OPTS" && environmentVariables.containsKey(it.key)) {
+            val e1 = environmentVariables[it.key]!!.trim()
+            val e2 = it.value.trim()
+            "$e1 $e2"
+        } else
+            it.value
     }
 }
