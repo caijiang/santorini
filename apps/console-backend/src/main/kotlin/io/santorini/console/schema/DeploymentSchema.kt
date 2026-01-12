@@ -11,10 +11,7 @@ import io.santorini.console.model.mapToPage
 import io.santorini.console.resources.GenerateContextHome
 import io.santorini.console.schema.ServiceMetaService.ServiceMetas
 import io.santorini.defaultFixedOffsetTimeZone
-import io.santorini.kubernetes.DeploymentRolloutState
-import io.santorini.kubernetes.applyStringSecret
-import io.santorini.kubernetes.evaluateDeploymentStatus
-import io.santorini.kubernetes.findResourcesInNamespace
+import io.santorini.kubernetes.*
 import io.santorini.model.ResourceRequirementTools
 import io.santorini.service.ImageService
 import io.santorini.well.StatusException
@@ -107,6 +104,10 @@ data class DeploymentDeployData(
      */
     val serviceDataSnapshot: String? = null,
     val targetGeneration: Long? = null,
+    /**
+     * 专家模式
+     */
+    val experiment: Boolean? = null,
 )
 
 /**
@@ -184,7 +185,7 @@ class DeploymentService(
         val resources = jsonb<ComputeResources>("resources", Json)
         val environmentVariables = jsonb<Map<String, String>>("environment_variables", Json).nullable()
         val targetGeneration = long("target_generation").nullable()
-        val digest = varchar("digest", 71).index()
+        val digest = varchar("digest", 71).nullable().index()
 
         /**
          * 版本已经过期，别再检查了
@@ -324,7 +325,7 @@ class DeploymentService(
                     rr.name
                 )
             }
-            val imageInfo = imageService.toImageInfo(deploy.envId, data)
+            val imageInfo = if (data.experiment == true) null else imageService.toImageInfo(deploy.envId, data)
                 ?: throw IllegalArgumentException("无法获取镜像")
 
             kubernetesClient.applyStringSecret(deploy.envId, deploy.serverId + "-env", context.toEnvResult())
@@ -335,7 +336,7 @@ class DeploymentService(
                 it[createTime] = Clock.System.now()
                 it[imageRepository] = data.imageRepository
                 it[imageTag] = data.imageTag
-                it[digest] = imageInfo.first
+                it[digest] = imageInfo?.first
                 it[pullSecretName] = data.pullSecretName
                 it[resourcesSupply] = data.resourcesSupply
                 it[Deployments.resources] = data.resources
@@ -389,11 +390,12 @@ class DeploymentService(
         }
     }
 
-    data class DeploymentCheck(
+    private data class DeploymentCheck(
         val id: UUID,
         val namespace: String,
         val service: String,
-        val generation: Long
+        val generation: Long,
+        val digest: String?
     )
 
     suspend fun heart() {
@@ -417,7 +419,8 @@ class DeploymentService(
                         it[Deployments.id].value,
                         it[Deployments.env].value,
                         it[Deployments.service].value,
-                        it[Deployments.targetGeneration]!!
+                        it[Deployments.targetGeneration]!!,
+                        it[Deployments.digest]
                     )
                 }
         }
@@ -440,6 +443,25 @@ class DeploymentService(
                 } else {
                     val state = current.evaluateDeploymentStatus()
                     if (state.finalState) {
+                        // 也顺利更新 digest
+                        if (dc.digest == null) {
+                            val pods = kubernetesClient.podsInNewReplicaSet(current)
+                            if (pods?.isNotEmpty() == true) {
+                                pods.flatMap {
+                                    it.status.containerStatuses ?: listOf()
+                                }.firstOrNull {
+                                    it.name == "main"
+                                }?.let {
+                                    it.fetchDigest()?.let { digest ->
+                                        dbQuery {
+                                            Deployments.update({ (Deployments.id eq dc.id).and(Deployments.digest.isNull()) }) { updateStatement ->
+                                                updateStatement[Deployments.digest] = digest
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         dbQuery {
                             Deployments.update({ Deployments.id eq dc.id }) {
                                 it[successful] = state == DeploymentRolloutState.SUCCESS
