@@ -21,7 +21,6 @@ export function useMainNav() {
       icon: iconName && <IconFromString name={iconName} />,
     }));
   }, [menusSrc]);
-  console.log('menus:', menus);
   return [
     {
       name: '添加服务',

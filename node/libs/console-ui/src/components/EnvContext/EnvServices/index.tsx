@@ -13,22 +13,19 @@ import HpaEditor from '../hpa/HpaEditor';
 import { ProTable } from '@ant-design/pro-components';
 import { useEnvContext } from '../../../layouts/EnvLayout';
 import PodsLink from './PodsLink';
-import { useMemo } from 'react';
 
 export default () => {
   const {
     data: { id, production },
   } = useEnvContext();
 
-  const request = useMemo(
-    () => toKtorRequest<ServiceConfigData>(`/services?envId=${id}`),
-    [id]
-  );
+  const request = toKtorRequest<ServiceConfigData>(`/services`);
   return (
     <ProTable<ServiceConfigData>
       headerTitle={'已部署服务'}
       rowKey={'id'}
       search={false}
+      params={{ envId: id }}
       request={request}
       columns={[
         serviceIdColumn,
