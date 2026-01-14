@@ -14,7 +14,7 @@ import { DeploymentUnitOutlined, EditOutlined } from '@ant-design/icons';
 import Env from '../components/env/Env';
 import EnvChooserModal from '../components/EnvChooserModal';
 import { NavLink, useNavigate } from 'react-router-dom';
-import ServiceDeployedStatus from '../components/ServiceDeployedStatus';
+import ServiceDeployedStatus from '../components/service/ServiceDeployedStatus';
 
 export default () => {
   const envs = useEnvs();

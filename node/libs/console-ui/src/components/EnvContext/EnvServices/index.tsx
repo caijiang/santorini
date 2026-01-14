@@ -5,7 +5,7 @@ import {
   serviceNameColumn,
   serviceTypeColumn,
 } from '../../../columns/service';
-import ServiceDeployedStatusForEnv from '../../ServiceDeployedStatusForEnv';
+import ServiceDeploymentDeployedStatus from '../../service/ServiceDeploymentDeployedStatus';
 import DashboardLink from '../../DashboardLink';
 import { NavLink } from 'react-router-dom';
 import RocketForm from '../rollout/RocketForm';
@@ -13,6 +13,8 @@ import HpaEditor from '../hpa/HpaEditor';
 import { ProTable } from '@ant-design/pro-components';
 import { useEnvContext } from '../../../layouts/EnvLayout';
 import PodsLink from './PodsLink';
+import ServiceDeploymentCpuUsage from '../../service/ServiceDeploymentCpuUsage';
+import ServiceDeploymentMemoryUsage from '../../service/ServiceDeploymentMemoryUsage';
 
 export default () => {
   const {
@@ -35,7 +37,19 @@ export default () => {
           valueType: 'option',
           title: '部署概要',
           render: (_, entity) => (
-            <ServiceDeployedStatusForEnv envId={id} service={entity} />
+            <ServiceDeploymentDeployedStatus envId={id} service={entity} />
+          ),
+        },
+        {
+          title: 'CPU',
+          render: (_, entity) => (
+            <ServiceDeploymentCpuUsage envId={id} service={entity} />
+          ),
+        },
+        {
+          title: '内存',
+          render: (_, entity) => (
+            <ServiceDeploymentMemoryUsage envId={id} service={entity} />
           ),
         },
         {

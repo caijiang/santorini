@@ -1,14 +1,14 @@
-import { ServiceConfigData } from '../apis/service';
+import { ServiceConfigData } from '../../apis/service';
 import { Empty, Space, Spin } from 'antd';
 import * as React from 'react';
-import { useEnvs } from '../hooks/common';
-import { kubeServiceApi } from '../apis/kubernetes/service';
-import Env from './env/Env';
-import DeploymentStatus from './kubernetes/tommy/DeploymentStatus';
-import { CUEnv } from '../apis/env';
+import { useEnvs } from '../../hooks/common';
+import { kubeServiceApi } from '../../apis/kubernetes/service';
+import Env from '../env/Env';
+import DeploymentStatus from '../kubernetes/tommy/DeploymentStatus';
+import { CUEnv } from '../../apis/env';
 import { IDeployment } from 'kubernetes-models/apps/v1/Deployment';
-import { queryDeploymentByEnvs } from '../slices/queryDeploymentByEnvs';
-import { useUnwrapAsyncThunkAction } from '../slices/support/common';
+import { queryDeploymentByEnvs } from '../../slices/queryDeploymentByEnvs';
+import { useUnwrapAsyncThunkAction } from '../../slices/support/common';
 import _ from 'lodash';
 import { useDispatch } from 'react-redux';
 
