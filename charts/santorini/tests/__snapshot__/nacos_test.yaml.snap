@@ -10,7 +10,7 @@
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/version: 0.3.0
-        helm.sh/chart: santorini-0.3.1
+        helm.sh/chart: santorini-0.3.2
       name: release-name-santorini-santorini-nacos
     type: Opaque
 外部mysql的部署稿子:
@@ -23,7 +23,7 @@
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: release-name-santorini-santorini-nacos
         app.kubernetes.io/version: 0.3.0
-        helm.sh/chart: santorini-0.3.1
+        helm.sh/chart: santorini-0.3.2
       name: release-name-santorini-santorini-nacos
     spec:
       selector:
@@ -37,7 +37,7 @@
             app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: release-name-santorini-santorini-nacos
             app.kubernetes.io/version: 0.3.0
-            helm.sh/chart: santorini-0.3.1
+            helm.sh/chart: santorini-0.3.2
         spec:
           containers:
             - env:
@@ -159,7 +159,7 @@
                 - configMapRef:
                     name: release-name-santorini-santorini
                     optional: false
-              image: mysql:8.0.27
+              image: docker.io/bitnamilegacy/mysql:9.4.0-debian-12-r1
               imagePullPolicy: IfNotPresent
               name: init-db
               volumeMounts:
@@ -184,7 +184,7 @@
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: release-name-santorini-santorini-nacos
         app.kubernetes.io/version: 0.3.0
-        helm.sh/chart: santorini-0.3.1
+        helm.sh/chart: santorini-0.3.2
       name: release-name-santorini-santorini-nacos
     spec:
       selector:
@@ -198,7 +198,7 @@
             app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: release-name-santorini-santorini-nacos
             app.kubernetes.io/version: 0.3.0
-            helm.sh/chart: santorini-0.3.1
+            helm.sh/chart: santorini-0.3.2
         spec:
           containers:
             - env:
@@ -322,7 +322,7 @@
                 - configMapRef:
                     name: release-name-santorini-santorini
                     optional: false
-              image: mysql:8.0.27
+              image: docker.io/bitnamilegacy/mysql:9.4.0-debian-12-r1
               imagePullPolicy: IfNotPresent
               name: init-db
               volumeMounts:

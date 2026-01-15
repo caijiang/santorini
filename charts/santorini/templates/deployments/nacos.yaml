@@ -30,7 +30,7 @@ spec:
                 path: sql.sql
       initContainers:
         - name: init-db # 负责执行，创建数据库，创建用户，创建
-          image: mysql:8.0.27
+          image: {{ template "child.mysql.image" . }}
           imagePullPolicy: IfNotPresent
           volumeMounts:
             - mountPath: /san

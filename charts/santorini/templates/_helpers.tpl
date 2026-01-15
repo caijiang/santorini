@@ -120,3 +120,7 @@ Return the proper Nacos image name
 {{- define "frontend.image" -}}
 {{- include "common.images.image" (dict "imageRoot" .Values.santorini.frontend.image "global" .Values.global) -}}
 {{- end -}}
+
+{{- define "child.mysql.image" -}}
+{{- include "common.images.image" (dict "imageRoot" .Values.mysql.image "global" .Values.global) -}}
+{{- end -}}
