@@ -7,9 +7,13 @@ metadata:
     {{- include "common.labels.withoutName" . | nindent 4 }}
 rules:
   - apiGroups: [ "apiregistration.k8s.io" ]
-    resources: [ "apiservices" ]
+    resources: [ "*" ]
     resourceNames: [ ]
-    verbs: [ "list" ]
+    verbs: [ "get", "list", "watch"]
+  - apiGroups: [ "metrics.k8s.io" ]
+    resources: [ "*" ]
+    resourceNames: [ ]
+    verbs: [ "get", "list", "watch"]
   - apiGroups: [ "rbac.authorization.k8s.io" ]
     resources: [ "rolebindings" ]
     resourceNames: [ ]
