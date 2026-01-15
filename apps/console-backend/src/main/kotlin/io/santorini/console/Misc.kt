@@ -10,13 +10,24 @@ import io.ktor.util.date.*
 import io.santorini.AesGcmCrypto
 import io.santorini.kubernetes.currentPod
 import io.santorini.kubernetes.rootOwner
+import io.santorini.service.KubernetesClientService
+import io.santorini.withAuthorization
+import org.koin.ktor.ext.inject
 import java.util.*
 import kotlin.time.Duration.Companion.days
 
 private val logger = KotlinLogging.logger {}
 
 internal fun Application.configureConsoleMisc(kubernetesClient: KubernetesClient) {
+    val service = inject<KubernetesClientService>()
     routing {
+        get("/clusterResourceStat") {
+            withAuthorization {
+                call.respond(
+                    service.value.clusterResourceStat()
+                )
+            }
+        }
         get("/tokenForKubernetesDashboard") {
             logger.info {
                 "visit tokenForKubernetesDashboard"

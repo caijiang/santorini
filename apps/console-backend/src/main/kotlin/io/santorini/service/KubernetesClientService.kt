@@ -2,6 +2,7 @@ package io.santorini.service
 
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.santorini.kubernetes.SantoriniResource
+import io.santorini.kubernetes.model.ClusterResourceStat
 import io.santorini.model.ResourceType
 
 /**
@@ -12,7 +13,6 @@ interface KubernetesClientService {
     val kubernetesClient: KubernetesClient
 
     //<editor-fold desc="环境资源">
-
     fun findResourcesInNamespace(namespace: String, type: ResourceType? = null): List<SantoriniResource>
 
     /**
@@ -38,5 +38,10 @@ interface KubernetesClientService {
      */
     fun removeResource(namespace: String, name: String)
     //</editor-fold>
+
+    /**
+     * 获取当前集群运行状态
+     */
+    fun clusterResourceStat(): ClusterResourceStat
 
 }

@@ -1,6 +1,7 @@
 package io.santorini.kubernetes
 
 import io.fabric8.kubernetes.client.KubernetesClient
+import io.santorini.kubernetes.model.ClusterResourceStat
 import io.santorini.model.ResourceType
 import io.santorini.service.KubernetesClientService
 
@@ -23,4 +24,6 @@ class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClien
     override fun removeResource(namespace: String, name: String) {
         kubernetesClient.removeResource(namespace, name)
     }
+
+    override fun clusterResourceStat(): ClusterResourceStat = kubernetesClient.clusterResourceStat()
 }
