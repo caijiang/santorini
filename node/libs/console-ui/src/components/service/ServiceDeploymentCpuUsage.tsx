@@ -45,6 +45,7 @@ export function resourceUsage(
   if (request === undefined && limit === undefined) return undefined;
   if (request === undefined) return `~${resourceQuantityString(limit!!, type)}`;
   if (limit === undefined) return `${resourceQuantityString(request, type)}~`;
+  if (request == limit) return resourceQuantityString(request, type);
   return `${resourceQuantityString(request, type)}-${resourceQuantityString(
     limit,
     type

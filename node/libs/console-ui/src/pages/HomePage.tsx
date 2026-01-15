@@ -15,13 +15,21 @@ import Env from '../components/env/Env';
 import EnvChooserModal from '../components/EnvChooserModal';
 import { NavLink, useNavigate } from 'react-router-dom';
 import ServiceDeployedStatus from '../components/service/ServiceDeployedStatus';
+import AllResourcesSummary from '../components/kubernetes/resources/AllResourcesSummary';
+import { useClusterResourceStatQuery } from '../apis/misc';
 
 export default () => {
   const envs = useEnvs();
   // KubeNamespaceListProps
   const nf = useNavigate();
+  const { data } = useClusterResourceStatQuery(undefined, {
+    pollingInterval: 60000,
+    skipPollingIfUnfocused: true,
+    refetchOnFocus: true,
+  });
   return (
     <PageContainer title={'首页'}>
+      <AllResourcesSummary state={data} />
       {/*https://codesandbox.io/p/sandbox/6chd58?file=%2FApp.tsx%3A43%2C8*/}
       <ProList<CUEnv>
         headerTitle={'环境'}
@@ -29,7 +37,7 @@ export default () => {
         dataSource={envs}
         loading={!envs}
         showActions="hover"
-        style={{ marginBottom: 10 }}
+        style={{ marginBottom: 10, marginTop: 10 }}
         metas={{
           title: {
             dataIndex: 'name',
