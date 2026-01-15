@@ -1,0 +1,30 @@
+# kubectl proxy 后就可以这样干了
+###
+GET localhost:8001/apis/metrics.k8s.io/v1beta1
+
+### NODR
+GET localhost:8001/apis/metrics.k8s.io/v1beta1/nodes
+
+> {%
+    function cpuToCore(inputCpu) {
+        if (inputCpu.endsWith('n')) {
+            return parseInt(inputCpu) / 1000000000
+        }
+    }
+
+    function memoryToGi(inputMemory) {
+        if (inputMemory.endsWith('Ki')) {
+            return parseInt(inputMemory) / (1024 * 1024)
+        }
+    }
+
+    client.test("打印这个", () => {
+        const items = response.body.items
+        const allUsages = items.map(it => it.usage)
+
+        console.log(allUsages.map(it => cpuToCore(it.cpu)).reduce((a, b) => a + b, 0))
+        console.log(allUsages.map(it => memoryToGi(it.memory)).reduce((a, b) => a + b, 0))
+
+        // console.log(allUsages)
+    })
+%}

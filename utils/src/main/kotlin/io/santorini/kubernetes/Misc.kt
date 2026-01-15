@@ -63,9 +63,7 @@ fun KubernetesClient.clusterResourceStat(): ClusterResourceStat {
                         }
             }
 
-    val metrics = if (metricsAvailable) top().pods().metrics().items.flatMap {
-        it?.containers ?: emptyList()
-    }.mapNotNull { it.usage } else null
+    val metrics = if (metricsAvailable) top().nodes().metrics().items.mapNotNull { it.usage } else null
 
 //    如果你为某个资源指定了限制值，但不指定请求值， 并且没有应用某种准入时机制为该资源设置默认请求值， 那么 Kubernetes 会复制你所指定的限制值，将其用作资源的请求值。
     return ClusterResourceStat(
