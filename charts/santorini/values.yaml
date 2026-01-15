@@ -256,3 +256,4 @@ longhorn:
 mysql:
   image:
     repository: bitnamilegacy/mysql
+    tag: 9.4.0-debian-12-r1

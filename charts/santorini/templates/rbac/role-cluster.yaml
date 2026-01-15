@@ -6,6 +6,10 @@ metadata:
   labels:
     {{- include "common.labels.withoutName" . | nindent 4 }}
 rules:
+  - apiGroups: [ "apiregistration.k8s.io" ]
+    resources: [ "apiservices" ]
+    resourceNames: [ ]
+    verbs: [ "list" ]
   - apiGroups: [ "rbac.authorization.k8s.io" ]
     resources: [ "rolebindings" ]
     resourceNames: [ ]
