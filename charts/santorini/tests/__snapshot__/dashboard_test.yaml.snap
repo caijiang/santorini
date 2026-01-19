@@ -11,8 +11,8 @@
       labels:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/version: 0.3.0
-        helm.sh/chart: santorini-0.3.4
+        app.kubernetes.io/version: 0.4.0
+        helm.sh/chart: santorini-0.4.0
       name: release-name-santorini-dashboard-expose-0
       namespace: kubernetes-dashboard
     spec:
