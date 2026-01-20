@@ -29,6 +29,14 @@ class CommandGenerator(
         }
     }
 
+    // docker
+    // shell
+    fun shell(): String {
+        return generateCommands().flatMap {
+            listOf("# ${it.name}") + it.commands.map { command -> command.cmd }
+        }.joinToString("\n")
+    }
+
     // 阶段，一批指令
     fun generateCommands(): List<Phase> {
         @Suppress("HttpUrlsUsage")

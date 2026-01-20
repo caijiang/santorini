@@ -16,7 +16,11 @@ import {
 } from '../../apis/service';
 import { arrayToProSchemaValueEnumMap } from '../../common/ktor';
 import { useDispatch } from 'react-redux';
-import { deployToKubernetes, imageRule } from '../../slices/deployService';
+import {
+  deployToKubernetes,
+  imageRule,
+  toImageRepository,
+} from '../../slices/deployService';
 import { App, Typography } from 'antd';
 import { dispatchAsyncThunkActionThrowIfError } from '../../common/rtk';
 import ResourceRequirementFormField from '../../components/deploy/ResourceRequirementFormField';
@@ -67,7 +71,7 @@ export default () => {
             }
           }
           onFinish={async ({ image, ...other }) => {
-            const st = (image as string).split(':', 2);
+            const st = toImageRepository(image as string);
             const cpu = other.cpu as number[];
             const memory = other.memory as number[];
             const action = deployToKubernetes({

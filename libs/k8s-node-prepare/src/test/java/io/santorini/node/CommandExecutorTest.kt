@@ -7,7 +7,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.junit.jupiter.api.Disabled
-import java.io.IOException
 import kotlin.test.Test
 
 /**
@@ -60,13 +59,7 @@ class CommandExecutorTest {
     @Test
     fun joinNode() = runTest {
         executeWithTestExecutor { executor ->
-            val generator = CommandGenerator(
-                javaClass.getResourceAsStream("/local-build-join.txt")?.bufferedReader()
-                    ?.readLine() ?: throw IOException("没有指令文件"),
-                javaClass.getResourceAsStream("/local-build-registry.json")?.let {
-                    json.decodeFromStream<PrivateImageRegistry>(it)
-                }
-            )
+            val generator = testCommandGenerator(javaClass)
 
             generator.generateCommands().forEach {
                 executor.executePhase(it)

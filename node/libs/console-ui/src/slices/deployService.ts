@@ -70,6 +70,13 @@ type Rules = Required<FieldProps['rules']>;
 type ExtractRule<T> = T extends Array<infer U> ? U : never;
 type Rule = ExtractRule<Rules>;
 
+export function toImageRepository(input: string) {
+  const index = input.lastIndexOf(':');
+  return index == -1
+    ? [input]
+    : [input.substring(0, index), input.substring(index + 1)];
+}
+
 export function imageRule(
   serviceId: string,
   envId: string,
@@ -80,7 +87,7 @@ export function imageRule(
   return {
     validator: async (_, value: string) => {
       if (!value) return Promise.resolve();
-      const st = value.split(':', 2);
+      const st = toImageRepository(value);
       const ps = await dispatchThunkActionThrowIfError(
         dispatch,
         deploymentApi.endpoints.preDeploy.initiate({
