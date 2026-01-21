@@ -27,3 +27,5 @@
   ip https://nacos.io/docs/latest/ecology/use-nacos-controller-to-sync-service/?spm=5238cd80.12e1854c.0.0.62f53bc31BS8o5
   能够实现的
 - [ ] chart 中所有服务都支持设置公共的亲和度,容忍度
+- [ ] 如果修改数组类资源（环境）无法成功 patch
+- [ ] 可以通过飞书等方式订阅服务状态变化

@@ -572,6 +572,8 @@ class DeploymentService(
  */
 private fun Map<String, String>.mergeWithCustom(environmentVariables: Map<String, String>?): Map<String, String> {
     if (environmentVariables.isNullOrEmpty()) return this
+    // environmentVariables 独有的
+    val environmentVariablesOnly = environmentVariables.filterKeys { !containsKey(it) }
     return this.mapValues {
         // appendable
         if (it.key == "JAVA_OPTS" && environmentVariables.containsKey(it.key)) {
@@ -580,5 +582,5 @@ private fun Map<String, String>.mergeWithCustom(environmentVariables: Map<String
             "$e1 $e2"
         } else
             it.value
-    }
+    } + environmentVariablesOnly
 }
