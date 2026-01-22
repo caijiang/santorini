@@ -153,7 +153,7 @@ class UserRoleService(
         val user = reference("user_id", Users)
         val service = reference("service_id", ServiceMetas)
         val role = enumeration<ServiceRole>("role")
-        val createBy = reference("create_by", Users)
+        val createBy = reference("create_by", Users).nullable()
 
         // datetime(6)
         val createTime = timestamp("create_time")
@@ -168,6 +168,11 @@ class UserRoleService(
             SchemaUtils.create(Users)
             SchemaUtils.create(UserEnvs)
             SchemaUtils.create(UserServiceRoles)
+            val sqls = SchemaUtils.addMissingColumnsStatements(UserServiceRoles, Users, UserEnvs)
+            sqls.forEach {
+                logger.info { "Executing for missing columns:$it" }
+                exec(it)
+            }
         }
     }
 
@@ -354,13 +359,17 @@ class UserRoleService(
         }
     }
 
-    suspend fun assignServiceRole(targetUser: Uuid, serviceId: String, roleId: ServiceRole, byUser: Uuid) {
+    suspend fun assignServiceRole(targetUser: Uuid, serviceId: String, roleId: ServiceRole, byUser: Uuid?) {
+        if (userById(targetUser.toJavaUuid())?.grantAuthorities?.root == true) {
+            logger.warn { "身为 root 的$targetUser 无需获取某个服务的权限" }
+            return
+        }
         dbQuery {
             UserServiceRoles.insert {
                 it[user] = targetUser.toJavaUuid()
                 it[service] = serviceId
                 it[role] = roleId
-                it[createBy] = byUser.toJavaUuid()
+                it[createBy] = byUser?.toJavaUuid()
                 it[createTime] = Clock.System.now()
             }
         }

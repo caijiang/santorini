@@ -11,6 +11,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.santorini.OAuthPlatformUserDataAuditResult
 import io.santorini.console.schema.*
+import io.santorini.model.ServiceRole
 import io.santorini.withAuthorization
 import org.koin.ktor.ext.inject
 
@@ -19,16 +20,16 @@ private val logger = KotlinLogging.logger {}
 internal fun Application.configureConsoleService() {
     val service = inject<ServiceMetaService>().value
     val deploymentService = inject<DeploymentService>().value
+    val userService = inject<UserRoleService>().value
     // 一般人员可以读取 env
     routing {
         post<ServiceMetaResource> {
-            withAuthorization({
-                it.audit == OAuthPlatformUserDataAuditResult.Manager
-            }) {
+            withAuthorization {
                 val text = call.receiveText()
                 val context = receiveFromJson<ServiceMetaData>(text)
                 logger.info { "准备新增服务:$context" }
                 service.create(context)
+                userService.assignServiceRole(it.id, context.first.id, ServiceRole.Owner, null)
                 call.respond(HttpStatusCode.OK)
             }
         }
