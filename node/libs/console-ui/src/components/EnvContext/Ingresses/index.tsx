@@ -33,6 +33,7 @@ import {
   PlusOutlined,
 } from '@ant-design/icons';
 import yamlGenerator from '../../../apis/kubernetes/yamlGenerator';
+import PreAuthorize from '../../../tor/PreAuthorize';
 
 function toHostSummary(ingress: IIngress): HostSummary {
   const name = ingress.spec?.rules!![0].host!!;
@@ -138,15 +139,17 @@ export default () => {
         title={'Ingress'}
         loading={!ingresses}
         extra={
-          <PathEditor
-            key={'create'}
-            title={'新增路径'}
-            trigger={
-              <Button title={'点击新增路径'}>
-                <PlusOutlined />
-              </Button>
-            }
-          />
+          <PreAuthorize haveAnyRole={['ingress', 'root']}>
+            <PathEditor
+              key={'create'}
+              title={'新增路径'}
+              trigger={
+                <Button title={'点击新增路径'}>
+                  <PlusOutlined />
+                </Button>
+              }
+            />
+          </PreAuthorize>
         }
       >
         {(!ingresses || !allHostNames) && <Skeleton />}
@@ -208,43 +211,54 @@ export default () => {
                       },
                       actions: {
                         render: (_, e) => [
-                          <PathEditor
+                          <PreAuthorize
                             key={'edit'}
-                            data={e}
-                            title={'编辑路径'}
-                            trigger={
-                              <Button>
-                                <EditOutlined />
-                              </Button>
-                            }
-                          />,
-                          <Popconfirm
-                            key={'delete2'}
-                            title={'确认要删除这条路由规则么'}
-                            onConfirm={async () => {
-                              const yaml = yamlGenerator.deleteIngress(e, data);
-                              try {
-                                if (yaml) {
-                                  await editApi({
-                                    namespace: data.id,
-                                    name: e.instance.metadata?.name,
-                                    yaml,
-                                  }).unwrap();
-                                } else {
-                                  await removeApi({
-                                    namespace: data.id,
-                                    name: e.instance.metadata?.name,
-                                  }).unwrap();
-                                }
-                              } catch (e) {
-                                message.error(`移除流量失败，原因:${e}`);
-                              }
-                            }}
+                            haveAnyRole={['ingress', 'root']}
                           >
-                            <Button danger>
-                              <DeleteOutlined />
-                            </Button>
-                          </Popconfirm>,
+                            <PathEditor
+                              data={e}
+                              title={'编辑路径'}
+                              trigger={
+                                <Button>
+                                  <EditOutlined />
+                                </Button>
+                              }
+                            />
+                          </PreAuthorize>,
+                          <PreAuthorize
+                            key={'delete2'}
+                            haveAnyRole={['ingress', 'root']}
+                          >
+                            <Popconfirm
+                              title={'确认要删除这条路由规则么'}
+                              onConfirm={async () => {
+                                const yaml = yamlGenerator.deleteIngress(
+                                  e,
+                                  data
+                                );
+                                try {
+                                  if (yaml) {
+                                    await editApi({
+                                      namespace: data.id,
+                                      name: e.instance.metadata?.name,
+                                      yaml,
+                                    }).unwrap();
+                                  } else {
+                                    await removeApi({
+                                      namespace: data.id,
+                                      name: e.instance.metadata?.name,
+                                    }).unwrap();
+                                  }
+                                } catch (e) {
+                                  message.error(`移除流量失败，原因:${e}`);
+                                }
+                              }}
+                            >
+                              <Button danger>
+                                <DeleteOutlined />
+                              </Button>
+                            </Popconfirm>
+                          </PreAuthorize>,
                         ],
                       },
                     }}
