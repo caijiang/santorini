@@ -18,6 +18,16 @@ import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.get
 import kotlin.uuid.Uuid
 
+val demoPlatformUserData = object : OAuthPlatformUserData {
+    override val platform: OAuthPlatform
+        get() = OAuthPlatform.Feishu
+    override val stablePk: String
+        get() = "demo-user"
+    override val name: String
+        get() = "临时普通用户"
+    override val avatarUrl: String
+        get() = "https://gw.alipayobjects.com/zos/rmsportal/BiazfanxmamNRoxxVxka.png"
+}
 
 fun Application.configureSecurity(
     httpClient: HttpClient,
@@ -91,26 +101,16 @@ fun Application.configureSecurity(
             if (System.getenv("TEST") != "true") {
                 call.respond(HttpStatusCode.NotFound)
             } else {
-                val platformUserData = object : OAuthPlatformUserData {
-                    override val platform: OAuthPlatform
-                        get() = OAuthPlatform.Feishu
-                    override val stablePk: String
-                        get() = "demo-user"
-                    override val name: String
-                        get() = "临时普通用户"
-                    override val avatarUrl: String
-                        get() = "https://gw.alipayobjects.com/zos/rmsportal/BiazfanxmamNRoxxVxka.png"
-                }
                 val result = OAuthPlatformUserDataAuditResult.User
                 val account = withContext(Dispatchers.IO) {
                     kubernetesClient.findOrCreateServiceAccount(
-                        platformUserData.platform.name,
-                        platformUserData.stablePk,
+                        demoPlatformUserData.platform.name,
+                        demoPlatformUserData.stablePk,
                         false
                     )
                 }
                 call.saveUserData(
-                    userService.oAuthPlatformUserDataToSiteUserData(platformUserData, result, account)
+                    userService.oAuthPlatformUserDataToSiteUserData(demoPlatformUserData, result, account)
                         .copy(platformAccessToken = "")
                 )
                 call.respondRedirect("/")

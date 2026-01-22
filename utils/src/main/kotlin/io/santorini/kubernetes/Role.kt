@@ -98,51 +98,6 @@ fun KubernetesClient.findRole(root: HasMetadata, roleName: String): Role {
         .firstOrNull() ?: throw Exception("系统没有提前制备 santorini.io/role = $roleName 的role")
 }
 
-fun KubernetesClient.assignClusterRole(
-    role: String,
-    vararg subjects: Subject
-) {
-    return assignClusterRole(rbac().clusterRoles().withName(role).get(), *subjects)
-}
-
-/**
- * 集群角色在集群里是唯一的，先查找一下，目标角色的已知 Binding, 如果已经存在的话 直接修改即可
- */
-private fun KubernetesClient.assignClusterRole(
-    role: ClusterRole,
-    vararg subjects: Subject
-) {
-    val instance = role.metadata.labels["app.kubernetes.io/instance"] ?: throw Exception("顶级元素不包含实例信息")
-    // 目标
-    val currentBinding = rbac().clusterRoleBindings().withLabels(
-        mapOf("app.kubernetes.io/instance" to instance, "santorini.io/id" to role.metadata.name)
-    ).list().items.firstOrNull()
-
-    if (currentBinding == null) {
-        val obj = ClusterRoleBindingBuilder()
-            .withNewMetadata()
-            .withGenerateName("santorini-cb")
-            .addToLabels("app.kubernetes.io/instance", instance)
-            .endMetadata()
-            .let { builder ->
-                var c = builder
-                subjects.forEach {
-                    c = c.addNewSubjectLike(it).endSubject()
-                }
-                c
-            }
-            .withNewRoleRef("rbac.authorization.k8s.io", "ClusterRole", role.metadata.name)
-            .build()
-        rbac().clusterRoleBindings().resource(obj).create()
-    } else {
-        rbac().clusterRoleBindings().withName(currentBinding.metadata.name)
-            .edit {
-                it.subjects.addAll(subjects)
-                it
-            }
-    }
-}
-
 /**
  * @param root 肯定包含管理 meta的元素
  * @param roleName 角色名称
@@ -175,16 +130,6 @@ fun KubernetesClient.findClusterRole(
         ?: throw IllegalStateException("系统没有提前制备 santorini.io/role = $roleName 的role")
 }
 
-/**
- * @return role 名字集合
- */
-fun KubernetesClient.clusterRoleBindingBySubject(subject: Subject): List<String> {
-    return rbac().clusterRoleBindings().list()
-        .items
-        .filter { binding -> binding.subjects.any { it.name == subject.name && it.namespace == subject.namespace && it.kind == subject.kind } }
-        .map { it.roleRef.name }
-}
-
 
 /**
  * 如果只属于目标 subject 则执行删除
@@ -199,7 +144,7 @@ private fun FilterWatchListDeletable<RoleBinding, RoleBindingList, Resource<Role
 
     val toDelete = all
         .filter { it -> it.subjects.any { it.name == name && it.kind == kind && it.namespace == namespace } && it.subjects.size == 1 }
-    if (toDelete.isEmpty()) {
+    if (toDelete.isNotEmpty()) {
         toDelete.forEach {
             client.rbac().roleBindings().resource(it).delete()
         }
@@ -230,17 +175,20 @@ fun KubernetesClient.removeAllServiceRolesFromNamespace(
 fun KubernetesClient.makesureRightEnvRoles(
     root: HasMetadata,
     serviceAccountName: String,
-    namespace: String
+    namespace: String,
+    withIngress: Boolean
 ) {
     val instance = root.metadata.labels["app.kubernetes.io/instance"] ?: throw Exception("顶级元素不包含实例信息")
 
     val labels = mapOf(
         "app.kubernetes.io/instance" to instance,
         "santorini.io/type" to "env-role",
-        "santorini.io/version" to "4"
+        "santorini.io/version" to "5"
     )
+    val basicRoleLabels = labels + mapOf("santorini.io/env-role" to "basic")
+    val withIngressRoleLabels = labels + mapOf("santorini.io/env-role" to "withIngress")
 
-    val role = findOrCreateRoleImpl(this, namespace, labels, "env-role-") {
+    val basicRole = findOrCreateRoleImpl(this, namespace, basicRoleLabels, "env-role-") {
         it.addToRules(
             PolicyRule(
                 listOf(""), null, listOf(), listOf("pods", "pods/log"), listOf("list", "get")
@@ -254,6 +202,18 @@ fun KubernetesClient.makesureRightEnvRoles(
             PolicyRule(
                 listOf(""), null, listOf(), listOf("events"), listOf("list")
             )
+        ).build()
+    }
+
+    val withIngressRole = findOrCreateRoleImpl(this, namespace, withIngressRoleLabels, "env-role-with-ingress-") {
+        it.addToRules(
+            PolicyRule(
+                listOf("networking.k8s.io"),
+                null,
+                listOf(),
+                listOf("ingresses"),
+                listOf("create", "update", "get", "delete", "list")
+            ),
         ).build()
     }
 
@@ -271,32 +231,45 @@ fun KubernetesClient.makesureRightEnvRoles(
         }
     // 删除过时的
     current.filter {
-        it.roleRef.name != role.metadata.name
+        it.roleRef.name != basicRole.metadata.name
+                && it.roleRef.name != withIngressRole.metadata.name
     }.forEach {
         rbac().roleBindings().resource(it).delete()
     }
     // 绑定现有的
-    if (current.none { it.roleRef.name == role.metadata.name }) {
-        val b = RoleBindingBuilder()
-            .withNewMetadata()
-            .withNamespace(namespace)
-            .withGenerateName("env-role-")
-            .addToLabels("santorini.io/type", "env-role")
-            .addToLabels("app.kubernetes.io/instance", instance)
-            .endMetadata()
-            .withRoleRef(
-                RoleRef("rbac.authorization.k8s.io", "Role", role.metadata.name)
-            )
-            .withSubjects(
-                SubjectBuilder()
-                    .withKind("ServiceAccount")
-                    .withNamespace(this.namespace)
-                    .withName(serviceAccountName)
-                    .build()
-            ).build()
-
-        rbac().roleBindings().resource(b).create()
+    if (current.none { it.roleRef.name == basicRole.metadata.name }) {
+        bindingEnvRole(namespace, instance, basicRole, serviceAccountName)
     }
+    if (current.none { it.roleRef.name == withIngressRole.metadata.name } && withIngress) {
+        bindingEnvRole(namespace, instance, withIngressRole, serviceAccountName)
+    }
+}
+
+private fun KubernetesClient.bindingEnvRole(
+    namespace: String,
+    instance: String,
+    basicRole: Role,
+    serviceAccountName: String
+) {
+    val b = RoleBindingBuilder()
+        .withNewMetadata()
+        .withNamespace(namespace)
+        .withGenerateName("env-role-")
+        .addToLabels("santorini.io/type", "env-role")
+        .addToLabels("app.kubernetes.io/instance", instance)
+        .endMetadata()
+        .withRoleRef(
+            RoleRef("rbac.authorization.k8s.io", "Role", basicRole.metadata.name)
+        )
+        .withSubjects(
+            SubjectBuilder()
+                .withKind("ServiceAccount")
+                .withNamespace(this.namespace)
+                .withName(serviceAccountName)
+                .build()
+        ).build()
+
+    rbac().roleBindings().resource(b).create()
 }
 
 fun KubernetesClient.makesureRightServiceRoles(

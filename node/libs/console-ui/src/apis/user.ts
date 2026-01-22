@@ -9,6 +9,25 @@ export const userApi = createApi({
   tagTypes: ['Envs', 'ServiceRoles'],
   endpoints: (build) => {
     return {
+      //<editor-fold desc="编辑用户的系统权限">
+      updateGrantedAuthority: build.mutation<
+        undefined,
+        {
+          userId: string;
+          target: string;
+          targetValue: boolean;
+        }
+      >({
+        query: ({ userId, target, targetValue }) => ({
+          url: `/users/${userId}/grantAuthorities/${target}`,
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: targetValue,
+        }),
+      }),
+      //</editor-fold>
       userServiceRoles: build.query<
         Record<string, io.santorini.model.ServiceRole[]>,
         string
@@ -92,4 +111,5 @@ export const {
   useUserServiceRolesQuery,
   useAddServiceRolesMutation,
   useRemoveServiceRolesMutation,
+  useUpdateGrantedAuthorityMutation,
 } = userApi;

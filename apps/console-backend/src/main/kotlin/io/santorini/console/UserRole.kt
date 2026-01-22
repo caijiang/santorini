@@ -6,6 +6,7 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.resources.post
+import io.ktor.server.resources.put
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.santorini.console.schema.UserResource
@@ -13,6 +14,8 @@ import io.santorini.console.schema.UserRoleService
 import io.santorini.model.ServiceRole
 import io.santorini.withAuthorization
 import org.koin.ktor.ext.inject
+import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
 
 //每当用户登陆后，就会被记录下来
 //每当新增一个服务单元，那么就会增加
@@ -28,6 +31,27 @@ internal fun Application.configureConsoleUser() {
     val service = inject<UserRoleService>().value
 
     routing {
+        //<editor-fold desc="编辑用户的系统权限">
+        put<UserResource.Id.GrantAuthorities.One> { one ->
+            // 只有 assign or root
+            val targetUser = service.userById(one.parent.id.id!!.toJavaUuid())
+            val target = one.authorityName
+            if (targetUser == null) {
+                call.respond(HttpStatusCode.NotFound)
+            } else
+                withAuthorization({
+                    if (targetUser.grantAuthorities.root)
+                    // 目标用户你管不了
+                        false
+                    else if (it.grantAuthorities?.root != true)
+                        it.grantAuthorities?.assigns == true && it.grantAuthorities.checkAuthorityName(target)
+                    else it.grantAuthorities.root
+                }) {
+                    service.updateUserGrantAuthority(Uuid.parse(targetUser.id), target, call.receive<Boolean>())
+                    call.respond(HttpStatusCode.NoContent)
+                }
+        }
+        //</editor-fold>
         get<UserResource> {
             withAuthorization(
                 {

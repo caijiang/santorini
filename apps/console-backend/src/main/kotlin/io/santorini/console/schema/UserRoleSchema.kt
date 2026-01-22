@@ -1,15 +1,14 @@
 package io.santorini.console.schema
 
 import io.fabric8.kubernetes.api.model.ServiceAccount
-import io.fabric8.kubernetes.client.KubernetesClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.resources.*
 import io.santorini.*
 import io.santorini.console.model.*
 import io.santorini.console.schema.ServiceMetaService.ServiceMetas
 import io.santorini.console.schema.UserRoleService.UserEnvs.env
-import io.santorini.kubernetes.*
 import io.santorini.model.ServiceRole
+import io.santorini.service.KubernetesClientService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.FixedOffsetTimeZone
@@ -65,6 +64,18 @@ data class UserResource(
     @Resource("{id}")
     @Serializable
     data class Id(val parent: UserResource = UserResource(), val id: Uuid? = null) {
+
+        /**
+         * 获取可见的环境 id
+         */
+        @Resource("grantAuthorities")
+        @Serializable
+        data class GrantAuthorities(val id: Id = Id()) {
+            @Resource("{authorityName}")
+            @Serializable
+            data class One(val parent: GrantAuthorities = GrantAuthorities(), val authorityName: String)
+        }
+
         /**
          * 获取可见的环境 id
          */
@@ -98,7 +109,7 @@ data class UserResource(
 
 class UserRoleService(
     database: Database,
-    private val kubernetesClient: KubernetesClient,
+    private val clientService: KubernetesClientService,
     private val serviceMetaService: ServiceMetaService,
     private val envService: EnvService,
 ) {
@@ -374,17 +385,20 @@ class UserRoleService(
         kubernetesRoles(id)
     }
 
+    /**
+     * 重新整理用户在 k8s 中的权限
+     */
     private suspend fun kubernetesRoles(userId: Uuid, removeEnv: String? = null) {
         logger.info {
             "重新整理用户:$userId 的权限"
         }
         val userData = userById(userId.toJavaUuid()) ?: return
-        val root = kubernetesClient.currentPod().rootOwner()
+        val root = clientService.currentPodRootOwner()
         removeEnv?.let {
             logger.info {
                 "移除其在环境 $removeEnv 的所有权限"
             }
-            kubernetesClient.removeAllServiceRolesFromNamespace(root, userData.serviceAccountName, it)
+            clientService.removeAllServiceRolesFromNamespace(root, userData.serviceAccountName, it)
         }
         // 获取每一组权限，检查是否符合要求，应加则加，应减则减
         val envs = toUserEnvs(userId)
@@ -401,8 +415,24 @@ class UserRoleService(
 
         envs.forEach { envId ->
             logger.info { "确保其具备环境:$envId 权限,以及 各服务身份:$serviceRoles" }
-            kubernetesClient.makesureRightEnvRoles(root, userData.serviceAccountName, envId)
-            kubernetesClient.makesureRightServiceRoles(root, userData.serviceAccountName, envId, serviceRoles)
+            clientService.makesureRightEnvRoles(
+                root,
+                userData.serviceAccountName,
+                envId,
+                userData.grantAuthorities.ingress
+            )
+            clientService.makesureRightServiceRoles(root, userData.serviceAccountName, envId, serviceRoles)
+        }
+    }
+
+    suspend fun updateUserGrantAuthority(userId: Uuid, target: String, targetValue: Boolean) {
+        dbQuery {
+            Users.update({ Users.id eq userId.toJavaUuid() }) {
+                it[grantAuthorities] = CustomFunction(
+                    "JSON_SET", grantAuthorities.columnType, grantAuthorities, stringLiteral("$.$target"),
+                    booleanLiteral(targetValue)
+                )
+            }
         }
     }
 

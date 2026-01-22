@@ -25,6 +25,10 @@ data class GrantAuthorities(
      * 允许分配权限
      */
     val assigns: Boolean,
+    /**
+     * 允许为自己有权的环境处理 ingress
+     */
+    val ingress: Boolean = false,
 ) {
     fun toArray(): Array<String> {
         val buf = mutableListOf("ROLE_USER")
@@ -44,6 +48,22 @@ data class GrantAuthorities(
             buf.add("ROLE_ROOT")
             buf.add("ROLE_MANAGER")
         }
+        if (ingress) {
+            buf.add("ROLE_INGRESS")
+        }
         return buf.toTypedArray()
+    }
+
+    fun checkAuthorityName(target: String): Boolean {
+        when (target) {
+            "root" -> root
+            "users" -> users
+            "envs" -> envs
+            "roles" -> roles
+            "assigns" -> assigns
+            "ingress" -> ingress
+            else -> throw IllegalArgumentException("$target is not a valid target")
+        }
+        throw IllegalArgumentException("$target is not a valid target")
     }
 }

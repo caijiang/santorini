@@ -294,7 +294,7 @@ class DeploymentKtTest {
                 )
             } answers {}
             every { kubernetesClient.makesureRightServiceRoles(any(), any(), any(), any()) } answers {}
-            every { kubernetesClient.makesureRightEnvRoles(anyNullable(), any(), any()) } answers {}
+            every { kubernetesClient.makesureRightEnvRoles(anyNullable(), any(), any(), false) } answers {}
 
             val pod = mockk<Pod>(relaxed = true)
 
@@ -304,7 +304,7 @@ class DeploymentKtTest {
             every {
                 kubernetesClient.currentPod()
             } returns pod
-            every { pod.rootOwner() } returns mockk()
+            every { pod.rootOwner(any()) } returns mockk()
 
             manager.post("https://localhost/users/${userData.id}/envs") {
                 contentType(ContentType.Application.Json)

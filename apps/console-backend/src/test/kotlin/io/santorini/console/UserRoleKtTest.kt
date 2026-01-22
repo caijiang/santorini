@@ -1,15 +1,11 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package io.santorini.console
 
-import io.fabric8.kubernetes.api.model.Pod
-import io.fabric8.kubernetes.api.model.rbac.ClusterRoleBuilder
-import io.fabric8.kubernetes.client.KubernetesClient
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotHaveSize
 import io.kotest.matchers.maps.shouldContain
 import io.kotest.matchers.maps.shouldHaveSize
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.ktor.client.call.*
@@ -18,17 +14,17 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
+import io.mockk.verify
 import io.santorini.LoginUserData
 import io.santorini.console.model.PageResult
 import io.santorini.console.schema.EnvData
 import io.santorini.console.schema.ServiceMetaData
 import io.santorini.console.schema.UserData
 import io.santorini.consoleModuleEntry
-import io.santorini.kubernetes.*
 import io.santorini.model.Lifecycle
 import io.santorini.model.ServiceRole
 import io.santorini.model.ServiceType
+import io.santorini.service.KubernetesClientService
 import io.santorini.test.mockUserModule
 import io.santorini.tools.addServiceMeta
 import io.santorini.tools.createStandardClient
@@ -37,7 +33,6 @@ import org.junit.jupiter.api.AfterAll
 import org.testcontainers.containers.MySQLContainer
 import java.util.*
 import kotlin.test.Test
-import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * @author CJ
@@ -56,11 +51,10 @@ class UserRoleKtTest {
 
     @Test
     fun userAndRole() = testApplication {
-        val kubernetesClient = mockk<KubernetesClient>()
-        every { kubernetesClient.namespace } returns "ns"
+        val kubernetesClient = mockk<KubernetesClientService>()
 
         application {
-            consoleModuleEntry(database = mysql.database, kubernetesClient = kubernetesClient)
+            consoleModuleEntry(database = mysql.database, kubernetesClientService = kubernetesClient)
             mockUserModule()
         }
 
@@ -100,26 +94,9 @@ class UserRoleKtTest {
             status shouldBe HttpStatusCode.OK
         }
         val userData = user.get("https://localhost/currentLogin").body<LoginUserData>()
-        val pod = mockk<Pod>(relaxed = true)
-
-        mockkStatic(Pod::rootOwner)
-        mockkStatic("io.santorini.kubernetes.RoleKt")
         every {
-            kubernetesClient.currentPod()
-        } returns pod
-        every { pod.rootOwner() } returns mockk()
-        val envRole = ClusterRoleBuilder()
-            .withNewMetadata()
-            .withName(UUID.randomUUID().toString())
-            .endMetadata()
-            .build()
-        every {
-            kubernetesClient.findClusterRole(any(), "env-${envId}-visitable", anyNullable())
-        } returns envRole
-
-        every {
-            kubernetesClient.clusterRoleBindingBySubject(anyNullable())
-        } returns emptyList()
+            kubernetesClient.currentPodRootOwner()
+        } returns mockk()
 
         withClue("一个普通用户，最早无法操作任何环境") {
             manager.get("https://localhost/users/${userData.id}/envs").apply {
@@ -127,20 +104,9 @@ class UserRoleKtTest {
                 body<List<String>>() shouldHaveSize 0
             }
         }
-
-//        mockkStatic(KubernetesClient::assignClusterRole)
-        every {
-            kubernetesClient.assignClusterRole(anyNullable(), anyNullable())
-        } answers {
-
-        }
-        mockkStatic(kubernetesClient::removeAllServiceRolesFromNamespace)
-        mockkStatic(kubernetesClient::makesureRightServiceRoles)
-        mockkStatic(kubernetesClient::makesureRightEnvRoles)
-
         every { kubernetesClient.removeAllServiceRolesFromNamespace(any(), anyNullable(), anyNullable()) } answers {}
         every { kubernetesClient.makesureRightServiceRoles(any(), any(), any(), any()) } answers {}
-        every { kubernetesClient.makesureRightEnvRoles(any(), any(), any()) } answers {}
+        every { kubernetesClient.makesureRightEnvRoles(any(), any(), any(), false) } answers {}
         manager.post("https://localhost/users/${userData.id}/envs") {
             contentType(ContentType.Application.Json)
             setBody(envId)
@@ -148,12 +114,14 @@ class UserRoleKtTest {
             status shouldBe HttpStatusCode.Created
         }
 
-//        verify(exactly = 1) {
-//            kubernetesClient.assignClusterRole(envRole.metadata.name, any())
-//        }
-        every {
-            kubernetesClient.clusterRoleBindingBySubject(anyNullable())
-        } returns listOf(envRole.metadata.name)
+        withClue("授权了环境需要调用 makesureRightEnvRoles") {
+            verify(exactly = 0) {
+                kubernetesClient.removeAllServiceRolesFromNamespace(any(), any(), envId)
+            }
+            verify(exactly = 1) {
+                kubernetesClient.makesureRightEnvRoles(any(), any(), envId, false)
+            }
+        }
 
         withClue("经过管理员授权即可查看") {
             manager.get("https://localhost/users/${userData.id}/envs").apply {
@@ -233,6 +201,52 @@ class UserRoleKtTest {
             user.get("https://localhost/services").apply {
                 status shouldBe HttpStatusCode.OK
                 body<List<ServiceMetaData>>() shouldHaveSize 1
+            }
+        }
+
+        withClue("授权之后需要调用各种 api") {
+            verify(exactly = 0) {
+                kubernetesClient.removeAllServiceRolesFromNamespace(any(), any(), envId)
+            }
+            verify(exactly = 1) {
+                kubernetesClient.makesureRightServiceRoles(
+                    any(), any(), envId, mapOf(
+                        rolePlayService.id to listOf(
+                            ServiceRole.Owner
+                        )
+                    )
+                )
+            }
+        }
+
+        withClue("允许设置权限--ingress") {
+            manager.put("https://localhost/users/${userData.id}/grantAuthorities/ingress") {
+                contentType(ContentType.Application.Json)
+                setBody(true)
+            }.apply {
+                status shouldBe HttpStatusCode.NoContent
+            }
+
+            manager.get("https://localhost/users?limit=40").apply {
+                status shouldBe HttpStatusCode.OK
+                val page = body<PageResult<UserData>>()
+                page.records.find {
+                    it.id == userData.id.toString()
+                }?.shouldNotBeNull()
+                page.records.find {
+                    it.id == userData.id.toString()
+                }?.grantAuthorities?.ingress shouldBe true
+            }
+        }
+
+        withClue("移除环境后") {
+            manager.delete("https://localhost/users/${userData.id}/envs/$envId").apply {
+                status shouldBe HttpStatusCode.NoContent
+            }
+            withClue("授权之后需要调用各种 api") {
+                verify(exactly = 1) {
+                    kubernetesClient.removeAllServiceRolesFromNamespace(any(), any(), envId)
+                }
             }
         }
 
