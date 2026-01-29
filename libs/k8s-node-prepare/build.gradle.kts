@@ -7,6 +7,7 @@ plugins {
     // Apply Kotlin Serialization plugin from `gradle/libs.versions.toml`.
     kotlin("plugin.serialization")
 //    alias("kotlin.serialization")
+    id("buildsrc.convention.plugin-common-ext")
 }
 
 tasks.withType<KotlinCompilationTask<*>> {
@@ -17,7 +18,6 @@ tasks.withType<KotlinCompilationTask<*>> {
 
 dependencies {
     implementation("org.apache.sshd:sshd-core:2.14.0")
-    implementation("io.github.caijiang:common-ext-jakarta:2.4.0")
     implementation(libs.kotlin.kotlinLogging)
     implementation(libs.bundles.kotlinxEcosystem)
 

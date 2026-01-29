@@ -9,6 +9,7 @@ plugins {
     kotlin("plugin.serialization")
 //    alias(libs.plugins.kotlinPluginSerialization)
 //    id("com.google.cloud.tools.jib") version "3.4.0"
+    id("buildsrc.convention.plugin-common-ext")
 }
 
 application {

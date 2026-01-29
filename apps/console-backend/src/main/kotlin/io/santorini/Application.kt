@@ -2,6 +2,11 @@ package io.santorini
 
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.fabric8.kubernetes.client.KubernetesClientBuilder
+import io.github.caijiang.common.job.scheduler.KubernetesJobScheduler
+import io.github.caijiang.common.job.scheduler.Scheduler
+import io.github.caijiang.common.job.worker.PersistentJob
+import io.github.caijiang.common.job.worker.ScheduleJobService
+import io.github.caijiang.common.job.worker.bean.SchedulerScheduleJobService
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
@@ -19,9 +24,6 @@ import io.santorini.service.ImageService
 import io.santorini.service.KubernetesClientService
 import io.santorini.well.StatusException
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.koin.core.parameter.ParametersHolder
@@ -31,7 +33,6 @@ import org.koin.ktor.ext.get
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
 import org.slf4j.event.Level
-import kotlin.time.Duration.Companion.seconds
 
 private val ktLogger = KotlinLogging.logger {}
 fun main(args: Array<String>) {
@@ -94,6 +95,7 @@ fun Application.consoleModuleEntry(
         ImageService(get(), get())
     }
 ) {
+    val app = this
     install(Koin) {
         slf4jLogger()
         modules(module {
@@ -108,6 +110,9 @@ fun Application.consoleModuleEntry(
             }
             single {
                 kubernetesClient
+            }
+            single<Scheduler> {
+                KubernetesJobScheduler(kubernetesClient)
             }
             single {
                 imageServiceLoader(it)
@@ -133,28 +138,41 @@ fun Application.consoleModuleEntry(
             single {
                 EnvWikiService(database)
             }
+            single<ScheduleJobService> {
+                SchedulerScheduleJobService(
+                    JobRunner(app), get()
+                )
+            }
         })
     }
-    monitor.subscribe(ApplicationStarted) {
-        try {
-            val deploymentService = get<DeploymentService>()
-            it.get<AppBackgroundScope>().launch {
-                while (isActive) {
-                    ktLogger.debug { "系统心跳" }
-                    try {
-                        deploymentService.heart()
-                    } catch (e: Exception) {
-                        ktLogger.warn(e) {
-                            "业务问题"
-                        }
-                    }
-                    delay(10.seconds)
-                }
-            }
-        } catch (e: Throwable) {
-            ktLogger.warn(e) { "启动时？github-action中？" }
-        }
-    }
+    app.get<ScheduleJobService>().submitPersistentJob("* * * * *", object : PersistentJob {
+        override val name: String
+            get() = "santorini-$JOB_HEARTBEAT"
+        override val parameters: Map<String, String>
+            get() = emptyMap()
+        override val type: String
+            get() = JOB_HEARTBEAT
+    })
+//    monitor.subscribe(ApplicationStarted) {
+//        try {
+//            val deploymentService = get<DeploymentService>()
+//            it.get<AppBackgroundScope>().launch {
+//                while (isActive) {
+//                    ktLogger.debug { "系统心跳" }
+//                    try {
+//                        deploymentService.heart()
+//                    } catch (e: Exception) {
+//                        ktLogger.warn(e) {
+//                            "业务问题"
+//                        }
+//                    }
+//                    delay(10.seconds)
+//                }
+//            }
+//        } catch (e: Throwable) {
+//            ktLogger.warn(e) { "启动时？github-action中？" }
+//        }
+//    }
     monitor.subscribe(ApplicationStopped) {
         try {
             it.get<AppBackgroundScope>().cancel("stop")
