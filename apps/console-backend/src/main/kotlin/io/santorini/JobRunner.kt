@@ -9,6 +9,7 @@ import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.get
 
 const val JOB_HEARTBEAT = "heartbeat"
+const val JOB_FINE = "finely"
 
 /**
  *
@@ -37,6 +38,10 @@ class JobRunner(
                     }
                 }
             }
+            return
+        }
+        if (job.type == JOB_FINE) {
+            ktLogger.info { "that's fine!" }
             return
         }
         TODO("Not yet implemented for ${job.type}")

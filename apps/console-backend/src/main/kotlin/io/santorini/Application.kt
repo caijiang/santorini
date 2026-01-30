@@ -6,6 +6,7 @@ import io.github.caijiang.common.job.scheduler.KubernetesJobScheduler
 import io.github.caijiang.common.job.scheduler.Scheduler
 import io.github.caijiang.common.job.worker.PersistentJob
 import io.github.caijiang.common.job.worker.ScheduleJobService
+import io.github.caijiang.common.job.worker.TemporaryJob
 import io.github.caijiang.common.job.worker.bean.SchedulerScheduleJobService
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.*
@@ -153,6 +154,13 @@ fun Application.consoleModuleEntry(
         override val type: String
             get() = JOB_HEARTBEAT
     })
+    if ("true" == System.getenv("TEST"))
+        app.get<ScheduleJobService>().submitTemporaryJob(object : TemporaryJob {
+            override val parameters: Map<String, String>
+                get() = mapOf()
+            override val type: String
+                get() = JOB_FINE
+        })
 //    monitor.subscribe(ApplicationStarted) {
 //        try {
 //            val deploymentService = get<DeploymentService>()

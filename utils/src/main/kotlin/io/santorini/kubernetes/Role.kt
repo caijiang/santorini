@@ -183,7 +183,7 @@ fun KubernetesClient.makesureRightEnvRoles(
     val labels = mapOf(
         "app.kubernetes.io/instance" to instance,
         "santorini.io/type" to "env-role",
-        "santorini.io/version" to "5"
+        "santorini.io/version" to "6"
     )
     val basicRoleLabels = labels + mapOf("santorini.io/env-role" to "basic")
     val withIngressRoleLabels = labels + mapOf("santorini.io/env-role" to "withIngress")
@@ -191,16 +191,23 @@ fun KubernetesClient.makesureRightEnvRoles(
     val basicRole = findOrCreateRoleImpl(this, namespace, basicRoleLabels, "env-role-") {
         it.addToRules(
             PolicyRule(
-                listOf(""), null, listOf(), listOf("pods", "pods/log"), listOf("list", "get")
+                listOf("batch"), null, listOf(), listOf("jobs", "cronjobs"), listOf("list", "get", "watch")
             ),
             PolicyRule(
-                listOf("apps"), null, listOf(), listOf("replicasets"), listOf("list", "get")
+                listOf(""), null, listOf(), listOf("pods", "pods/log"), listOf("list", "get", "watch")
             ),
             PolicyRule(
-                listOf("autoscaling"), null, listOf(), listOf("horizontalpodautoscalers"), listOf("list")
+                listOf("apps"), null, listOf(), listOf("replicasets"), listOf("list", "get", "watch")
             ),
             PolicyRule(
-                listOf(""), null, listOf(), listOf("events"), listOf("list")
+                listOf("autoscaling"),
+                null,
+                listOf(),
+                listOf("horizontalpodautoscalers"),
+                listOf("list", "get", "watch")
+            ),
+            PolicyRule(
+                listOf(""), null, listOf(), listOf("events"), listOf("list", "get", "watch")
             )
         ).build()
     }
