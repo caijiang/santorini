@@ -7,7 +7,8 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.santorini.console.schema.HostData
-import io.santorini.consoleModule
+import io.santorini.consoleModuleEntry
+import io.santorini.io.santorini.test.MockJobService
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
 import kotlinx.serialization.json.Json
@@ -22,7 +23,9 @@ class HostKtTest {
     @Test
     fun testHost() = testApplication {
         application {
-            consoleModule()
+            consoleModuleEntry(
+                scheduleJobServiceLoader = { _, _ -> MockJobService }
+            )
             mockUserModule()
         }
 

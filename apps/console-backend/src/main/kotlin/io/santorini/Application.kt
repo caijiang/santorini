@@ -94,7 +94,12 @@ fun Application.consoleModuleEntry(
     ),
     imageServiceLoader: Scope.(ParametersHolder) -> ImageService = {
         ImageService(get(), get())
-    }
+    },
+    scheduleJobServiceLoader: Scope.(ParametersHolder, Application) -> ScheduleJobService = { _, app ->
+        SchedulerScheduleJobService(
+            JobRunner(app), get()
+        )
+    },
 ) {
     val app = this
     install(Koin) {
@@ -140,9 +145,7 @@ fun Application.consoleModuleEntry(
                 EnvWikiService(database)
             }
             single<ScheduleJobService> {
-                SchedulerScheduleJobService(
-                    JobRunner(app), get()
-                )
+                scheduleJobServiceLoader(it, app)
             }
         })
     }

@@ -6,6 +6,7 @@ import io.kotest.matchers.shouldBe
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import io.santorini.io.santorini.test.MockJobService
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
 import kotlin.test.Test
@@ -18,7 +19,9 @@ class SecurityKtTest {
     fun 获取当前身份信息() {
         testApplication {
             application {
-                consoleModule()
+                consoleModuleEntry(
+                    scheduleJobServiceLoader = { _, _ -> MockJobService }
+                )
                 mockUserModule()
             }
 

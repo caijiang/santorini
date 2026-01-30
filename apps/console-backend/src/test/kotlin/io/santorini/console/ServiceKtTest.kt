@@ -12,7 +12,8 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.santorini.console.model.PageResult
 import io.santorini.console.schema.ServiceMetaData
-import io.santorini.consoleModule
+import io.santorini.consoleModuleEntry
+import io.santorini.io.santorini.test.MockJobService
 import io.santorini.model.Lifecycle
 import io.santorini.model.ServiceType
 import io.santorini.test.mockUserModule
@@ -27,7 +28,9 @@ class ServiceKtTest {
     @Test
     fun 服务单元测试() = testApplication {
         application {
-            consoleModule()
+            consoleModuleEntry(
+                scheduleJobServiceLoader = { _, _ -> MockJobService }
+            )
             mockUserModule()
         }
 

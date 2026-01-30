@@ -18,6 +18,7 @@ import io.mockk.mockkStatic
 import io.mockk.verify
 import io.santorini.console.schema.EnvData
 import io.santorini.consoleModuleEntry
+import io.santorini.io.santorini.test.MockJobService
 import io.santorini.kubernetes.createEnvResourceInPlain
 import io.santorini.kubernetes.createEnvResourceInSecret
 import io.santorini.kubernetes.updateOne
@@ -41,7 +42,9 @@ class EnvKtTest {
         val clientService = mockk<KubernetesClientService>(relaxed = true)
         every { clientService.kubernetesClient } returns kubernetesClient
         application {
-            consoleModuleEntry(kubernetesClient = kubernetesClient, kubernetesClientService = clientService)
+            consoleModuleEntry(
+                kubernetesClient = kubernetesClient, kubernetesClientService = clientService,
+                scheduleJobServiceLoader = { _, _ -> MockJobService })
             mockUserModule()
         }
 

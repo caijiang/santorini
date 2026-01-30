@@ -21,6 +21,7 @@ import io.santorini.console.schema.EnvData
 import io.santorini.console.schema.ServiceMetaData
 import io.santorini.console.schema.UserData
 import io.santorini.consoleModuleEntry
+import io.santorini.io.santorini.test.MockJobService
 import io.santorini.model.Lifecycle
 import io.santorini.model.ServiceRole
 import io.santorini.model.ServiceType
@@ -54,7 +55,10 @@ class UserRoleKtTest {
         val kubernetesClient = mockk<KubernetesClientService>()
 
         application {
-            consoleModuleEntry(database = mysql.database, kubernetesClientService = kubernetesClient)
+            consoleModuleEntry(
+                database = mysql.database,
+                kubernetesClientService = kubernetesClient,
+                scheduleJobServiceLoader = { _, _ -> MockJobService })
             mockUserModule()
         }
 

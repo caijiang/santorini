@@ -20,6 +20,7 @@ import io.mockk.mockkStatic
 import io.santorini.LoginUserData
 import io.santorini.console.schema.*
 import io.santorini.consoleModuleEntry
+import io.santorini.io.santorini.test.MockJobService
 import io.santorini.kubernetes.*
 import io.santorini.model.*
 import io.santorini.service.ImageService
@@ -42,9 +43,12 @@ class DeploymentKtTest {
         val kubernetesClient = mockk<KubernetesClient>()
         val imageService = mockk<ImageService>()
         application {
-            consoleModuleEntry(kubernetesClient = kubernetesClient, imageServiceLoader = {
-                imageService
-            })
+            consoleModuleEntry(
+                kubernetesClient = kubernetesClient, imageServiceLoader = {
+                    imageService
+                },
+                scheduleJobServiceLoader = { _, _ -> MockJobService }
+            )
             mockUserModule()
         }
 
