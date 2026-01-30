@@ -9,8 +9,8 @@
       labels:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/version: 0.4.0
-        helm.sh/chart: santorini-0.4.0
+        app.kubernetes.io/version: 0.5.0
+        helm.sh/chart: santorini-0.5.0
       name: release-name-santorini-santorini-nacos
     type: Opaque
 外部mysql的部署稿子:
@@ -22,8 +22,8 @@
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: release-name-santorini-santorini-nacos
-        app.kubernetes.io/version: 0.4.0
-        helm.sh/chart: santorini-0.4.0
+        app.kubernetes.io/version: 0.5.0
+        helm.sh/chart: santorini-0.5.0
       name: release-name-santorini-santorini-nacos
     spec:
       selector:
@@ -36,8 +36,8 @@
             app.kubernetes.io/instance: RELEASE-NAME
             app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: release-name-santorini-santorini-nacos
-            app.kubernetes.io/version: 0.4.0
-            helm.sh/chart: santorini-0.4.0
+            app.kubernetes.io/version: 0.5.0
+            helm.sh/chart: santorini-0.5.0
         spec:
           containers:
             - env:
@@ -183,8 +183,8 @@
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: release-name-santorini-santorini-nacos
-        app.kubernetes.io/version: 0.4.0
-        helm.sh/chart: santorini-0.4.0
+        app.kubernetes.io/version: 0.5.0
+        helm.sh/chart: santorini-0.5.0
       name: release-name-santorini-santorini-nacos
     spec:
       selector:
@@ -197,8 +197,8 @@
             app.kubernetes.io/instance: RELEASE-NAME
             app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: release-name-santorini-santorini-nacos
-            app.kubernetes.io/version: 0.4.0
-            helm.sh/chart: santorini-0.4.0
+            app.kubernetes.io/version: 0.5.0
+            helm.sh/chart: santorini-0.5.0
         spec:
           containers:
             - env:

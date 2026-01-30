@@ -9,6 +9,10 @@ metadata:
     {{- include "common.labels.withoutName" . | nindent 4 }}
 rules:
   # 这里算是直接部署资源
+  - apiGroups: [ "batch" ]
+    resources: [ "jobs","cronjobs" ]
+    resourceNames: [ ]
+    verbs: [ "get", "list", "watch", "create", "update", "delete" ]
   - apiGroups: [ "apps" ]
     resources: [ "deployments","deployments/newreplicaset" ]
     resourceNames: [ ]

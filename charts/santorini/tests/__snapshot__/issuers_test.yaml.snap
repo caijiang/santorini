@@ -6,8 +6,8 @@ masterEmail有了就用传入的:
       labels:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/version: 0.4.0
-        helm.sh/chart: santorini-0.4.0
+        app.kubernetes.io/version: 0.5.0
+        helm.sh/chart: santorini-0.5.0
       name: release-name-santorini-common-letsencrypt-issuer
     spec:
       acme:
@@ -28,8 +28,8 @@ masterEmail有了就用传入的:
       labels:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/version: 0.4.0
-        helm.sh/chart: santorini-0.4.0
+        app.kubernetes.io/version: 0.5.0
+        helm.sh/chart: santorini-0.5.0
       name: release-name-santorini-common-letsencrypt-issuer
     spec:
       acme:
