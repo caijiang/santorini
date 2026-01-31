@@ -319,13 +319,39 @@ export default {
                     },
                   },
                 ],
-                env: deployData.environmentVariables
-                  ? _.map(deployData.environmentVariables, (value, name) => ({
-                      name,
-                      value,
-                    }))?.filter((it) => it.name !== 'JAVA_OPTS')
-                  : // 因为 JVM 的 JAVA_OPTS 是需要叠加的
-                    undefined,
+                env: [
+                  {
+                    name: 'kubenamespace',
+                    valueFrom: {
+                      fieldRef: {
+                        fieldPath: 'metadata.namespace',
+                      },
+                    },
+                  },
+                  {
+                    name: 'kubename',
+                    valueFrom: {
+                      fieldRef: {
+                        fieldPath: 'metadata.name',
+                      },
+                    },
+                  },
+                  {
+                    name: 'kubeuid',
+                    valueFrom: {
+                      fieldRef: {
+                        fieldPath: 'metadata.uid',
+                      },
+                    },
+                  },
+                  ...(deployData.environmentVariables
+                    ? _.map(deployData.environmentVariables, (value, name) => ({
+                        name,
+                        value,
+                      }))?.filter((it) => it.name !== 'JAVA_OPTS')
+                    : // 因为 JVM 的 JAVA_OPTS 是需要叠加的
+                      []),
+                ],
                 resources: {
                   requests: {
                     cpu: deployData.resources.cpu.requestMillis + 'm',
