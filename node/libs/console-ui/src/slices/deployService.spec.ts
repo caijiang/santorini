@@ -1,7 +1,7 @@
 import { serviceApi, ServiceConfigData } from '../apis/service';
 import { kubeServiceApi } from '../apis/kubernetes/service';
 import { CUEnv } from '../apis/env';
-import { describe } from 'vitest';
+import { describe, expect } from 'vitest';
 import _ from 'lodash';
 import { isAction } from '@reduxjs/toolkit';
 import { deployToKubernetes } from './deployService';
@@ -36,6 +36,27 @@ const env = {
   name: '',
   production: false,
 } satisfies CUEnv;
+
+/**
+ * 入参的arg是否符合，我们模拟 endpoint initiate 返回的结果
+ * @param arg 调用方法的参数
+ * @param api query api
+ */
+function invocationArgMatchMockEndpointInitiateV4(
+  arg: any,
+  api: {
+    initiate: (a1: any) => any;
+  }
+): boolean {
+  const mockApiInvokeAgainArg = api.initiate({});
+  if (arg == mockApiInvokeAgainArg) return true;
+  if (_.isPlainObject(arg) && _.isPlainObject(mockApiInvokeAgainArg)) {
+    const { method } = arg;
+    const { method: method2 } = mockApiInvokeAgainArg;
+    return method == method2;
+  }
+  return false;
+}
 
 describe('部署服务', () => {
   const getState = vi.fn();
@@ -83,7 +104,10 @@ describe('部署服务', () => {
             initiate: vi.fn(() => 'createDeployment'),
           },
           patchDeployment: {
-            initiate: vi.fn(() => 'patchDeployment'),
+            initiate: (arg: any) => ({
+              method: 'patchDeployment',
+              args: arg,
+            }),
           },
           createService: {
             initiate: vi.fn(() => 'createService'),
@@ -196,12 +220,13 @@ describe('部署服务', () => {
         'All calls:',
         JSON.stringify(commonDispatch.mock.calls, null, 2)
       );
-      expect(commonDispatch).toHaveBeenNthCalledWith(
+      expect(commonDispatch.mock.calls.length, '一共 dispatch了').equals(7);
+      expect(commonDispatch, '第一个是标准 pending').toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({ type: 'service/deployToKubernetes/pending' })
       );
-      expect(commonDispatch).toHaveBeenNthCalledWith(
-        7,
+      expect(commonDispatch, '业务最终成功').toHaveBeenNthCalledWith(
+        commonDispatch.mock.calls.length,
         expect.objectContaining({
           type: 'service/deployToKubernetes/fulfilled',
         })
@@ -225,12 +250,22 @@ describe('部署服务', () => {
       },
     });
     const dispatch = vi.fn((arg) => {
-      if (arg == kubeServiceApi.endpoints.deployment.initiate({})) {
+      if (
+        invocationArgMatchMockEndpointInitiateV4(
+          arg,
+          kubeServiceApi.endpoints.deployment
+        )
+      ) {
         return {
           unwrap: () => Promise.resolve({}),
         };
       }
-      if (arg == kubeServiceApi.endpoints.patchDeployment.initiate({})) {
+      if (
+        invocationArgMatchMockEndpointInitiateV4(
+          arg,
+          kubeServiceApi.endpoints.patchDeployment
+        )
+      ) {
         return {
           unwrap: () =>
             Promise.resolve({
@@ -244,12 +279,72 @@ describe('部署服务', () => {
     });
     await action(dispatch, getState, undefined);
     console.log('All calls:', JSON.stringify(dispatch.mock.calls, null, 2));
-    expect(dispatch).toHaveBeenNthCalledWith(
+    expect(dispatch.mock.calls.length, '一共 dispatch了').equals(7);
+    expect(dispatch, '第一个是标准 pending').toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({ type: 'service/deployToKubernetes/pending' })
     );
-    expect(dispatch).toHaveBeenNthCalledWith(
-      7,
+    expect(dispatch, '业务最终成功').toHaveBeenNthCalledWith(
+      dispatch.mock.calls.length,
+      expect.objectContaining({
+        type: 'service/deployToKubernetes/fulfilled',
+      })
+    );
+  });
+  it('升级但只修改了环境', { skip: false }, async () => {
+    const action = deployToKubernetes({
+      service: demoServiceData,
+      env,
+      lastDeploy: {
+        imageRepository: 'myOldImage',
+        resources: mockResources,
+        serviceDataSnapshot: JSON.stringify({
+          ...demoServiceData,
+        }),
+      },
+      deployData: {
+        imageRepository: 'myOldImage',
+        resources: mockResources,
+      },
+    });
+    const dispatch = vi.fn((arg) => {
+      if (
+        invocationArgMatchMockEndpointInitiateV4(
+          arg,
+          kubeServiceApi.endpoints.deployment
+        )
+      ) {
+        return {
+          unwrap: () => Promise.resolve({}),
+        };
+      }
+
+      if (
+        invocationArgMatchMockEndpointInitiateV4(
+          arg,
+          kubeServiceApi.endpoints.patchDeployment
+        )
+      ) {
+        return {
+          unwrap: () =>
+            Promise.resolve({
+              metadata: {
+                resourceVersion: 'kubeDeployUpdatedVersion',
+              },
+            }),
+        };
+      }
+      return commonDispatch(arg);
+    });
+    await action(dispatch, getState, undefined);
+    console.log('All calls:', JSON.stringify(dispatch.mock.calls, null, 2));
+    expect(dispatch.mock.calls.length, '一共 dispatch了').equals(7);
+    expect(dispatch, '第一个是标准 pending').toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ type: 'service/deployToKubernetes/pending' })
+    );
+    expect(dispatch, '业务最终成功').toHaveBeenNthCalledWith(
+      dispatch.mock.calls.length,
       expect.objectContaining({
         type: 'service/deployToKubernetes/fulfilled',
       })
