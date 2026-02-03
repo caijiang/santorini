@@ -107,6 +107,9 @@ class KubernetesClientServiceTest {
                     .list().items.filter { roleBinding -> roleBinding.subjects.any { it.name == sa } } shouldHaveSize 0
             }
 
+            // 查看
+            service.clusterResourceStat()
+
         }
     }
 }

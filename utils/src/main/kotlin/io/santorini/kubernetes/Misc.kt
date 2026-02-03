@@ -44,11 +44,13 @@ fun KubernetesClient.clusterResourceStat(): ClusterResourceStat {
 
     val result = ps.groupingBy { isPodReady(it.status).toString() }.eachCount()
 
-    val allResources = ps.flatMap {
-        it.spec?.containers ?: emptyList()
-    }.mapNotNull {
-        it.resources
-    }
+    val allResources = ps
+        .filter { "Succeeded" != it.status.phase }// Succeeded 的 pod 宣布自己不会再重启
+        .flatMap {
+            it.spec?.containers ?: emptyList()
+        }.mapNotNull {
+            it.resources
+        }
 
     val nodes = nodes().list().items
 

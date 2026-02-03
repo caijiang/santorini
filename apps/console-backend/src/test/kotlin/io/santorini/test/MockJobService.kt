@@ -11,6 +11,12 @@ import java.util.*
  */
 object MockJobService : ScheduleJobService {
     private val logger = KotlinLogging.logger {}
+    override fun cleanPersistentJob(jobName: String) {
+        logger.info {
+            "Cleaning PersistentJob $jobName"
+        }
+    }
+
     override fun submitPersistentJob(cron: String, job: PersistentJob, timezone: TimeZone, springCronSeconds: String) {
         logger.info { "Submitting job $cron to $job" }
     }

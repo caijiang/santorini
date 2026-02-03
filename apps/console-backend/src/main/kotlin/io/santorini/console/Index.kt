@@ -62,6 +62,14 @@ private fun Application.installScheduler(serverConfig: ServerConfig, scheduler: 
             )
             call.respond(HttpStatusCode.NoContent)
         }
+        delete((serverConfig.prefix ?: "") + "/p/{env}/{hostname}/{name}") {
+            scheduler.cleanPersistentJob(
+                call.parameters["env"]!!,
+                call.parameters["hostname"]!!,
+                call.parameters["name"]!!,
+            )
+            call.respond(HttpStatusCode.NoContent)
+        }
     }
 
 }
