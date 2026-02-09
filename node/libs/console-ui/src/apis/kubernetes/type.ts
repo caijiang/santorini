@@ -9,6 +9,14 @@ export interface NamespaceWithLabelSelectors {
   labelSelectors?: string[];
 }
 
+export interface WithLabelSelectors {
+  /**
+   * 默认 santorini.io/manageable=true
+   * 如果传入空数组则不会采用默认值
+   */
+  labelSelectors?: string[];
+}
+
 export function toPodsLabelSelectors({
   name,
   labelSelectors,
@@ -19,16 +27,18 @@ export function toPodsLabelSelectors({
   return [...s1, ...s2].join(',');
 }
 
-export interface NamespacedNamedResource {
+export interface NamespacedNamedResource extends WithLabelSelectors {
   namespace?: string;
   name?: string;
 }
 
-export interface ObjectContainer {
-  namespace?: string;
-  name?: string;
+export interface ObjectContainer extends NamespacedNamedResource {
   yaml?: string;
-  jsonObject?: any;
+  // jsonObject?: any;
+}
+
+export interface PatchObjectContainer extends ObjectContainer {
+  force?: boolean;
 }
 
 export interface TypedObjectContainer<T> extends ObjectContainer {

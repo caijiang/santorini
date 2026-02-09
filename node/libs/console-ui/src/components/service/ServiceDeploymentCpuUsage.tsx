@@ -1,5 +1,5 @@
 import { ServiceDeployment } from './types';
-import { useDeploymentQuery } from '../../apis/kubernetes/service';
+import { useGetDeploymentsQuery } from '../../apis/kubernetes/service';
 import { IDeployment } from 'kubernetes-models/apps/v1/Deployment';
 import { useMemo } from 'react';
 import { IQuantity } from '@kubernetes-models/apimachinery/api/resource/Quantity';
@@ -53,7 +53,7 @@ export function resourceUsage(
 }
 
 export default ({ service: { id }, envId }: ServiceDeployment) => {
-  const { data } = useDeploymentQuery({
+  const { data } = useGetDeploymentsQuery({
     namespace: envId,
     name: id,
     labelSelectors: ['santorini.io/service-type', `santorini.io/id=${id}`],

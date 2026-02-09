@@ -100,26 +100,26 @@ describe('部署服务', () => {
     return {
       kubeServiceApi: {
         endpoints: {
-          createDeployment: {
-            initiate: vi.fn(() => 'createDeployment'),
+          createDeployments: {
+            initiate: vi.fn(() => 'createDeployments'),
           },
-          patchDeployment: {
+          patchDeployments: {
             initiate: (arg: any) => ({
-              method: 'patchDeployment',
+              method: 'patchDeployments',
               args: arg,
             }),
           },
-          createService: {
-            initiate: vi.fn(() => 'createService'),
+          getDeployments: {
+            initiate: vi.fn(() => 'getDeployments'),
           },
-          deleteService: {
-            initiate: vi.fn(() => 'deleteService'),
+          createServices: {
+            initiate: vi.fn(() => 'createServices'),
           },
-          serviceByName: {
-            initiate: vi.fn(() => 'serviceByName'),
+          deleteServices: {
+            initiate: vi.fn(() => 'deleteServices'),
           },
-          deployment: {
-            initiate: vi.fn(() => 'deployment'),
+          getServices: {
+            initiate: vi.fn(() => 'getServices'),
           },
         },
       },
@@ -128,12 +128,12 @@ describe('部署服务', () => {
   // 通用 dispatch
   const commonDispatch = vi.fn((arg) => {
     // 反正不关心
-    if (arg == kubeServiceApi.endpoints.createService.initiate({})) {
+    if (arg == kubeServiceApi.endpoints.createServices.initiate({})) {
       return {
         unwrap: () => Promise.resolve(undefined),
       };
     }
-    if (arg == kubeServiceApi.endpoints.createDeployment.initiate({})) {
+    if (arg == kubeServiceApi.endpoints.createDeployments.initiate({})) {
       return {
         unwrap: () =>
           Promise.resolve({
@@ -143,12 +143,12 @@ describe('部署服务', () => {
           }),
       };
     }
-    if (arg == kubeServiceApi.endpoints.deployment.initiate({})) {
+    if (arg == kubeServiceApi.endpoints.getDeployments.initiate({})) {
       return {
         unwrap: () => Promise.resolve(undefined),
       };
     }
-    if (arg == kubeServiceApi.endpoints.serviceByName.initiate({})) {
+    if (arg == kubeServiceApi.endpoints.getServices.initiate({})) {
       return {
         unwrap: () => Promise.resolve(undefined),
       };
@@ -163,7 +163,7 @@ describe('部署服务', () => {
         unwrap: () => Promise.resolve(undefined),
       };
     }
-    if (arg == kubeServiceApi.endpoints.deleteService.initiate({})) {
+    if (arg == kubeServiceApi.endpoints.deleteServices.initiate({})) {
       return {
         unwrap: () => Promise.resolve(),
       };
@@ -253,7 +253,7 @@ describe('部署服务', () => {
       if (
         invocationArgMatchMockEndpointInitiateV4(
           arg,
-          kubeServiceApi.endpoints.deployment
+          kubeServiceApi.endpoints.getDeployments
         )
       ) {
         return {
@@ -263,7 +263,7 @@ describe('部署服务', () => {
       if (
         invocationArgMatchMockEndpointInitiateV4(
           arg,
-          kubeServiceApi.endpoints.patchDeployment
+          kubeServiceApi.endpoints.patchDeployments
         )
       ) {
         return {
@@ -301,17 +301,24 @@ describe('部署服务', () => {
         serviceDataSnapshot: JSON.stringify({
           ...demoServiceData,
         }),
+        environmentVariables: {
+          e1: 'v1',
+        },
       },
       deployData: {
         imageRepository: 'myOldImage',
         resources: mockResources,
+        environmentVariables: {
+          e1: 'v1_1',
+          e2: 'v2',
+        },
       },
     });
     const dispatch = vi.fn((arg) => {
       if (
         invocationArgMatchMockEndpointInitiateV4(
           arg,
-          kubeServiceApi.endpoints.deployment
+          kubeServiceApi.endpoints.getDeployments
         )
       ) {
         return {
@@ -322,7 +329,7 @@ describe('部署服务', () => {
       if (
         invocationArgMatchMockEndpointInitiateV4(
           arg,
-          kubeServiceApi.endpoints.patchDeployment
+          kubeServiceApi.endpoints.patchDeployments
         )
       ) {
         return {

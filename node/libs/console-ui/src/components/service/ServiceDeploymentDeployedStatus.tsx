@@ -1,6 +1,6 @@
 import { Spin } from 'antd';
 import * as React from 'react';
-import { useDeploymentQuery } from '../../apis/kubernetes/service';
+import { useGetDeploymentsQuery } from '../../apis/kubernetes/service';
 import DeploymentStatus from '../kubernetes/tommy/DeploymentStatus';
 import { ServiceDeployment } from './types';
 
@@ -13,7 +13,7 @@ interface ServiceDeploymentDeployedStatusProps extends ServiceDeployment {}
 const ServiceDeploymentDeployedStatus: React.FC<
   ServiceDeploymentDeployedStatusProps
 > = ({ service: { id }, envId }) => {
-  const { data, isLoading, refetch } = useDeploymentQuery({
+  const { data, isLoading, refetch } = useGetDeploymentsQuery({
     namespace: envId,
     name: id,
     labelSelectors: ['santorini.io/service-type', `santorini.io/id=${id}`],

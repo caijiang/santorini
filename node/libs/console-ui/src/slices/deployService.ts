@@ -5,11 +5,11 @@ import { kubeServiceApi } from '../apis/kubernetes/service';
 import yamlGenerator from '../apis/kubernetes/yamlGenerator';
 import { IDeployment } from 'kubernetes-models/apps/v1/Deployment';
 import { IService } from 'kubernetes-models/v1';
-import { compare } from 'fast-json-patch';
 import { deploymentApi, usePreDeployMutation } from '../apis/deployment';
 import { Rule } from 'eslint';
 import { FieldProps } from 'rc-field-form/lib/Field';
 import { dispatchThunkActionThrowIfError } from '../common/rtk';
+import { createServerSideApplySliceHelper } from './serverSideApply';
 
 export interface ServiceDeployToKubernetesProps {
   service: ServiceConfigData;
@@ -45,14 +45,14 @@ async function findServiceInstanceInKubernetes(
   dispatch: GetThunkAPI<any>['dispatch']
 ): Promise<ServiceInstanceInKubernetes | undefined> {
   const rs0 = await dispatch(
-    kubeServiceApi.endpoints.deployment.initiate({
+    kubeServiceApi.endpoints.getDeployments.initiate({
       namespace: envId,
       name: serviceId,
       labelSelectors: ['santorini.io/service-type'],
     })
   ).unwrap();
   const ss = await dispatch(
-    kubeServiceApi.endpoints.serviceByName.initiate({
+    kubeServiceApi.endpoints.getServices.initiate({
       namespace: envId,
       name: serviceId,
     })
@@ -158,6 +158,12 @@ export function useImageTagRule(
   };
 }
 
+export const patchDeploymentServerSideApply =
+  createServerSideApplySliceHelper<IDeployment>(
+    'k8s/patchDeploymentSSA',
+    kubeServiceApi.endpoints.patchDeployments
+  );
+
 /**
  * 支持新部署，也支持更新
  */
@@ -166,6 +172,9 @@ export const deployToKubernetes = createAsyncThunk(
   async (input: ServiceDeployToKubernetesProps, { dispatch }) => {
     const { service, env, lastDeploy } = input;
 
+    if (!service.id || !env.id) {
+      throw '尚未完全加载';
+    }
     console.debug('之前部署的概要信息: lastDeploy:', lastDeploy);
     // 如果失败，则直接删除
     const result = await dispatch(
@@ -185,58 +194,36 @@ export const deployToKubernetes = createAsyncThunk(
         dispatch
       );
       console.debug('当前 kube 已部署情况: ', current);
+      // 使用更为低级的 api 进行操作，注意缓存的控制
       const thisTimeVersion = yamlGenerator.serviceInstance(input);
-      const lastVersion = lastDeploy?.serviceDataSnapshot
-        ? yamlGenerator.serviceInstance({
-            ...input,
-            service: JSON.parse(lastDeploy.serviceDataSnapshot),
-            deployData: lastDeploy,
-            doNotUseLatestCode: true,
-          })
-        : undefined;
+      // 区分为，必要属性和全量属性
+      // const lastVersion = lastDeploy?.serviceDataSnapshot
+      //   ? yamlGenerator.serviceInstance({
+      //       ...input,
+      //       service: JSON.parse(lastDeploy.serviceDataSnapshot),
+      //       deployData: lastDeploy,
+      //       doNotUseLatestCode: true,
+      //     })
+      //   : undefined;
       console.debug('thisTimeVersion:', thisTimeVersion);
-      console.debug('lastVersion:', lastVersion);
+      // console.debug('lastVersion:', lastVersion);
       let deploymentResult: IDeployment | undefined = undefined;
       if (current) {
         // 更新
         if (thisTimeVersion.deployment) {
           if (current.deployment) {
-            const versionMergePatch = lastVersion
-              ? compare(
-                  lastVersion.deployment.toJsonObject(),
-                  thisTimeVersion.deployment.toJsonObject()
-                )
-              : undefined;
-            console.debug(
-              '之前已经部署了 deployment,本次进行更新:',
-              versionMergePatch
-            );
-
-            if (versionMergePatch) {
-              // console.error("from: ",lastVersion?.deployment?.toJsonText())
-              // console.error("to: ",thisTimeVersion.deployment.toJsonText())
-              console.debug('另一个版本的闪存也在:', versionMergePatch);
-              // console.error(JSON.stringify(versionMergePatch));
-              deploymentResult = await dispatch(
-                kubeServiceApi.endpoints.patchDeployment.initiate({
-                  namespace: env.id,
-                  jsonObject: versionMergePatch,
-                  name: service.id,
-                })
-              ).unwrap();
-            } else {
-              deploymentResult = await dispatch(
-                kubeServiceApi.endpoints.updateDeployment.initiate({
-                  namespace: env.id,
-                  yaml: thisTimeVersion.deployment.toYamlText(),
-                  name: service.id,
-                })
-              ).unwrap();
-            }
+            deploymentResult = await dispatch(
+              patchDeploymentServerSideApply({
+                namespace: env.id,
+                yaml: thisTimeVersion.deployment.toYamlText(),
+                name: service.id,
+                current: current.deployment,
+              })
+            ).unwrap();
           } else {
             console.debug('首次部署 deployment');
             deploymentResult = await dispatch(
-              kubeServiceApi.endpoints.createDeployment.initiate({
+              kubeServiceApi.endpoints.createDeployments.initiate({
                 namespace: env.id,
                 yaml: thisTimeVersion.deployment.toYamlText(),
               })
@@ -249,14 +236,14 @@ export const deployToKubernetes = createAsyncThunk(
         if (thisTimeVersion.service) {
           if (!current.service) {
             await dispatch(
-              kubeServiceApi.endpoints.createService.initiate({
+              kubeServiceApi.endpoints.createServices.initiate({
                 namespace: env.id,
                 yaml: thisTimeVersion.service.toYamlText(),
               })
             ).unwrap();
           } else {
             await dispatch(
-              kubeServiceApi.endpoints.updateService.initiate({
+              kubeServiceApi.endpoints.updateServices.initiate({
                 namespace: env.id,
                 yaml: thisTimeVersion.service.toYamlText(),
                 name: service.id,
@@ -266,7 +253,7 @@ export const deployToKubernetes = createAsyncThunk(
         } else {
           if (current.service) {
             await dispatch(
-              kubeServiceApi.endpoints.deleteService.initiate({
+              kubeServiceApi.endpoints.deleteServices.initiate({
                 namespace: env.id,
                 name: service.id,
               })
@@ -276,14 +263,14 @@ export const deployToKubernetes = createAsyncThunk(
       } else {
         // 部署
         deploymentResult = await dispatch(
-          kubeServiceApi.endpoints.createDeployment.initiate({
+          kubeServiceApi.endpoints.createDeployments.initiate({
             namespace: env.id,
             yaml: thisTimeVersion.deployment.toYamlText(),
           })
         ).unwrap();
         if (thisTimeVersion.service) {
           await dispatch(
-            kubeServiceApi.endpoints.createService.initiate({
+            kubeServiceApi.endpoints.createServices.initiate({
               namespace: env.id,
               yaml: thisTimeVersion.service.toYamlText(),
             })
