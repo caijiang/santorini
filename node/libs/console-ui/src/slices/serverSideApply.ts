@@ -8,7 +8,6 @@ import { ObjectContainer, PatchObjectContainer } from '../apis/kubernetes/type';
 import _ from 'lodash';
 import { IStatus } from '@kubernetes-models/apimachinery/apis/meta/v1';
 import { IStatusCause } from '@kubernetes-models/apimachinery/apis/meta/v1/StatusCause';
-import YAML from 'yaml';
 import {
   readKubernetesField,
   removeKubernetesField,
@@ -26,7 +25,7 @@ interface ServerSideApplyInput<T> {
 /**
  * 应当自动合并的冲突字段管理员
  */
-export const autoMergeFieldManagers = ['Mozilla'];
+export const autoMergeFieldManagers = ['Mozilla', 'santorini'];
 
 export type ConflictFieldSolution = 'force' | 'abandon' | 'merge';
 
@@ -129,7 +128,7 @@ async function patchWithSolution<T>(
   dispatch: any
 ): Promise<T> {
   // 计划修改的 yaml
-  const draft = YAML.parse(input.yaml!!);
+  const draft = { ...input.jsonObject };
   const anyForce = _.values(solutions).some((it) => it == 'force');
   _.keys(solutions)
     .filter((it) => solutions[it] != 'force')
@@ -146,7 +145,7 @@ async function patchWithSolution<T>(
     api.initiate({
       ...input,
       force: anyForce,
-      yaml: YAML.stringify(draft),
+      jsonObject: draft,
     })
   ).unwrap();
 }

@@ -10,7 +10,6 @@ import * as React from 'react';
 import {useMemo} from 'react';
 import _ from 'lodash';
 import {Col, Drawer, Row, Tooltip, Typography} from 'antd';
-import YAML from 'yaml';
 import PreviewRevision from './PreviewRevision';
 import {readKubernetesField} from '../../slices/kubernetesJsonPath';
 
@@ -21,7 +20,6 @@ export default () => {
   const a = useSelector(
     (it) => (it as { serverSideApply: ServerSideApplyState }).serverSideApply
   );
-  console.log('a:', a);
   return <SSADrawer state={a} />;
 };
 
@@ -59,11 +57,11 @@ export const SSADrawer: React.FC<{ state: ServerSideApplyState }> = ({
       return {};
     }
     // 草稿纸
-    if (!state.initArgs?.yaml) {
+    if (!state.initArgs?.jsonObject) {
       return {};
     }
     const current = state.initArgs.current;
-    const draft = YAML.parse(state.initArgs.yaml);
+    const draft = state.initArgs.jsonObject;
     return _.fromPairs(
       fieldNames.map((fieldName) => {
         const c = readKubernetesField(current, fieldName);
@@ -111,7 +109,7 @@ export const SSADrawer: React.FC<{ state: ServerSideApplyState }> = ({
           )}
         >
           {fieldNames.map((name, index) => (
-            <>
+            <React.Fragment key={name}>
               <Row>
                 <Col>
                   <Tooltip
@@ -178,7 +176,7 @@ export const SSADrawer: React.FC<{ state: ServerSideApplyState }> = ({
                   />
                 </Col>
               </Row>
-            </>
+            </React.Fragment>
           ))}
         </ProForm>
       )}

@@ -1,7 +1,143 @@
 {
+  "userAbandon": false,
   "initArgs": {
     "namespace": "test-ns",
-    "yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  labels:\n    santorini.io/id: demo-service-137\n    santorini.io/manageable: \"true\"\n    santorini.io/service-type: JVM\n  name: demo-service-137\n  namespace: test-ns\nspec:\n  minReadySeconds: 0\n  progressDeadlineSeconds: 600\n  replicas: 1\n  revisionHistoryLimit: 10\n  selector:\n    matchLabels:\n      app.kubernetes.io/name: demo-service-137\n  strategy:\n    rollingUpdate:\n      maxSurge: 25%\n      maxUnavailable: 25%\n    type: RollingUpdate\n  template:\n    metadata:\n      labels:\n        app.kubernetes.io/name: demo-service-137\n        santorini.io/manageable: \"true\"\n    spec:\n      tolerations:\n        - key: focus.santorini.io/namespace\n          value: test-ns\n          operator: Equal\n        - key: focus.santorini.io/service\n          value: demo-service-137\n          operator: Equal\n      automountServiceAccountToken: false\n      imagePullSecrets:\n        - name: ph-image-hangzhou-vpc\n      containers:\n        - name: main\n          image: registry-vpc.cn-hangzhou.aliyuncs.com/lecai-flow/ph-spring-boot-demo-base-8:2026-02-03-14-59-51\n          imagePullPolicy: IfNotPresent\n          ports:\n            - containerPort: 8080\n              name: http\n          envFrom:\n            - configMapRef:\n                name: santorini-env-share\n                optional: true\n            - secretRef:\n                name: santorini-env-share\n                optional: true\n            - secretRef:\n                name: demo-service-137-env\n                optional: true\n          env:\n            - name: kubenamespace\n              valueFrom:\n                fieldRef:\n                  fieldPath: metadata.namespace\n            - name: kubename\n              valueFrom:\n                fieldRef:\n                  fieldPath: metadata.name\n            - name: kubeuid\n              valueFrom:\n                fieldRef:\n                  fieldPath: metadata.uid\n            - name: CCCP\n              value: \"12112\"\n          resources:\n            requests:\n              cpu: 100m\n              memory: 128Mi\n            limits:\n              cpu: 500m\n              memory: 512Mi\n          securityContext:\n            allowPrivilegeEscalation: false\n            privileged: false\n          restartPolicy: Always\n          readinessProbe:\n            httpGet:\n              port: 8080\n              path: /i/health\n            initialDelaySeconds: 1\n            periodSeconds: 1\n          livenessProbe:\n            httpGet:\n              port: 8080\n              path: /i/health\n            initialDelaySeconds: 200\n            periodSeconds: 1\n          startupProbe:\n            httpGet:\n              port: 8080\n              path: /i/health\n            initialDelaySeconds: 30\n            failureThreshold: 17\n",
+    "jsonObject": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "santorini.io/id": "demo-service-137",
+          "santorini.io/manageable": "true",
+          "santorini.io/service-type": "JVM"
+        },
+        "name": "demo-service-137",
+        "namespace": "test-ns"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "demo-service-137"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "demo-service-137",
+              "santorini.io/manageable": "true"
+            }
+          },
+          "spec": {
+            "imagePullSecrets": [
+              {
+                "name": "ph-image-hangzhou-vpc"
+              }
+            ],
+            "containers": [
+              {
+                "name": "main",
+                "image": "registry-vpc.cn-hangzhou.aliyuncs.com/lecai-flow/ph-spring-boot-demo-base-8:2026-02-03-14-59-51",
+                "imagePullPolicy": "IfNotPresent",
+                "ports": [
+                  {
+                    "containerPort": 8080,
+                    "name": "http"
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "configMapRef": {
+                      "name": "santorini-env-share",
+                      "optional": true
+                    }
+                  },
+                  {
+                    "secretRef": {
+                      "name": "santorini-env-share",
+                      "optional": true
+                    }
+                  },
+                  {
+                    "secretRef": {
+                      "name": "demo-service-137-env",
+                      "optional": true
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "kubenamespace",
+                    "valueFrom": {
+                      "fieldRef": {
+                        "fieldPath": "metadata.namespace"
+                      }
+                    }
+                  },
+                  {
+                    "name": "kubename",
+                    "valueFrom": {
+                      "fieldRef": {
+                        "fieldPath": "metadata.name"
+                      }
+                    }
+                  },
+                  {
+                    "name": "kubeuid",
+                    "valueFrom": {
+                      "fieldRef": {
+                        "fieldPath": "metadata.uid"
+                      }
+                    }
+                  },
+                  {
+                    "name": "CCCP",
+                    "value": "12112"
+                  },
+                  {
+                    "name": "E2",
+                    "value": "v222"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "128Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "512Mi"
+                  }
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "port": 8080,
+                    "path": "/i/health"
+                  },
+                  "initialDelaySeconds": 1,
+                  "periodSeconds": 1
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "port": 8080,
+                    "path": "/i/health"
+                  },
+                  "initialDelaySeconds": 200,
+                  "periodSeconds": 1
+                },
+                "startupProbe": {
+                  "httpGet": {
+                    "port": 8080,
+                    "path": "/i/health"
+                  },
+                  "initialDelaySeconds": 30,
+                  "failureThreshold": 17
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
     "name": "demo-service-137",
     "current": {
       "kind": "Deployment",
@@ -10,8 +146,8 @@
         "name": "demo-service-137",
         "namespace": "test-ns",
         "uid": "88028c8e-4d5a-47a5-b670-a17c17ce9e7a",
-        "resourceVersion": "29945039",
-        "generation": 5,
+        "resourceVersion": "31477823",
+        "generation": 8,
         "creationTimestamp": "2026-02-03T03:19:21Z",
         "labels": {
           "santorini.io/id": "demo-service-137",
@@ -19,7 +155,7 @@
           "santorini.io/service-type": "JVM"
         },
         "annotations": {
-          "deployment.kubernetes.io/revision": "5"
+          "deployment.kubernetes.io/revision": "8"
         },
         "managedFields": [
           {
@@ -52,29 +188,19 @@
                         "f:env": {
                           "k:{\"name\":\"CCCP\"}": {
                             ".": {},
-                            "f:name": {},
-                            "f:value": {}
+                            "f:name": {}
                           },
                           "k:{\"name\":\"kubename\"}": {
                             ".": {},
-                            "f:name": {},
-                            "f:valueFrom": {
-                              "f:fieldRef": {}
-                            }
+                            "f:name": {}
                           },
                           "k:{\"name\":\"kubenamespace\"}": {
                             ".": {},
-                            "f:name": {},
-                            "f:valueFrom": {
-                              "f:fieldRef": {}
-                            }
+                            "f:name": {}
                           },
                           "k:{\"name\":\"kubeuid\"}": {
                             ".": {},
-                            "f:name": {},
-                            "f:valueFrom": {
-                              "f:fieldRef": {}
-                            }
+                            "f:name": {}
                           }
                         },
                         "f:envFrom": {},
@@ -188,29 +314,19 @@
                         "f:env": {
                           "k:{\"name\":\"CCCP\"}": {
                             ".": {},
-                            "f:name": {},
-                            "f:value": {}
+                            "f:name": {}
                           },
                           "k:{\"name\":\"kubename\"}": {
                             ".": {},
-                            "f:name": {},
-                            "f:valueFrom": {
-                              "f:fieldRef": {}
-                            }
+                            "f:name": {}
                           },
                           "k:{\"name\":\"kubenamespace\"}": {
                             ".": {},
-                            "f:name": {},
-                            "f:valueFrom": {
-                              "f:fieldRef": {}
-                            }
+                            "f:name": {}
                           },
                           "k:{\"name\":\"kubeuid\"}": {
                             ".": {},
-                            "f:name": {},
-                            "f:valueFrom": {
-                              "f:fieldRef": {}
-                            }
+                            "f:name": {}
                           }
                         },
                         "f:envFrom": {},
@@ -288,6 +404,116 @@
                     "f:securityContext": {},
                     "f:terminationGracePeriodSeconds": {},
                     "f:tolerations": {}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "manager": "santorini",
+            "operation": "Apply",
+            "apiVersion": "apps/v1",
+            "time": "2026-02-10T01:50:11Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:labels": {
+                  "f:santorini.io/id": {},
+                  "f:santorini.io/manageable": {},
+                  "f:santorini.io/service-type": {}
+                }
+              },
+              "f:spec": {
+                "f:selector": {},
+                "f:template": {
+                  "f:metadata": {
+                    "f:labels": {
+                      "f:app.kubernetes.io/name": {},
+                      "f:santorini.io/manageable": {}
+                    }
+                  },
+                  "f:spec": {
+                    "f:containers": {
+                      "k:{\"name\":\"main\"}": {
+                        ".": {},
+                        "f:env": {
+                          "k:{\"name\":\"CCCP\"}": {
+                            ".": {},
+                            "f:name": {},
+                            "f:value": {}
+                          },
+                          "k:{\"name\":\"kubename\"}": {
+                            ".": {},
+                            "f:name": {},
+                            "f:valueFrom": {
+                              "f:fieldRef": {}
+                            }
+                          },
+                          "k:{\"name\":\"kubenamespace\"}": {
+                            ".": {},
+                            "f:name": {},
+                            "f:valueFrom": {
+                              "f:fieldRef": {}
+                            }
+                          },
+                          "k:{\"name\":\"kubeuid\"}": {
+                            ".": {},
+                            "f:name": {},
+                            "f:valueFrom": {
+                              "f:fieldRef": {}
+                            }
+                          }
+                        },
+                        "f:envFrom": {},
+                        "f:image": {},
+                        "f:imagePullPolicy": {},
+                        "f:livenessProbe": {
+                          "f:httpGet": {
+                            "f:path": {},
+                            "f:port": {}
+                          },
+                          "f:initialDelaySeconds": {},
+                          "f:periodSeconds": {}
+                        },
+                        "f:name": {},
+                        "f:ports": {
+                          "k:{\"containerPort\":8080,\"protocol\":\"TCP\"}": {
+                            ".": {},
+                            "f:containerPort": {},
+                            "f:name": {}
+                          }
+                        },
+                        "f:readinessProbe": {
+                          "f:httpGet": {
+                            "f:path": {},
+                            "f:port": {}
+                          },
+                          "f:initialDelaySeconds": {},
+                          "f:periodSeconds": {}
+                        },
+                        "f:resources": {
+                          "f:limits": {
+                            "f:cpu": {},
+                            "f:memory": {}
+                          },
+                          "f:requests": {
+                            "f:cpu": {},
+                            "f:memory": {}
+                          }
+                        },
+                        "f:startupProbe": {
+                          "f:failureThreshold": {},
+                          "f:httpGet": {
+                            "f:path": {},
+                            "f:port": {}
+                          },
+                          "f:initialDelaySeconds": {}
+                        }
+                      }
+                    },
+                    "f:imagePullSecrets": {
+                      "k:{\"name\":\"ph-image-hangzhou-vpc\"}": {}
+                    }
                   }
                 }
               }
@@ -343,26 +569,17 @@
                           "k:{\"name\":\"kubename\"}": {
                             ".": {},
                             "f:name": {},
-                            "f:valueFrom": {
-                              ".": {},
-                              "f:fieldRef": {}
-                            }
+                            "f:valueFrom": {}
                           },
                           "k:{\"name\":\"kubenamespace\"}": {
                             ".": {},
                             "f:name": {},
-                            "f:valueFrom": {
-                              ".": {},
-                              "f:fieldRef": {}
-                            }
+                            "f:valueFrom": {}
                           },
                           "k:{\"name\":\"kubeuid\"}": {
                             ".": {},
                             "f:name": {},
-                            "f:valueFrom": {
-                              ".": {},
-                              "f:fieldRef": {}
-                            }
+                            "f:valueFrom": {}
                           }
                         },
                         "f:envFrom": {},
@@ -419,7 +636,6 @@
                             "f:memory": {}
                           }
                         },
-                        "f:restartPolicy": {},
                         "f:securityContext": {
                           ".": {},
                           "f:allowPrivilegeEscalation": {},
@@ -462,7 +678,7 @@
             "manager": "kube-controller-manager",
             "operation": "Update",
             "apiVersion": "apps/v1",
-            "time": "2026-02-05T10:23:56Z",
+            "time": "2026-02-10T01:51:22Z",
             "fieldsType": "FieldsV1",
             "fieldsV1": {
               "f:metadata": {
@@ -580,7 +796,7 @@
                   },
                   {
                     "name": "CCCP",
-                    "value": "121123"
+                    "value": "12112"
                   }
                 ],
                 "resources": {
@@ -674,7 +890,7 @@
         "progressDeadlineSeconds": 600
       },
       "status": {
-        "observedGeneration": 5,
+        "observedGeneration": 8,
         "replicas": 1,
         "updatedReplicas": 1,
         "readyReplicas": 1,
@@ -691,10 +907,10 @@
           {
             "type": "Progressing",
             "status": "True",
-            "lastUpdateTime": "2026-02-05T10:23:56Z",
+            "lastUpdateTime": "2026-02-10T01:51:22Z",
             "lastTransitionTime": "2026-02-03T06:16:59Z",
             "reason": "NewReplicaSetAvailable",
-            "message": "ReplicaSet \"demo-service-137-6b8dc8b9f6\" has successfully progressed."
+            "message": "ReplicaSet \"demo-service-137-78b88b67d5\" has successfully progressed."
           }
         ]
       }

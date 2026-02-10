@@ -9,6 +9,7 @@ import {
   ObjectContainer,
   PatchObjectContainer,
 } from './type';
+import YAML from 'yaml';
 
 function toId({ namespace, name }: NamespacedNamedResource) {
   return `${namespace}-${name}`;
@@ -60,7 +61,7 @@ export function createCrudApisForNamespacedResources<
         fieldManager: 'santorini',
       },
       method: 'POST',
-      body: resource.yaml,
+      body: YAML.stringify(resource.jsonObject),
       headers: {
         'Content-Type': 'application/yaml',
       },
@@ -77,7 +78,7 @@ export function createCrudApisForNamespacedResources<
         force: resource.force ? 'true' : undefined,
       },
       method: 'PATCH',
-      body: resource.yaml,
+      body: YAML.stringify(resource.jsonObject),
       headers: {
         'Content-Type': 'application/apply-patch+yaml',
       },
@@ -91,7 +92,7 @@ export function createCrudApisForNamespacedResources<
         fieldManager: 'santorini',
       },
       method: 'PUT',
-      body: resource.yaml,
+      body: YAML.stringify(resource.jsonObject),
       headers: {
         'Content-Type': 'application/yaml',
       },

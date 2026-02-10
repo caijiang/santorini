@@ -22,10 +22,6 @@ export interface ServiceDeployToKubernetesProps {
    * 非首次部署的话还有这个，表示上次部署的情况
    */
   lastDeploy?: DeploymentDeployData;
-  /**
-   * 不要使用最新代码改动
-   */
-  doNotUseLatestCode?: boolean;
 }
 
 /**
@@ -195,57 +191,43 @@ export const deployToKubernetes = createAsyncThunk(
       );
       console.debug('当前 kube 已部署情况: ', current);
       // 使用更为低级的 api 进行操作，注意缓存的控制
-      const thisTimeVersion = yamlGenerator.serviceInstance(input);
       // 区分为，必要属性和全量属性
-      // const lastVersion = lastDeploy?.serviceDataSnapshot
-      //   ? yamlGenerator.serviceInstance({
-      //       ...input,
-      //       service: JSON.parse(lastDeploy.serviceDataSnapshot),
-      //       deployData: lastDeploy,
-      //       doNotUseLatestCode: true,
-      //     })
-      //   : undefined;
-      console.debug('thisTimeVersion:', thisTimeVersion);
-      // console.debug('lastVersion:', lastVersion);
-      let deploymentResult: IDeployment | undefined = undefined;
+      let deploymentResult: IDeployment | undefined;
+      const generatedService = yamlGenerator.generateService(input);
       if (current) {
         // 更新
-        if (thisTimeVersion.deployment) {
-          if (current.deployment) {
-            deploymentResult = await dispatch(
-              patchDeploymentServerSideApply({
-                namespace: env.id,
-                yaml: thisTimeVersion.deployment.toYamlText(),
-                name: service.id,
-                current: current.deployment,
-              })
-            ).unwrap();
-          } else {
-            console.debug('首次部署 deployment');
-            deploymentResult = await dispatch(
-              kubeServiceApi.endpoints.createDeployments.initiate({
-                namespace: env.id,
-                yaml: thisTimeVersion.deployment.toYamlText(),
-              })
-            ).unwrap();
-          }
+        if (current.deployment) {
+          deploymentResult = await dispatch(
+            patchDeploymentServerSideApply({
+              namespace: env.id,
+              jsonObject: yamlGenerator.generateDeployment(input, false),
+              name: service.id,
+              current: current.deployment,
+            })
+          ).unwrap();
         } else {
-          // TODO never
+          console.debug('首次部署 deployment');
+          deploymentResult = await dispatch(
+            kubeServiceApi.endpoints.createDeployments.initiate({
+              namespace: env.id,
+              jsonObject: yamlGenerator.generateDeployment(input, true),
+            })
+          ).unwrap();
         }
 
-        if (thisTimeVersion.service) {
+        if (generatedService) {
           if (!current.service) {
             await dispatch(
               kubeServiceApi.endpoints.createServices.initiate({
                 namespace: env.id,
-                yaml: thisTimeVersion.service.toYamlText(),
+                jsonObject: generatedService,
               })
             ).unwrap();
           } else {
             await dispatch(
               kubeServiceApi.endpoints.updateServices.initiate({
                 namespace: env.id,
-                yaml: thisTimeVersion.service.toYamlText(),
+                jsonObject: generatedService,
                 name: service.id,
               })
             ).unwrap();
@@ -265,14 +247,14 @@ export const deployToKubernetes = createAsyncThunk(
         deploymentResult = await dispatch(
           kubeServiceApi.endpoints.createDeployments.initiate({
             namespace: env.id,
-            yaml: thisTimeVersion.deployment.toYamlText(),
+            jsonObject: yamlGenerator.generateDeployment(input, true),
           })
         ).unwrap();
-        if (thisTimeVersion.service) {
+        if (generatedService) {
           await dispatch(
             kubeServiceApi.endpoints.createServices.initiate({
               namespace: env.id,
-              yaml: thisTimeVersion.service.toYamlText(),
+              jsonObject: generatedService,
             })
           ).unwrap();
         }

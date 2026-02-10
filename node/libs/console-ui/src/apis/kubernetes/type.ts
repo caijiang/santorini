@@ -33,8 +33,7 @@ export interface NamespacedNamedResource extends WithLabelSelectors {
 }
 
 export interface ObjectContainer extends NamespacedNamedResource {
-  yaml?: string;
-  // jsonObject?: any;
+  jsonObject?: any;
 }
 
 export interface PatchObjectContainer extends ObjectContainer {

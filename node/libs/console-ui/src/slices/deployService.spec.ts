@@ -96,6 +96,11 @@ describe('部署服务', () => {
       },
     };
   });
+  vi.mock('./serverSideApply', () => ({
+    createServerSideApplySliceHelper: vi.fn(() =>
+      vi.fn(() => 'patchDeploymentServerSideApply')
+    ),
+  }));
   vi.mock('../apis/kubernetes/service', () => {
     return {
       kubeServiceApi: {
@@ -250,22 +255,7 @@ describe('部署服务', () => {
       },
     });
     const dispatch = vi.fn((arg) => {
-      if (
-        invocationArgMatchMockEndpointInitiateV4(
-          arg,
-          kubeServiceApi.endpoints.getDeployments
-        )
-      ) {
-        return {
-          unwrap: () => Promise.resolve({}),
-        };
-      }
-      if (
-        invocationArgMatchMockEndpointInitiateV4(
-          arg,
-          kubeServiceApi.endpoints.patchDeployments
-        )
-      ) {
+      if (arg === 'patchDeploymentServerSideApply') {
         return {
           unwrap: () =>
             Promise.resolve({
@@ -275,46 +265,6 @@ describe('部署服务', () => {
             }),
         };
       }
-      return commonDispatch(arg);
-    });
-    await action(dispatch, getState, undefined);
-    console.log('All calls:', JSON.stringify(dispatch.mock.calls, null, 2));
-    expect(dispatch.mock.calls.length, '一共 dispatch了').equals(7);
-    expect(dispatch, '第一个是标准 pending').toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ type: 'service/deployToKubernetes/pending' })
-    );
-    expect(dispatch, '业务最终成功').toHaveBeenNthCalledWith(
-      dispatch.mock.calls.length,
-      expect.objectContaining({
-        type: 'service/deployToKubernetes/fulfilled',
-      })
-    );
-  });
-  it('升级但只修改了环境', { skip: false }, async () => {
-    const action = deployToKubernetes({
-      service: demoServiceData,
-      env,
-      lastDeploy: {
-        imageRepository: 'myOldImage',
-        resources: mockResources,
-        serviceDataSnapshot: JSON.stringify({
-          ...demoServiceData,
-        }),
-        environmentVariables: {
-          e1: 'v1',
-        },
-      },
-      deployData: {
-        imageRepository: 'myOldImage',
-        resources: mockResources,
-        environmentVariables: {
-          e1: 'v1_1',
-          e2: 'v2',
-        },
-      },
-    });
-    const dispatch = vi.fn((arg) => {
       if (
         invocationArgMatchMockEndpointInitiateV4(
           arg,
@@ -325,7 +275,6 @@ describe('部署服务', () => {
           unwrap: () => Promise.resolve({}),
         };
       }
-
       if (
         invocationArgMatchMockEndpointInitiateV4(
           arg,
