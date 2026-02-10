@@ -13,11 +13,18 @@ interface ServiceDeploymentDeployedStatusProps extends ServiceDeployment {}
 const ServiceDeploymentDeployedStatus: React.FC<
   ServiceDeploymentDeployedStatusProps
 > = ({ service: { id }, envId }) => {
-  const { data, isLoading, refetch } = useGetDeploymentsQuery({
-    namespace: envId,
-    name: id,
-    labelSelectors: ['santorini.io/service-type', `santorini.io/id=${id}`],
-  });
+  const { data, isLoading, refetch } = useGetDeploymentsQuery(
+    {
+      namespace: envId,
+      name: id,
+      labelSelectors: ['santorini.io/service-type', `santorini.io/id=${id}`],
+    },
+    {
+      skipPollingIfUnfocused: true,
+      // 每隔 3 分钟重新拉取数据
+      pollingInterval: 3 * 60 * 1000,
+    }
+  );
   // const { data, isLoading, refetch } = useDeploymentsQuery({
   //   namespace: envId,
   //   labelSelectors: ['santorini.io/service-type', `santorini.io/id=${id}`],
