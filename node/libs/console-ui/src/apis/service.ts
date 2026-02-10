@@ -117,7 +117,7 @@ export interface LastReleaseDeploymentSummary extends DeploymentDeployData {}
 export const serviceApi = createApi({
   reducerPath: 'serviceApi',
   baseQuery: stBaseQuery,
-  tagTypes: ['Services', 'Deployments'],
+  tagTypes: ['Services'],
   endpoints: (build) => {
     return {
       createService: build.mutation<undefined, ServiceConfigData>({

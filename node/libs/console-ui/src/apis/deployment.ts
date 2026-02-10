@@ -49,7 +49,7 @@ interface DeploymentInList {
 export const deploymentApi = createApi({
   reducerPath: 'consoleDeploymentApi',
   baseQuery: stBaseQuery,
-  tagTypes: ['Deployments'],
+  tagTypes: ['LastRelease', 'DeployHistory'],
   endpoints: (build) => {
     return {
       /**
@@ -64,7 +64,10 @@ export const deploymentApi = createApi({
         },
         PageResult<DeploymentInList>
       >({
-        providesTags: ['Deployments'],
+        providesTags: (_, __, { serviceId }) => {
+          if (!serviceId) return [];
+          return [{ type: 'DeployHistory', id: serviceId }];
+        },
         transformResponse(baseQueryReturnValue) {
           return baseQueryReturnValue.records;
         },
@@ -80,7 +83,6 @@ export const deploymentApi = createApi({
         PreDeployResult,
         { envId: string; serviceId: string; data: DeploymentDeployData }
       >({
-        invalidatesTags: ['Deployments'],
         query: ({ envId, serviceId, data }) => ({
           method: 'POST',
           url: `/deployments/preDeploy/${envId}/${serviceId}`,
@@ -92,22 +94,34 @@ export const deploymentApi = createApi({
         string,
         { envId: string; serviceId: string; data: DeploymentDeployData }
       >({
-        invalidatesTags: ['Deployments'],
+        invalidatesTags: (_, __, { envId, serviceId }) => {
+          return [
+            { type: 'DeployHistory', id: serviceId },
+            { type: 'LastRelease', id: `${envId}-${serviceId}` },
+          ];
+        },
         query: ({ envId, serviceId, data }) => ({
           method: 'POST',
           url: `/deployments/deploy/${envId}/${serviceId}`,
           body: data,
-          // application/json 而且带有括号
         }),
       }),
       /**
        * 回收一次失败的部署
        */
-      invokeDeploy: build.mutation<undefined, string>({
-        invalidatesTags: ['Deployments'],
+      invokeDeploy: build.mutation<
+        undefined,
+        { envId: string; serviceId: string; data: string }
+      >({
+        invalidatesTags: (_, __, { envId, serviceId }) => {
+          return [
+            { type: 'DeployHistory', id: serviceId },
+            { type: 'LastRelease', id: `${envId}-${serviceId}` },
+          ];
+        },
         query: (arg) => ({
           method: 'DELETE',
-          url: `/deployments/${arg}`,
+          url: `/deployments/${arg.data}`,
         }),
       }),
       /**
@@ -117,7 +131,6 @@ export const deploymentApi = createApi({
         undefined,
         { id: string; generation: string }
       >({
-        invalidatesTags: ['Deployments'],
         query: ({ id, generation }) => ({
           method: 'PUT',
           url: `/deployments/${id}/targetGeneration`,
@@ -137,7 +150,9 @@ export const deploymentApi = createApi({
           envId: string;
         }
       >({
-        providesTags: ['Deployments'],
+        providesTags: (_, __, { envId, serviceId }) => {
+          return [{ type: 'LastRelease', id: `${envId}-${serviceId}` }];
+        },
         query: ({ serviceId, envId }) =>
           `/services/${serviceId}/lastRelease/${envId}`,
       }),

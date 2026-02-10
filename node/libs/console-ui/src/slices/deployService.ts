@@ -271,7 +271,11 @@ export const deployToKubernetes = createAsyncThunk(
     } catch (e) {
       console.log('部署发生了错误:', e);
       await dispatch(
-        deploymentApi.endpoints.invokeDeploy.initiate(result)
+        deploymentApi.endpoints.invokeDeploy.initiate({
+          envId: env.id,
+          serviceId: service.id,
+          data: result,
+        })
       ).unwrap();
       throw e;
     }

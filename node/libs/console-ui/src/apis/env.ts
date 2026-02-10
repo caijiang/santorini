@@ -42,11 +42,11 @@ export const envApi = createApi({
     return {
       //<editor-fold desc="共享环境变量">
       shareEnvVars: build.query<EnvVar[], string>({
-        providesTags: ['ShareEnvVars'],
+        providesTags: (_, __, id) => [{ type: 'ShareEnvVars', id }],
         query: (arg) => `/envs/${arg}/shareEnvs`,
       }),
       createEnvVar: build.mutation<undefined, { env: string; var: EnvVar }>({
-        invalidatesTags: ['ShareEnvVars'],
+        invalidatesTags: (_, __, { env: id }) => [{ type: 'ShareEnvVars', id }],
         query: ({ env, var: { name, value, secret } }) => ({
           url: `/envs/${env}/shareEnvs/${name}`,
           method: 'PUT',
@@ -55,7 +55,7 @@ export const envApi = createApi({
         }),
       }),
       deleteEnvVar: build.mutation<undefined, { env: string; var: EnvVar }>({
-        invalidatesTags: ['ShareEnvVars'],
+        invalidatesTags: (_, __, { env: id }) => [{ type: 'ShareEnvVars', id }],
         query: ({ env, var: { name, secret } }) => ({
           url: `/envs/${env}/shareEnvs/${name}`,
           method: 'DELETE',
@@ -71,14 +71,14 @@ export const envApi = createApi({
         SantoriniResourceData[],
         { envId: string; params?: any }
       >({
-        providesTags: ['Resources'],
+        providesTags: (_, __, { envId: id }) => [{ type: 'Resources', id }],
         query: ({ envId, params }) => ({
           url: `/envs/${envId}/resources`,
           params,
         }),
       }),
       createResource: build.mutation<undefined, { envId: string; data: any }>({
-        invalidatesTags: ['Resources'],
+        invalidatesTags: (_, __, { envId: id }) => [{ type: 'Resources', id }],
         query: ({ envId, data }) => ({
           url: `/envs/${envId}/resources`,
           method: 'POST',
@@ -89,7 +89,7 @@ export const envApi = createApi({
         undefined,
         { envId: string; name: string }
       >({
-        invalidatesTags: ['Resources'],
+        invalidatesTags: (_, __, { envId: id }) => [{ type: 'Resources', id }],
         query: ({ envId, name }) => ({
           url: `/envs/${envId}/resources/${name}`,
           method: 'DELETE',
@@ -110,33 +110,6 @@ export const envApi = createApi({
             : '/envs',
           method: 'GET',
         }),
-        // transformResponse(baseQueryReturnValue, __, arg) {
-        //   if (!baseQueryReturnValue || !arg || arg.length == 0) {
-        //     return undefined;
-        //   }
-        //   if (!_.isArrayLike(baseQueryReturnValue)) {
-        //     return undefined;
-        //   }
-        //   return arg.map((meta) => {
-        //     const server = baseQueryReturnValue.find(
-        //       (it) => it.id == meta.name
-        //     );
-        //     if (!server) {
-        //       return {
-        //         // kubeMeta: meta,
-        //         id: meta.name!!,
-        //         name: meta.name!!,
-        //         production: false,
-        //       };
-        //     }
-        //     return {
-        //       // kubeMeta: meta,
-        //       id: meta.name!!,
-        //       name: server.name,
-        //       production: server.production,
-        //     };
-        //   });
-        // },
       }),
       //</editor-fold>
     };
