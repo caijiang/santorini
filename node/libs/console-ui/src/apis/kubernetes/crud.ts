@@ -55,6 +55,20 @@ export function createCrudApisForNamespacedResources<
     }),
   });
   const createApi = build.mutation<undefined, ObjectContainer>({
+    invalidatesTags: (_, __, arg) => {
+      if (arg.name) {
+        return [{ type: kindName, id: toId(arg) }];
+      }
+      if (arg.jsonObject?.metadata?.name) {
+        return [
+          {
+            type: kindName,
+            id: `${arg.namespace}-${arg.jsonObject?.metadata?.name}`,
+          },
+        ];
+      }
+      return [];
+    },
     query: (resource) => ({
       url: toKindResourceUrl(resource),
       params: {

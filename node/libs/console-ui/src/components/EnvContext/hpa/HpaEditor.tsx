@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, App, Button, ButtonProps, Modal, ModalProps } from 'antd';
 import { ArrowsAltOutlined } from '@ant-design/icons';
 import {
-  useCreateHpaMutation,
-  useDeleteHpaMutation,
-  useEditHpaMutation,
-  useHpaQuery,
+  useCreateHorizontalPodAutoScalersMutation,
+  useDeleteHorizontalPodAutoScalersMutation,
+  useGetHorizontalPodAutoScalersQuery,
+  useUpdateHorizontalPodAutoScalersMutation,
 } from '../../../apis/kubernetes/hpa';
 import { useEnvContext } from '../../../layouts/EnvLayout';
 import {
@@ -149,9 +149,9 @@ const HpaEditor: React.FC<HpaEditorProps> = ({
   service,
 }) => {
   const { message } = App.useApp();
-  const [deleteApi] = useDeleteHpaMutation();
-  const [createApi] = useCreateHpaMutation();
-  const [editApi] = useEditHpaMutation();
+  const [deleteApi] = useDeleteHorizontalPodAutoScalersMutation();
+  const [createApi] = useCreateHorizontalPodAutoScalersMutation();
+  const [editApi] = useUpdateHorizontalPodAutoScalersMutation();
   const [form] = ProForm.useForm();
   // ProForm.useForm()
   const [open, setOpen] = useState(false);
@@ -159,15 +159,25 @@ const HpaEditor: React.FC<HpaEditorProps> = ({
   const {
     data: { id: envId },
   } = useEnvContext();
-  const { data: hpa, isLoading: hpaLoading } = useHpaQuery(
-    {
-      envId: envId,
-      serviceId: service.id,
-    },
-    {
-      skip: !open,
-    }
-  );
+  const { data: hpa, isLoading: hpaLoading } =
+    useGetHorizontalPodAutoScalersQuery(
+      {
+        namespace: envId,
+        name: service.id,
+      },
+      {
+        skip: !open,
+      }
+    );
+  // const { data: hpa, isLoading: hpaLoading } = useHpaQuery(
+  //   {
+  //     envId: envId,
+  //     serviceId: service.id,
+  //   },
+  //   {
+  //     skip: !open,
+  //   }
+  // );
   // 获取初始化数据 null 表示还没结束, undefined 表示没有设置
   const initFormData = useMemo(() => {
     if (!open) return null;
@@ -206,10 +216,10 @@ const HpaEditor: React.FC<HpaEditorProps> = ({
           try {
             setWorking(true);
             const s1: FormData = await form.validateFields();
-            const s2 = toHorizontalPodAutoscaler(s1, envId, service);
+            const s2 = toHorizontalPodAutoscaler(s1, envId, service)?.toJSON();
             const targetId = {
-              envId,
-              serviceId: service.id,
+              namespace: envId,
+              name: service.id,
             };
             let successMessage: string | undefined = undefined;
             if (!s2) {
@@ -221,7 +231,7 @@ const HpaEditor: React.FC<HpaEditorProps> = ({
             } else {
               const targetData = {
                 ...targetId,
-                body: s2,
+                jsonObject: s2,
               };
               const api = initFormData !== undefined ? editApi : createApi;
               await api(targetData).unwrap();
