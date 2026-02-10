@@ -1,7 +1,7 @@
 import { serviceApi, ServiceConfigData } from '../apis/service';
 import { kubeServiceApi } from '../apis/kubernetes/service';
 import { CUEnv } from '../apis/env';
-import { describe } from 'vitest';
+import { describe, expect } from 'vitest';
 import _ from 'lodash';
 import { isAction } from '@reduxjs/toolkit';
 import { deployToKubernetes } from './deployService';
@@ -36,6 +36,27 @@ const env = {
   name: '',
   production: false,
 } satisfies CUEnv;
+
+/**
+ * 入参的arg是否符合，我们模拟 endpoint initiate 返回的结果
+ * @param arg 调用方法的参数
+ * @param api query api
+ */
+function invocationArgMatchMockEndpointInitiateV4(
+  arg: any,
+  api: {
+    initiate: (a1: any) => any;
+  }
+): boolean {
+  const mockApiInvokeAgainArg = api.initiate({});
+  if (arg == mockApiInvokeAgainArg) return true;
+  if (_.isPlainObject(arg) && _.isPlainObject(mockApiInvokeAgainArg)) {
+    const { method } = arg;
+    const { method: method2 } = mockApiInvokeAgainArg;
+    return method == method2;
+  }
+  return false;
+}
 
 describe('部署服务', () => {
   const getState = vi.fn();
@@ -75,27 +96,35 @@ describe('部署服务', () => {
       },
     };
   });
+  vi.mock('./serverSideApply', () => ({
+    createServerSideApplySliceHelper: vi.fn(() =>
+      vi.fn(() => 'patchDeploymentServerSideApply')
+    ),
+  }));
   vi.mock('../apis/kubernetes/service', () => {
     return {
       kubeServiceApi: {
         endpoints: {
-          createDeployment: {
-            initiate: vi.fn(() => 'createDeployment'),
+          createDeployments: {
+            initiate: vi.fn(() => 'createDeployments'),
           },
-          patchDeployment: {
-            initiate: vi.fn(() => 'patchDeployment'),
+          patchDeployments: {
+            initiate: (arg: any) => ({
+              method: 'patchDeployments',
+              args: arg,
+            }),
           },
-          createService: {
-            initiate: vi.fn(() => 'createService'),
+          getDeployments: {
+            initiate: vi.fn(() => 'getDeployments'),
           },
-          deleteService: {
-            initiate: vi.fn(() => 'deleteService'),
+          createServices: {
+            initiate: vi.fn(() => 'createServices'),
           },
-          serviceByName: {
-            initiate: vi.fn(() => 'serviceByName'),
+          deleteServices: {
+            initiate: vi.fn(() => 'deleteServices'),
           },
-          deployment: {
-            initiate: vi.fn(() => 'deployment'),
+          getServices: {
+            initiate: vi.fn(() => 'getServices'),
           },
         },
       },
@@ -104,12 +133,12 @@ describe('部署服务', () => {
   // 通用 dispatch
   const commonDispatch = vi.fn((arg) => {
     // 反正不关心
-    if (arg == kubeServiceApi.endpoints.createService.initiate({})) {
+    if (arg == kubeServiceApi.endpoints.createServices.initiate({})) {
       return {
         unwrap: () => Promise.resolve(undefined),
       };
     }
-    if (arg == kubeServiceApi.endpoints.createDeployment.initiate({})) {
+    if (arg == kubeServiceApi.endpoints.createDeployments.initiate({})) {
       return {
         unwrap: () =>
           Promise.resolve({
@@ -119,12 +148,12 @@ describe('部署服务', () => {
           }),
       };
     }
-    if (arg == kubeServiceApi.endpoints.deployment.initiate({})) {
+    if (arg == kubeServiceApi.endpoints.getDeployments.initiate({})) {
       return {
         unwrap: () => Promise.resolve(undefined),
       };
     }
-    if (arg == kubeServiceApi.endpoints.serviceByName.initiate({})) {
+    if (arg == kubeServiceApi.endpoints.getServices.initiate({})) {
       return {
         unwrap: () => Promise.resolve(undefined),
       };
@@ -139,7 +168,7 @@ describe('部署服务', () => {
         unwrap: () => Promise.resolve(undefined),
       };
     }
-    if (arg == kubeServiceApi.endpoints.deleteService.initiate({})) {
+    if (arg == kubeServiceApi.endpoints.deleteServices.initiate({})) {
       return {
         unwrap: () => Promise.resolve(),
       };
@@ -196,12 +225,13 @@ describe('部署服务', () => {
         'All calls:',
         JSON.stringify(commonDispatch.mock.calls, null, 2)
       );
-      expect(commonDispatch).toHaveBeenNthCalledWith(
+      expect(commonDispatch.mock.calls.length, '一共 dispatch了').equals(7);
+      expect(commonDispatch, '第一个是标准 pending').toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({ type: 'service/deployToKubernetes/pending' })
       );
-      expect(commonDispatch).toHaveBeenNthCalledWith(
-        7,
+      expect(commonDispatch, '业务最终成功').toHaveBeenNthCalledWith(
+        commonDispatch.mock.calls.length,
         expect.objectContaining({
           type: 'service/deployToKubernetes/fulfilled',
         })
@@ -225,12 +255,32 @@ describe('部署服务', () => {
       },
     });
     const dispatch = vi.fn((arg) => {
-      if (arg == kubeServiceApi.endpoints.deployment.initiate({})) {
+      if (arg === 'patchDeploymentServerSideApply') {
+        return {
+          unwrap: () =>
+            Promise.resolve({
+              metadata: {
+                resourceVersion: 'kubeDeployUpdatedVersion',
+              },
+            }),
+        };
+      }
+      if (
+        invocationArgMatchMockEndpointInitiateV4(
+          arg,
+          kubeServiceApi.endpoints.getDeployments
+        )
+      ) {
         return {
           unwrap: () => Promise.resolve({}),
         };
       }
-      if (arg == kubeServiceApi.endpoints.patchDeployment.initiate({})) {
+      if (
+        invocationArgMatchMockEndpointInitiateV4(
+          arg,
+          kubeServiceApi.endpoints.patchDeployments
+        )
+      ) {
         return {
           unwrap: () =>
             Promise.resolve({
@@ -244,12 +294,13 @@ describe('部署服务', () => {
     });
     await action(dispatch, getState, undefined);
     console.log('All calls:', JSON.stringify(dispatch.mock.calls, null, 2));
-    expect(dispatch).toHaveBeenNthCalledWith(
+    expect(dispatch.mock.calls.length, '一共 dispatch了').equals(7);
+    expect(dispatch, '第一个是标准 pending').toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({ type: 'service/deployToKubernetes/pending' })
     );
-    expect(dispatch).toHaveBeenNthCalledWith(
-      7,
+    expect(dispatch, '业务最终成功').toHaveBeenNthCalledWith(
+      dispatch.mock.calls.length,
       expect.objectContaining({
         type: 'service/deployToKubernetes/fulfilled',
       })

@@ -1,61 +1,10 @@
-import {ServiceDeployToKubernetesProps} from '../../slices/deployService';
+import { ServiceDeployToKubernetesProps } from '../../slices/deployService';
 import tommy from './tommy';
-import {NginxIngressAnnotation} from '../../components/EnvContext/Ingresses/IngressAnnotation';
-import {HostSummary} from '../host';
-import {CUEnv} from '../env';
-import {IngressPath} from '../../components/EnvContext/Ingresses/df';
-import YAML from 'yaml';
-
-/**
- * 很酷的 obj,可以是 json 也可以是 yaml
- */
-interface KubFriendlyObject {
-  /**
-   * json 格式的文本
-   */
-  toJsonText(): string;
-
-  toJsonObject(): Record<string, any>;
-
-  toYamlText(): string;
-}
-
-export function fromYamlTextToObject(yaml: string): KubFriendlyObject {
-  const json = YAML.parse(yaml);
-  return {
-    toJsonText(): string {
-      return JSON.stringify(json);
-    },
-    toJsonObject(): Record<string, any> {
-      return json;
-    },
-    toYamlText(): string {
-      return yaml;
-    },
-  };
-}
-
-export function fromJsonToObject(json: Record<string, any>): KubFriendlyObject {
-  return {
-    toJsonText(): string {
-      return JSON.stringify(json);
-    },
-    toJsonObject(): Record<string, any> {
-      return json;
-    },
-    toYamlText(): string {
-      return YAML.stringify(json);
-    },
-  };
-}
-
-/**
- * 服务 yaml,一般分为 deployment 和 service
- */
-interface ServiceInstanceYaml {
-  deployment: KubFriendlyObject;
-  service?: KubFriendlyObject;
-}
+import { NginxIngressAnnotation } from '../../components/EnvContext/Ingresses/IngressAnnotation';
+import { HostSummary } from '../host';
+import { CUEnv } from '../env';
+import { IngressPath } from '../../components/EnvContext/Ingresses/df';
+import { Ingress } from 'kubernetes-models/networking.k8s.io/v1';
 
 export interface CUEditableIngress {
   host: string;
@@ -74,11 +23,11 @@ export interface KubernetesYamlGenerator {
     env: CUEnv,
     instance: CUEditableIngress,
     hosts: HostSummary[]
-  ) => string;
+  ) => Ingress;
   /**
    * 删除流量
    */
-  deleteIngress: (current: IngressPath, env: CUEnv) => string | undefined;
+  deleteIngress: (current: IngressPath, env: CUEnv) => Ingress | undefined;
   /**
    * 编辑流量
    */
@@ -87,12 +36,24 @@ export interface KubernetesYamlGenerator {
     env: CUEnv,
     instance: CUEditableIngress,
     hosts: HostSummary[]
-  ) => string;
+  ) => Ingress;
 
-  serviceInstance: (
-    input: ServiceDeployToKubernetesProps
-  ) => ServiceInstanceYaml;
+  /**
+   * 生成部署物
+   * @param input 部署信息
+   * @param firstDeploy 是否首次部署
+   */
+  generateDeployment(
+    input: ServiceDeployToKubernetesProps,
+    firstDeploy: boolean
+  ): any;
+
+  /**
+   * 生成服务
+   * @param input 部署信息
+   * @return  可能为空
+   */
+  generateService(input: ServiceDeployToKubernetesProps): any;
 }
 
 export default tommy;
-// import cdk8s from './cdk8s';

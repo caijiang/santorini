@@ -1,14 +1,10 @@
-import {
-  CUEditableIngress,
-  fromJsonToObject,
-  KubernetesYamlGenerator,
-} from './yamlGenerator';
+import { CUEditableIngress, KubernetesYamlGenerator } from './yamlGenerator';
 import { Deployment } from 'kubernetes-models/apps/v1';
-import YAML from 'yaml';
 import { Service } from 'kubernetes-models/v1';
 import { Ingress } from 'kubernetes-models/networking.k8s.io/v1';
 import _ from 'lodash';
 import { HostSummary } from '../host';
+import { ServiceDeployToKubernetesProps } from '../../slices/deployService';
 
 function makeSure(
   inputs: { [p: string]: string } | undefined,
@@ -108,11 +104,11 @@ function generateIngressPath(instance: CUEditableIngress) {
   };
 }
 
-// noinspection JSUnusedLocalSymbols
+// noinspection JSUnusedLocalSymbols,ES6ShorthandObjectProperty
 export default {
   createIngress: (env, instance, hosts) => {
     const host = hosts.find((it) => it.hostname == instance.host)!!;
-    const ingress = new Ingress({
+    return new Ingress({
       metadata: {
         labels: {
           'santorini.io/manageable': 'true',
@@ -139,7 +135,6 @@ export default {
         ],
       },
     });
-    return YAML.stringify(ingress.toJSON());
   },
   deleteIngress: (current, env) => {
     // 有其他 rule
@@ -171,7 +166,7 @@ export default {
 
     if (newRules.length == 0) return undefined;
 
-    const ingress = new Ingress({
+    return new Ingress({
       metadata: {
         ...oldJson.metadata,
         labels: makeSure(oldJson.metadata?.labels, {
@@ -184,12 +179,11 @@ export default {
         rules: newRules,
       },
     });
-    return YAML.stringify(ingress.toJSON());
   },
   editIngress: (current, env, instance, hosts) => {
     const host = hosts.find((it) => it.hostname == instance.host)!!;
     const oldJson = current.instance;
-    const ingress = new Ingress({
+    return new Ingress({
       metadata: {
         ...oldJson.metadata,
         labels: makeSure(oldJson.metadata?.labels, {
@@ -223,17 +217,10 @@ export default {
         }),
       },
     });
-    return YAML.stringify(ingress.toJSON());
   },
-  serviceInstance: ({ service, env, deployData }) => {
-    // const podLabels = {
-    //   ...{
-    //     'app.kubernetes.io/name': service.id,
-    //   },
-    //   ...(doNotUseLatestCode
-    //     ? {}
-    //     : { 'santorini.io/manageable': 'true' }),
-    // };
+  generateDeployment(
+    {service, env, deployData}: ServiceDeployToKubernetesProps,
+  ): any {
     const podLabels = {
       'app.kubernetes.io/name': service.id,
       'santorini.io/manageable': 'true',
@@ -249,10 +236,14 @@ export default {
         namespace: env.id,
       },
       spec: {
-        minReadySeconds: 0,
-        progressDeadlineSeconds: 600,
-        replicas: 1,
-        revisionHistoryLimit: 10,
+        // ...(firstDeploy
+        //   ? {
+        //       minReadySeconds: 0,
+        //       progressDeadlineSeconds: 600,
+        //       replicas: 1,
+        //       revisionHistoryLimit: 10,
+        //     }
+        //   : {}),
         selector: {
           matchLabels: {
             'app.kubernetes.io/name': service.id,
@@ -324,6 +315,7 @@ export default {
                     name: 'kubenamespace',
                     valueFrom: {
                       fieldRef: {
+                        apiVersion: 'v1',
                         fieldPath: 'metadata.namespace',
                       },
                     },
@@ -332,6 +324,7 @@ export default {
                     name: 'kubename',
                     valueFrom: {
                       fieldRef: {
+                        apiVersion: 'v1',
                         fieldPath: 'metadata.name',
                       },
                     },
@@ -340,6 +333,7 @@ export default {
                     name: 'kubeuid',
                     valueFrom: {
                       fieldRef: {
+                        apiVersion: 'v1',
                         fieldPath: 'metadata.uid',
                       },
                     },
@@ -370,7 +364,7 @@ export default {
                 },
                 // dnsPolicy: ClusterFirst
                 // hostNetwork: false
-                restartPolicy: 'Always',
+                // restartPolicy: 'Always',
                 readinessProbe: service.lifecycle?.readinessProbe,
                 livenessProbe: service.lifecycle?.livenessProbe,
                 startupProbe: service.lifecycle?.startupProbe,
@@ -390,6 +384,9 @@ export default {
         // terminationGracePeriodSeconds: 30
       },
     });
+    return deployment.toJSON();
+  },
+  generateService({service, env}: ServiceDeployToKubernetesProps): any {
     const s =
       service.ports && service.ports.length > 0
         ? new Service({
@@ -409,13 +406,6 @@ export default {
             },
           })
         : undefined;
-    const deploymentJson = deployment.toJSON();
-    const serviceJson = s?.toJSON();
-    // console.debug('deploymentJson json:', deploymentJson);
-    // console.debug('serviceJson json:', serviceJson);
-    return {
-      deployment: fromJsonToObject(deploymentJson),
-      service: serviceJson ? fromJsonToObject(serviceJson) : undefined,
-    };
+    return s?.toJSON();
   },
 } as KubernetesYamlGenerator;

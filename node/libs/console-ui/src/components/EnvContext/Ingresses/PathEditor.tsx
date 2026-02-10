@@ -146,7 +146,7 @@ const PathEditor: React.FC<
             const yaml = yamlGenerator.createIngress(env, instance, hosts);
             await createApi({
               namespace: env.id,
-              yaml,
+              jsonObject: yaml.toJSON(),
             }).unwrap();
             return true;
           } catch (e) {
@@ -160,7 +160,7 @@ const PathEditor: React.FC<
             await editApi({
               namespace: env.id,
               name: data.instance.metadata?.name,
-              yaml,
+              jsonObject: yaml.toJSON(),
             }).unwrap();
             return true;
           } catch (e) {

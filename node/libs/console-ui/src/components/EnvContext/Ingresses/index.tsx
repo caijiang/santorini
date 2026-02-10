@@ -241,7 +241,7 @@ export default () => {
                                     await editApi({
                                       namespace: data.id,
                                       name: e.instance.metadata?.name,
-                                      yaml,
+                                      jsonObject: yaml.toJSON(),
                                     }).unwrap();
                                   } else {
                                     await removeApi({

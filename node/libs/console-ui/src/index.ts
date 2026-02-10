@@ -17,6 +17,7 @@ import { envWikiApi } from './apis/envWiki';
 import publicRoutes from './publicRoutes';
 import { kubeHpaApi } from './apis/kubernetes/hpa';
 import { advancedApi } from './apis/advanced';
+import { serverSideApplySlice } from './slices/serverSideApply';
 
 export { useAppNameQuery };
 
@@ -53,6 +54,7 @@ export default {
     [hostApi.reducerPath]: hostApi.reducer,
     [miscApi.reducerPath]: miscApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
+    [serverSideApplySlice.name]: serverSideApplySlice.reducer,
   },
   routesInRoot: publicRoutes,
   routesInMainNav: mainRoutes,

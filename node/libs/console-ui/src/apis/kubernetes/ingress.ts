@@ -4,6 +4,7 @@ import { CUEnv } from '../env';
 import { IIngress, IIngressList } from 'kubernetes-models/networking.k8s.io/v1';
 
 import { ObjectContainer } from './type';
+import YAML from 'yaml';
 
 export const ingressApi = createApi({
   reducerPath: 'kubeIngress',
@@ -13,10 +14,10 @@ export const ingressApi = createApi({
     return {
       createIngress: build.mutation<undefined, ObjectContainer>({
         invalidatesTags: ['Ingresses'],
-        query: ({ namespace, yaml }) => ({
+        query: ({ namespace, jsonObject }) => ({
           url: `/apis/networking.k8s.io/v1/namespaces/${namespace}/ingresses`,
           method: 'POST',
-          body: yaml,
+          body: YAML.stringify(jsonObject),
           headers: {
             'Content-Type': 'application/yaml',
           },
@@ -31,10 +32,10 @@ export const ingressApi = createApi({
       }),
       editIngress: build.mutation<undefined, ObjectContainer>({
         invalidatesTags: ['Ingresses'],
-        query: ({ namespace, yaml, name }) => ({
+        query: ({ namespace, jsonObject, name }) => ({
           url: `/apis/networking.k8s.io/v1/namespaces/${namespace}/ingresses/${name}`,
           method: 'PUT',
-          body: yaml,
+          body: YAML.stringify(jsonObject),
           headers: {
             'Content-Type': 'application/yaml',
           },

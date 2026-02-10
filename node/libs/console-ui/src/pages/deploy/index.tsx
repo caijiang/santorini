@@ -29,6 +29,7 @@ import { useDockerConfigJsonSecretNamesQuery } from '../../apis/env';
 import EnvironmentVariablesEditor from '../../components/form/EnvironmentVariablesEditor';
 import PreAuthorize from '../../tor/PreAuthorize';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
+import ServerSideApplyDrawer from '../../components/drawer/ServerSideApplyDrawer';
 
 export default () => {
   // 作为一个部署服务的专用页面
@@ -50,6 +51,7 @@ export default () => {
   const allReady = !lastReleaseLoading && !isLoading && service && secrets;
   return (
     <PageContainer title={'部署'} loading={!allReady}>
+      <ServerSideApplyDrawer />
       {!lastReleaseLoading && (
         <ProForm
           initialValues={

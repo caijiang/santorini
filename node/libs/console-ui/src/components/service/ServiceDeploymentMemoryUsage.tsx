@@ -1,5 +1,5 @@
 import { ServiceDeployment } from './types';
-import { useDeploymentQuery } from '../../apis/kubernetes/service';
+import { useGetDeploymentsQuery } from '../../apis/kubernetes/service';
 import { useMemo } from 'react';
 import {
   queryResourceUsageFromDeployment,
@@ -7,7 +7,7 @@ import {
 } from './ServiceDeploymentCpuUsage';
 
 export default ({ service: { id }, envId }: ServiceDeployment) => {
-  const { data } = useDeploymentQuery({
+  const { data } = useGetDeploymentsQuery({
     namespace: envId,
     name: id,
     labelSelectors: ['santorini.io/service-type', `santorini.io/id=${id}`],
