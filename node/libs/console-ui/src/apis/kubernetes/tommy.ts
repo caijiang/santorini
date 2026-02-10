@@ -1,6 +1,5 @@
 import { CUEditableIngress, KubernetesYamlGenerator } from './yamlGenerator';
 import { Deployment } from 'kubernetes-models/apps/v1';
-import YAML from 'yaml';
 import { Service } from 'kubernetes-models/v1';
 import { Ingress } from 'kubernetes-models/networking.k8s.io/v1';
 import _ from 'lodash';
@@ -109,7 +108,7 @@ function generateIngressPath(instance: CUEditableIngress) {
 export default {
   createIngress: (env, instance, hosts) => {
     const host = hosts.find((it) => it.hostname == instance.host)!!;
-    const ingress = new Ingress({
+    return new Ingress({
       metadata: {
         labels: {
           'santorini.io/manageable': 'true',
@@ -136,7 +135,6 @@ export default {
         ],
       },
     });
-    return YAML.stringify(ingress.toJSON());
   },
   deleteIngress: (current, env) => {
     // 有其他 rule
@@ -168,7 +166,7 @@ export default {
 
     if (newRules.length == 0) return undefined;
 
-    const ingress = new Ingress({
+    return new Ingress({
       metadata: {
         ...oldJson.metadata,
         labels: makeSure(oldJson.metadata?.labels, {
@@ -181,12 +179,11 @@ export default {
         rules: newRules,
       },
     });
-    return YAML.stringify(ingress.toJSON());
   },
   editIngress: (current, env, instance, hosts) => {
     const host = hosts.find((it) => it.hostname == instance.host)!!;
     const oldJson = current.instance;
-    const ingress = new Ingress({
+    return new Ingress({
       metadata: {
         ...oldJson.metadata,
         labels: makeSure(oldJson.metadata?.labels, {
@@ -220,7 +217,6 @@ export default {
         }),
       },
     });
-    return YAML.stringify(ingress.toJSON());
   },
   generateDeployment(
     {service, env, deployData}: ServiceDeployToKubernetesProps,

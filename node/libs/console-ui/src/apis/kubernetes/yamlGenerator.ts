@@ -4,6 +4,7 @@ import { NginxIngressAnnotation } from '../../components/EnvContext/Ingresses/In
 import { HostSummary } from '../host';
 import { CUEnv } from '../env';
 import { IngressPath } from '../../components/EnvContext/Ingresses/df';
+import { Ingress } from 'kubernetes-models/networking.k8s.io/v1';
 
 export interface CUEditableIngress {
   host: string;
@@ -22,11 +23,11 @@ export interface KubernetesYamlGenerator {
     env: CUEnv,
     instance: CUEditableIngress,
     hosts: HostSummary[]
-  ) => string;
+  ) => Ingress;
   /**
    * 删除流量
    */
-  deleteIngress: (current: IngressPath, env: CUEnv) => string | undefined;
+  deleteIngress: (current: IngressPath, env: CUEnv) => Ingress | undefined;
   /**
    * 编辑流量
    */
@@ -35,7 +36,7 @@ export interface KubernetesYamlGenerator {
     env: CUEnv,
     instance: CUEditableIngress,
     hosts: HostSummary[]
-  ) => string;
+  ) => Ingress;
 
   /**
    * 生成部署物
