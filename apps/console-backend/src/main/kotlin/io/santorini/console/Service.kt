@@ -21,8 +21,21 @@ internal fun Application.configureConsoleService() {
     val service = inject<ServiceMetaService>().value
     val deploymentService = inject<DeploymentService>().value
     val userService = inject<UserRoleService>().value
+    val userCareServiceMetaService = inject<UserCareServiceMetaService>().value
     // 一般人员可以读取 env
     routing {
+        //<editor-fold desc="用户可以管理自身专注">
+        post<UserCareServiceMetaResource> { ps ->
+            withAuthorization {
+                userCareServiceMetaService.careOn(ps, it.id)
+            }
+        }
+        delete<UserCareServiceMetaResource> { ps ->
+            withAuthorization {
+                userCareServiceMetaService.careOff(ps, it.id)
+            }
+        }
+        //</editor-fold>
         post<ServiceMetaResource> {
             withAuthorization {
                 val text = call.receiveText()

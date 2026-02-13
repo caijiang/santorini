@@ -11,6 +11,7 @@ import io.santorini.AesGcmCrypto
 import io.santorini.kubernetes.currentPod
 import io.santorini.kubernetes.rootOwner
 import io.santorini.service.KubernetesClientService
+import io.santorini.service.SiteService
 import io.santorini.withAuthorization
 import org.koin.ktor.ext.inject
 import java.util.*
@@ -20,6 +21,7 @@ private val logger = KotlinLogging.logger {}
 
 internal fun Application.configureConsoleMisc(kubernetesClient: KubernetesClient) {
     val service = inject<KubernetesClientService>()
+    val site = inject<SiteService>()
     routing {
         get("/clusterResourceStat") {
             withAuthorization {
@@ -51,7 +53,7 @@ internal fun Application.configureConsoleMisc(kubernetesClient: KubernetesClient
             }
         }
         get("/appName") {
-            call.respond(System.getenv("APPNAME") ?: "Santorini")
+            call.respond(site.value.appName)
         }
         // 获取内置的 nacos 地址
         get("/embedNacosServerAddr") {

@@ -270,6 +270,25 @@ class ServiceMetaService(
         return mergeJson(detail.first, detail.second)
     }
 
+    suspend fun readServiceMetaData(id: String): ServiceMetaData? {
+        return dbQuery {
+            ServiceMetas.selectAll()
+                .where {
+                    ServiceMetas.id eq id
+                }
+                .map {
+                    ServiceMetaData(
+                        id = it[ServiceMetas.id].value,
+                        name = it[ServiceMetas.name],
+                        type = it[ServiceMetas.type],
+                        requirements = it[ServiceMetas.requirements],
+                        lifecycle = it[ServiceMetas.lifecycle],
+                    )
+                }
+                .firstOrNull()
+        }
+    }
+
     private suspend fun read(id: String): Pair<ServiceMetaData, String>? {
         return dbQuery {
             ServiceMetas.selectAll()

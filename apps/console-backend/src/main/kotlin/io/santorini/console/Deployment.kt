@@ -13,6 +13,7 @@ import io.santorini.console.schema.DeploymentDeployData
 import io.santorini.console.schema.DeploymentResource
 import io.santorini.console.schema.DeploymentService
 import io.santorini.console.schema.PreDeployResult
+import io.santorini.service.NoticeService
 import io.santorini.withAuthorization
 import java.util.*
 import kotlin.uuid.toKotlinUuid
@@ -23,6 +24,7 @@ private val logger = KotlinLogging.logger {}
 
 internal fun Application.configureConsoleDeployment() {
     val service = koinGet<DeploymentService>()
+    val noticeService = koinGet<NoticeService>()
     // 一般人员可以读取 env
     routing {
         // 所有人的最近发布信息?
@@ -63,6 +65,7 @@ internal fun Application.configureConsoleDeployment() {
                 try {
                     // 然后操作 kubernetes
                     call.respond(service.deploy(it.id, deployData, data).toKotlinUuid())
+                    noticeService.newDeployment(it, data)
                 } catch (e: Exception) {
                     logger.info(e) { "处理部署时" }
                     call.respond(HttpStatusCode.BadRequest)

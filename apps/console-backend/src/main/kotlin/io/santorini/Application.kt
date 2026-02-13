@@ -19,10 +19,14 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.santorini.console.configureConsole
 import io.santorini.console.schema.*
+import io.santorini.informer.KubernetesInformerService
+import io.santorini.informer.KubernetesInformerServiceImpl
 import io.santorini.kubernetes.KubernetesClientServiceImpl
 import io.santorini.scope.AppBackgroundScope
-import io.santorini.service.ImageService
-import io.santorini.service.KubernetesClientService
+import io.santorini.service.*
+import io.santorini.service.impl.NoticeServiceImpl
+import io.santorini.service.impl.SiteServiceImpl
+import io.santorini.service.impl.feishu.FeishuServiceImpl
 import io.santorini.well.StatusException
 import kotlinx.coroutines.cancel
 import kotlinx.serialization.json.Json
@@ -100,22 +104,36 @@ fun Application.consoleModuleEntry(
             JobRunner(app), get()
         )
     },
+    kubernetesInformerServiceLoader: Scope.(ParametersHolder) -> KubernetesInformerService = {
+        KubernetesInformerServiceImpl(get(), get()).apply {
+            loopForLocker()
+        }
+    },
 ) {
     val app = this
     install(Koin) {
         slf4jLogger()
         modules(module {
+            single<SiteService> {
+                SiteServiceImpl()
+            }
+            single {
+                kubernetesClient
+            }
+            single<AsyncTaskService> {
+                AsyncTaskServiceImpl()
+            }
             single {
                 kubernetesClientService
             }
             single {
                 httpClient
             }
-            single {
-                AppBackgroundScope()
+            single<FeishuService> {
+                FeishuServiceImpl(kubernetesClientService, httpClient)
             }
             single {
-                kubernetesClient
+                AppBackgroundScope()
             }
             single<Scheduler> {
                 KubernetesJobScheduler(kubernetesClient)
@@ -144,8 +162,17 @@ fun Application.consoleModuleEntry(
             single {
                 EnvWikiService(database)
             }
+            single {
+                UserCareServiceMetaService(database)
+            }
             single<ScheduleJobService> {
                 scheduleJobServiceLoader(it, app)
+            }
+            single<NoticeService> {
+                NoticeServiceImpl(get(), get(), get(), get(), get(), get())
+            }
+            single<KubernetesInformerService> {
+                kubernetesInformerServiceLoader(this, it)
             }
         })
     }

@@ -6,6 +6,7 @@ import io.santorini.kubernetes.SantoriniResource
 import io.santorini.kubernetes.model.ClusterResourceStat
 import io.santorini.model.ResourceType
 import io.santorini.model.ServiceRole
+import io.santorini.service.impl.feishu.FeishuToken
 
 /**
  * 与 kubernetesClient 的所有交互
@@ -76,6 +77,14 @@ interface KubernetesClientService {
         namespace: String,
         serviceRoles: Map<String, List<ServiceRole>>
     )
+    //</editor-fold>
+
+    //<editor-fold desc="飞书相关">
+    /**
+     * 获取 feishu token
+     */
+    fun queryFeishuToken(id: String): FeishuToken?
+    fun saveFeishuToken(id: String, token: FeishuToken)
     //</editor-fold>
 
 }
