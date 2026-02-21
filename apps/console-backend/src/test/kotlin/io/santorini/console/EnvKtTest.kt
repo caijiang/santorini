@@ -24,6 +24,7 @@ import io.santorini.kubernetes.createEnvResourceInSecret
 import io.santorini.kubernetes.updateOne
 import io.santorini.model.ResourceType
 import io.santorini.service.KubernetesClientService
+import io.santorini.test.mockKubernetesInformerServiceLoader
 import io.santorini.test.mockThatConfigMapNameWill
 import io.santorini.test.mockThatSecretNameWill
 import io.santorini.test.mockUserModule
@@ -44,7 +45,9 @@ class EnvKtTest {
         application {
             consoleModuleEntry(
                 kubernetesClient = kubernetesClient, kubernetesClientService = clientService,
-                scheduleJobServiceLoader = { _, _ -> MockJobService })
+                scheduleJobServiceLoader = { _, _ -> MockJobService },
+                kubernetesInformerServiceLoader = mockKubernetesInformerServiceLoader,
+            )
             mockUserModule()
         }
 

@@ -1,5 +1,6 @@
 package io.santorini.console.schema
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.santorini.console.schema.UserRoleService.Users
 import io.santorini.defaultFixedOffsetTimeZone
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +18,8 @@ import kotlin.time.Clock
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 
+
+private val logger = KotlinLogging.logger {}
 
 @Serializable
 data class EnvWikiContent(
@@ -68,9 +71,11 @@ class EnvWikiService(database: Database) {
     }
 
     init {
+        logger.info { "Start checking EnvWiki" }
         transaction(database) {
             SchemaUtils.create(EnvWikiRevisions)
         }
+        logger.info { "End checking EnvWiki" }
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =

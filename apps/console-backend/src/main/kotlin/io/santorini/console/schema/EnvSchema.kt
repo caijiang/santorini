@@ -91,6 +91,7 @@ class EnvService(database: Database) {
     }
 
     init {
+        logger.info { "Start checking Env" }
         transaction(database) {
             SchemaUtils.create(Envs)
             val sqls = SchemaUtils.addMissingColumnsStatements(Envs)
@@ -99,6 +100,7 @@ class EnvService(database: Database) {
                 exec(it)
             }
         }
+        logger.info { "End checking Env" }
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =

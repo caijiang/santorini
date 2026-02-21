@@ -5,6 +5,7 @@ import io.mockk.mockk
 import io.santorini.informer.k8s.autoScalingHappen
 import io.santorini.informer.k8s.serviceInstanceUnstable
 import io.santorini.io.santorini.service.workWithLocalKubernetesCluster
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Disabled
 import kotlin.test.Test
 
@@ -16,7 +17,7 @@ import kotlin.test.Test
 class KubernetesInformerServiceImplTest {
 
     @Test
-    fun previewWatch() {
+    fun previewWatch() = runTest {
         workWithLocalKubernetesCluster(javaClass) {
             val service = KubernetesInformerServiceImpl(this, mockk())
             val namespace = "test-ns"
@@ -54,7 +55,7 @@ class KubernetesInformerServiceImplTest {
                 println("从$oldDR 变更到$newDR")
             }
 
-            service.loopForLocker(
+            service.initLocker(
                 "release-name-santorini-santorini-console-backend-66dd8fdb9n7glz",
                 LeaderCallbacks(
                     {
@@ -68,6 +69,7 @@ class KubernetesInformerServiceImplTest {
                     { _: String? -> } // Leader 变更时的回调
                 )
             )
+            service.loopForLocker()
 
             println("working...")
 

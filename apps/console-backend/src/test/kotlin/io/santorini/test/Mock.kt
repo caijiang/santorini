@@ -12,8 +12,7 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
 import io.santorini.OAuthPlatform
 import io.santorini.OAuthPlatformUserData
 import io.santorini.OAuthPlatformUserDataAuditResult
@@ -21,8 +20,11 @@ import io.santorini.console.schema.ComputeResourceCpu
 import io.santorini.console.schema.ComputeResourceMemory
 import io.santorini.console.schema.ComputeResources
 import io.santorini.console.schema.UserRoleService
+import io.santorini.informer.KubernetesInformerService
 import io.santorini.saveUserData
 import me.jiangcai.cr.Deployable
+import org.koin.core.parameter.ParametersHolder
+import org.koin.core.scope.Scope
 import org.koin.ktor.ext.inject
 import java.util.*
 import kotlin.uuid.ExperimentalUuidApi
@@ -157,4 +159,17 @@ fun mockComputeResources(): ComputeResources {
             128, 1024
         )
     )
+}
+
+val mockKubernetesInformerServiceLoader: Scope.(ParametersHolder) -> KubernetesInformerService = {
+    mockk<KubernetesInformerService>().apply {
+        val svc = this
+        coEvery {
+            svc.loopForLocker()
+        } answers (object : Answer<Unit> {
+            override fun answer(call: Call) {
+
+            }
+        })
+    }
 }

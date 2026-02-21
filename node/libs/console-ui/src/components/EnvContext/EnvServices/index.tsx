@@ -15,6 +15,7 @@ import { useEnvContext } from '../../../layouts/EnvLayout';
 import PodsLink from './PodsLink';
 import ServiceDeploymentCpuUsage from '../../service/ServiceDeploymentCpuUsage';
 import ServiceDeploymentMemoryUsage from '../../service/ServiceDeploymentMemoryUsage';
+import UserCareServiceButton from '../UserCareServiceButton';
 
 export default () => {
   const {
@@ -73,6 +74,7 @@ export default () => {
             </NavLink>,
             <RocketForm key={'rock'} service={entity}></RocketForm>,
             production && <HpaEditor service={entity} key={'hpa'} />,
+            <UserCareServiceButton service={entity} key={'userCares'} />,
           ],
         },
       ]}

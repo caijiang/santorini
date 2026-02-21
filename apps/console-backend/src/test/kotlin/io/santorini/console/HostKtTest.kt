@@ -9,6 +9,7 @@ import io.ktor.server.testing.*
 import io.santorini.console.schema.HostData
 import io.santorini.consoleModuleEntry
 import io.santorini.io.santorini.test.MockJobService
+import io.santorini.test.mockKubernetesInformerServiceLoader
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
 import kotlinx.serialization.json.Json
@@ -24,7 +25,8 @@ class HostKtTest {
     fun testHost() = testApplication {
         application {
             consoleModuleEntry(
-                scheduleJobServiceLoader = { _, _ -> MockJobService }
+                scheduleJobServiceLoader = { _, _ -> MockJobService },
+                kubernetesInformerServiceLoader = mockKubernetesInformerServiceLoader,
             )
             mockUserModule()
         }

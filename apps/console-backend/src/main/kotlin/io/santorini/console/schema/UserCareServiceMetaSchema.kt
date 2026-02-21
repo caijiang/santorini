@@ -3,11 +3,15 @@ package io.santorini.console.schema
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.resources.*
 import io.santorini.OAuthPlatform
+import io.santorini.console.schema.UserCareServiceMetaService.UserCareServiceMetas.env
+import io.santorini.console.schema.UserCareServiceMetaService.UserCareServiceMetas.service
+import io.santorini.console.schema.UserCareServiceMetaService.UserCareServiceMetas.user
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.count
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.jdbc.*
@@ -27,7 +31,7 @@ data class NoticeTargetUser(
     val feishuOpenId: String?
 )
 
-@Resource("/cares/{envId}/{serverId}")
+@Resource("/cares/{envId}/{serviceId}")
 @Serializable
 data class UserCareServiceMetaResource(
     val serviceId: String,
@@ -51,6 +55,7 @@ class UserCareServiceMetaService(
     }
 
     init {
+        logger.info { "Start checking UserCareServiceMetas" }
         transaction(database) {
             SchemaUtils.create(UserCareServiceMetas)
             val sqls = SchemaUtils.addMissingColumnsStatements(UserCareServiceMetas)
@@ -59,6 +64,7 @@ class UserCareServiceMetaService(
                 exec(it)
             }
         }
+        logger.info { "End checking UserCareServiceMetas" }
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
@@ -67,6 +73,22 @@ class UserCareServiceMetaService(
                 block()
             }
         }
+
+    suspend fun queryCare(ps: UserCareServiceMetaResource, userId: Uuid): Boolean {
+        return dbQuery {
+            UserCareServiceMetas.select(
+                user.count()
+            ).where {
+                user eq userId.toJavaUuid() and (
+                        env eq ps.envId
+                        ) and (
+                        service eq ps.serviceId
+                        )
+            }.map {
+                it[user.count()] > 0
+            }.firstOrNull() ?: false
+        }
+    }
 
     suspend fun careOn(ps: UserCareServiceMetaResource, userId: Uuid) {
         dbQuery {
@@ -101,9 +123,9 @@ class UserCareServiceMetaService(
                     UserRoleService.Users.name,
                 )
                 .where {
-                    UserCareServiceMetas.service eq serviceId
+                    service eq serviceId
                 }.andWhere {
-                    UserCareServiceMetas.env eq namespace
+                    env eq namespace
                 }.map {
                     val platform = it[UserRoleService.Users.thirdPlatform]
                     if (platform == OAuthPlatform.Feishu) {

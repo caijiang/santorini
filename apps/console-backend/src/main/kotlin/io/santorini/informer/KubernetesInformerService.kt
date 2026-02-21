@@ -11,9 +11,9 @@ interface KubernetesInformerService {
     fun stop()
 
     /**
-     * 如果可以获得租约，则尝试开启 informer 工作;如果失去就停止
+     * 初始化锁应用
      */
-    fun loopForLocker(
+    fun initLocker(
         identity: String = System.getenv("HOSTNAME"), callback: LeaderCallbacks = LeaderCallbacks(
             {
                 logger.info {
@@ -32,5 +32,10 @@ interface KubernetesInformerService {
             { _: String? -> } // Leader 变更时的回调
         )
     )
+
+    /**
+     * 如果可以获得租约，则尝试开启 informer 工作;如果失去就停止
+     */
+    suspend fun loopForLocker()
 
 }

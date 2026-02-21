@@ -28,11 +28,18 @@ internal fun Application.configureConsoleService() {
         post<UserCareServiceMetaResource> { ps ->
             withAuthorization {
                 userCareServiceMetaService.careOn(ps, it.id)
+                call.respond(HttpStatusCode.NoContent)
+            }
+        }
+        get<UserCareServiceMetaResource> { ps ->
+            withAuthorization {
+                call.respond(userCareServiceMetaService.queryCare(ps, it.id))
             }
         }
         delete<UserCareServiceMetaResource> { ps ->
             withAuthorization {
                 userCareServiceMetaService.careOff(ps, it.id)
+                call.respond(HttpStatusCode.NoContent)
             }
         }
         //</editor-fold>

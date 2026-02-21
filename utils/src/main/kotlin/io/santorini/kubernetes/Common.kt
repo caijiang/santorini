@@ -3,15 +3,19 @@ package io.santorini.kubernetes
 import io.fabric8.kubernetes.api.model.HasMetadata
 import io.fabric8.kubernetes.api.model.Pod
 import io.fabric8.kubernetes.client.KubernetesClient
+import io.github.oshai.kotlinlogging.KotlinLogging
 
 fun HasMetadata.inheritLabels(): Map<String, String> = this.metadata.labels
 
 const val CONFIG_ADDITIONAL_KEY_HOSTNAME = "FAKE_ENV_HOSTNAME"
 
+private val logger = KotlinLogging.logger {}
+
 /**
  * 运行当前 pod的 pod 配置;需要当前 pod 存在一定权限
  */
 fun KubernetesClient.currentPod(): Pod {
+    logger.warn(Throwable()) { "who invoke currentPod?" }
     val namespace: String = namespace
     val podName =
         configuration.additionalProperties?.get(CONFIG_ADDITIONAL_KEY_HOSTNAME)?.toString() ?: System.getenv("HOSTNAME")

@@ -4,6 +4,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.santorini.io.santorini.test.MockJobService
+import io.santorini.test.mockKubernetesInformerServiceLoader
 import io.santorini.tools.database
 import org.junit.jupiter.api.AfterAll
 import org.testcontainers.containers.MySQLContainer
@@ -33,7 +34,8 @@ class ApplicationTest {
         application {
             consoleModuleEntry(
                 database = mysql.database,
-                scheduleJobServiceLoader = { _, _ -> MockJobService }
+                scheduleJobServiceLoader = { _, _ -> MockJobService },
+                kubernetesInformerServiceLoader = mockKubernetesInformerServiceLoader,
             )
         }
         client.get("/").apply {

@@ -18,6 +18,7 @@ import publicRoutes from './publicRoutes';
 import { kubeHpaApi } from './apis/kubernetes/hpa';
 import { advancedApi } from './apis/advanced';
 import { serverSideApplySlice } from './slices/serverSideApply';
+import { userCaresApi } from './apis/userCares';
 
 export { useAppNameQuery };
 
@@ -37,6 +38,7 @@ export default {
     hostApi.middleware,
     miscApi.middleware,
     userApi.middleware,
+    userCaresApi.middleware,
     listenerMiddleware.middleware,
   ],
   reducers: {
@@ -54,6 +56,7 @@ export default {
     [hostApi.reducerPath]: hostApi.reducer,
     [miscApi.reducerPath]: miscApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
+    [userCaresApi.reducerPath]: userCaresApi.reducer,
     [serverSideApplySlice.name]: serverSideApplySlice.reducer,
   },
   routesInRoot: publicRoutes,

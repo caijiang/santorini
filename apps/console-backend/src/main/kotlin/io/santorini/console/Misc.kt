@@ -13,6 +13,8 @@ import io.santorini.kubernetes.rootOwner
 import io.santorini.service.KubernetesClientService
 import io.santorini.service.SiteService
 import io.santorini.withAuthorization
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.koin.ktor.ext.inject
 import java.util.*
 import kotlin.time.Duration.Companion.days
@@ -57,19 +59,23 @@ internal fun Application.configureConsoleMisc(kubernetesClient: KubernetesClient
         }
         // 获取内置的 nacos 地址
         get("/embedNacosServerAddr") {
-            val root = kubernetesClient.currentPod().rootOwner(kubernetesClient)
+            val root = withContext(Dispatchers.IO) {
+                kubernetesClient.currentPod().rootOwner(kubernetesClient)
+            }
             val instance =
                 root.metadata.labels["app.kubernetes.io/instance"] ?: throw Exception("顶级元素不包含实例信息")
-            val add = kubernetesClient.services()
-                .inNamespace(kubernetesClient.namespace)
-                .withName("$instance-santorini-santorini-nacos")
-                .get()
-                ?.let {
-                    it.spec.ports.firstOrNull { port -> port.name == "server" }
-                        ?.let { port ->
-                            "${it.metadata.name}.${kubernetesClient.namespace}:${port.port}"
-                        }
-                }
+            val add = withContext(Dispatchers.IO) {
+                kubernetesClient.services()
+                    .inNamespace(kubernetesClient.namespace)
+                    .withName("$instance-santorini-santorini-nacos")
+                    .get()
+                    ?.let {
+                        it.spec.ports.firstOrNull { port -> port.name == "server" }
+                            ?.let { port ->
+                                "${it.metadata.name}.${kubernetesClient.namespace}:${port.port}"
+                            }
+                    }
+            }
             if (add != null) {
                 call.respond(add)
             } else {

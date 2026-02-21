@@ -1,5 +1,6 @@
 package io.santorini.console.schema
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.resources.*
 import io.santorini.console.model.Pageable
 import io.santorini.console.schema.ServiceMetaService.ServiceMetas
@@ -14,6 +15,8 @@ import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.time.Clock
+
+private val logger = KotlinLogging.logger {}
 
 @Serializable
 data class HostData(
@@ -60,9 +63,11 @@ class HostService(database: Database) {
     }
 
     init {
+        logger.info { "Start checking Hosts" }
         transaction(database) {
             SchemaUtils.create(Hosts)
         }
+        logger.info { "End checking Hosts" }
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =

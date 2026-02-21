@@ -12,6 +12,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -26,6 +27,7 @@ import io.santorini.model.Lifecycle
 import io.santorini.model.ServiceRole
 import io.santorini.model.ServiceType
 import io.santorini.service.KubernetesClientService
+import io.santorini.test.mockKubernetesInformerServiceLoader
 import io.santorini.test.mockUserModule
 import io.santorini.tools.addServiceMeta
 import io.santorini.tools.createStandardClient
@@ -58,7 +60,9 @@ class UserRoleKtTest {
             consoleModuleEntry(
                 database = mysql.database,
                 kubernetesClientService = kubernetesClient,
-                scheduleJobServiceLoader = { _, _ -> MockJobService })
+                scheduleJobServiceLoader = { _, _ -> MockJobService },
+                kubernetesInformerServiceLoader = mockKubernetesInformerServiceLoader,
+            )
             mockUserModule()
         }
 
@@ -98,7 +102,7 @@ class UserRoleKtTest {
             status shouldBe HttpStatusCode.OK
         }
         val userData = user.get("https://localhost/currentLogin").body<LoginUserData>()
-        every {
+        coEvery {
             kubernetesClient.currentPodRootOwner()
         } returns mockk()
 

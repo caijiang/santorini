@@ -69,6 +69,7 @@ dependencies {
     implementation(project(":libs:container-registry"))
     //    https://github.com/fabric8io/kubernetes-client
     implementation("io.fabric8:kubernetes-client:7.4.0")
+    implementation("io.fabric8:kubernetes-httpclient-jdk:7.4.0")
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.server.sessions)
     implementation(libs.ktor.server.compression)

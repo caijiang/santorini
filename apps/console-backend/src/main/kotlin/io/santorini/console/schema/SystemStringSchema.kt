@@ -1,5 +1,6 @@
 package io.santorini.console.schema
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.resources.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -12,6 +13,7 @@ import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
+private val logger = KotlinLogging.logger {}
 @Serializable
 data class SystemStringData(
     val name: String,
@@ -36,9 +38,11 @@ class SystemStringService(database: Database) {
     }
 
     init {
+        logger.info { "Start checking System Strings" }
         transaction(database) {
             SchemaUtils.create(SystemStrings)
         }
+        logger.info { "End checking System Strings" }
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =

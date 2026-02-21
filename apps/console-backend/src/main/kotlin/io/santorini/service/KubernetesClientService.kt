@@ -18,7 +18,7 @@ interface KubernetesClientService {
     /**
      * 获取当前 pod 的所有者信息
      */
-    fun currentPodRootOwner(): HasMetadata
+    suspend fun currentPodRootOwner(): HasMetadata
 
     //<editor-fold desc="环境资源">
     fun findResourcesInNamespace(namespace: String, type: ResourceType? = null): List<SantoriniResource>
@@ -50,7 +50,7 @@ interface KubernetesClientService {
     /**
      * 获取当前集群运行状态
      */
-    fun clusterResourceStat(): ClusterResourceStat
+    suspend fun clusterResourceStat(): ClusterResourceStat
 
     //<editor-fold desc="权限控制">
     /**

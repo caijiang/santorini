@@ -10,8 +10,10 @@
     <!--    可调试路由-->
     <!--    <logger name="io.ktor.server.routing.Routing" level="trace"/>-->
     <!--    <logger name="io.ktor.client.plugins" level="trace"/>-->
-    <logger name="Exposed" level="trace"/>
-    <logger name="io.santorini.kubernetes" level="debug"/>
-    <logger name="io.santorini.schema" level="debug"/>
-    <logger name="io.santorini.console" level="debug"/>
+    <!--    <logger name="Exposed" level="trace"/>-->
+    <!--    <logger name="io.santorini.kubernetes" level="debug"/>-->
+    <!--    <logger name="io.santorini.schema" level="debug"/>-->
+    <!--    <logger name="io.santorini.console" level="debug"/>-->
+    <logger name="io.santorini.informer" level="trace"/>
+    <logger name="io.fabric8.kubernetes" level="info"/>
 </configuration>

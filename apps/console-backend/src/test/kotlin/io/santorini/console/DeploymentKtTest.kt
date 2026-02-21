@@ -26,6 +26,7 @@ import io.santorini.model.*
 import io.santorini.service.ImageService
 import io.santorini.test.mockComputeResources
 import io.santorini.test.mockDeploymentServicePreDeployWorkFineWith
+import io.santorini.test.mockKubernetesInformerServiceLoader
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
 import me.jiangcai.cr.Deployable
@@ -47,7 +48,8 @@ class DeploymentKtTest {
                 kubernetesClient = kubernetesClient, imageServiceLoader = {
                     imageService
                 },
-                scheduleJobServiceLoader = { _, _ -> MockJobService }
+                scheduleJobServiceLoader = { _, _ -> MockJobService },
+                kubernetesInformerServiceLoader = mockKubernetesInformerServiceLoader,
             )
             mockUserModule()
         }

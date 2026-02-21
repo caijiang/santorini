@@ -30,6 +30,7 @@ class NoticeServiceImpl(
     private val logger = KotlinLogging.logger {}
     override fun serviceInstanceUnstable(address: String, old: EndpointSlice, new: EndpointSlice) {
         asyncTaskService.submit {
+            logger.info { "start serviceInstanceUnstable" }
             val namespace = old.metadata.namespace
             val serviceId = old.metadata.labels["kubernetes.io/service-name"]
             if (namespace == null || serviceId == null) {
@@ -39,6 +40,7 @@ class NoticeServiceImpl(
             } else {
                 userCareServiceMetaService.listNoticeTarget(namespace, serviceId).feishuTasksWithoutNames {
                     // 获取服务信息
+                    logger.info { "listNoticeTarget, result: $it" }
                     val service = serviceMetaService.readServiceMetaData(serviceId) ?: return@feishuTasksWithoutNames
                     val env = envService.read(listOf(namespace)).firstOrNull()
                     val post = FeishuPost(
@@ -82,6 +84,7 @@ class NoticeServiceImpl(
         oldObj: HorizontalPodAutoscaler,
         newObj: HorizontalPodAutoscaler
     ) {
+
         logger.warn {
             "autoScalingHappen ${oldDesiredReplicas},${newDesiredReplicas},${oldObj},${newObj}"
         }

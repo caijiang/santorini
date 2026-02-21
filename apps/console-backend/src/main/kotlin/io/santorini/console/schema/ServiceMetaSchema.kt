@@ -117,6 +117,7 @@ class ServiceMetaService(
     }
 
     init {
+        logger.info { "Start checking ServiceMetas" }
         transaction(database) {
             SchemaUtils.create(ServiceMetas)
             SchemaUtils.create(ServiceMetaOthers)
@@ -127,6 +128,7 @@ class ServiceMetaService(
             }
 
         }
+        logger.info { "End checking ServiceMetas" }
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =

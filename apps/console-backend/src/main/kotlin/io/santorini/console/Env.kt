@@ -18,6 +18,8 @@ import io.santorini.kubernetes.updateOne
 import io.santorini.model.ResourceType
 import io.santorini.service.KubernetesClientService
 import io.santorini.withAuthorization
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 
@@ -167,18 +169,22 @@ internal fun Application.configureConsoleEnv(kubernetesClient: KubernetesClient)
                 val envs = userRoleService.value.toUserEnvs(userId)
                 envs.contains(it.id)
             }) { _ ->
-                val x1 = kubernetesClient.configMaps().inNamespace(it.id)
+                val x1 = withContext(Dispatchers.IO) {
+                    kubernetesClient.configMaps().inNamespace(it.id)
                     .withName(Share_Env_Config_Name)
                     .get()
                     ?.data?.map {
                         EnvShareEnv(it.key, it.value, false)
-                    }
-                val x2 = kubernetesClient.secrets().inNamespace(it.id)
-                    .withName(Share_Env_Config_Name)
-                    .get()
-                    ?.data?.map {
-                        EnvShareEnv(it.key, null, true)
-                    }
+                        }
+                }
+                val x2 = withContext(Dispatchers.IO) {
+                    kubernetesClient.secrets().inNamespace(it.id)
+                        .withName(Share_Env_Config_Name)
+                        .get()
+                        ?.data?.map {
+                            EnvShareEnv(it.key, null, true)
+                        }
+                }
                 val tmp = mutableListOf<EnvShareEnv>()
                 x1?.let { tmp.addAll(it) }
                 x2?.let { tmp.addAll(it) }
@@ -199,7 +205,9 @@ internal fun Application.configureConsoleEnv(kubernetesClient: KubernetesClient)
                 val name = it.name
                 val value = call.receive<String>()
                 // 确保存在
-                kubernetesClient.updateOne(it.id, Share_Env_Config_Name, secret, name, value)
+                withContext(Dispatchers.IO) {
+                    kubernetesClient.updateOne(it.id, Share_Env_Config_Name, secret, name, value)
+                }
                 call.respond(HttpStatusCode.NoContent)
             }
         }
@@ -211,7 +219,9 @@ internal fun Application.configureConsoleEnv(kubernetesClient: KubernetesClient)
             }) { _ ->
                 val secret = call.queryParameters["secret"]?.toBoolean() ?: false
                 val name = it.name
-                kubernetesClient.removeOne(it.id, Share_Env_Config_Name, secret, name)
+                withContext(Dispatchers.IO) {
+                    kubernetesClient.removeOne(it.id, Share_Env_Config_Name, secret, name)
+                }
                 call.respond(HttpStatusCode.NoContent)
             }
         }

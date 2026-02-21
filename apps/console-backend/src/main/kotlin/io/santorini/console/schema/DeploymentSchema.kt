@@ -209,6 +209,7 @@ class DeploymentService(
     }
 
     init {
+        logger.info { "Start checking Deployments" }
         transaction(database) {
             SchemaUtils.create(Deployments)
             val sqls = SchemaUtils.addMissingColumnsStatements(Deployments)
@@ -217,6 +218,7 @@ class DeploymentService(
                 exec(it)
             }
         }
+        logger.info { "End checking Deployments" }
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
@@ -449,7 +451,9 @@ class DeploymentService(
                     if (state.finalState) {
                         // 也顺利更新 digest
                         if (dc.digest == null) {
-                            val pods = kubernetesClient.podsInNewReplicaSet(current)
+                            val pods = withContext(Dispatchers.IO) {
+                                kubernetesClient.podsInNewReplicaSet(current)
+                            }
                             if (pods?.isNotEmpty() == true) {
                                 pods.flatMap {
                                     it.status.containerStatuses ?: listOf()

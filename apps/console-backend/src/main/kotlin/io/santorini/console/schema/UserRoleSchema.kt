@@ -164,6 +164,7 @@ class UserRoleService(
     }
 
     init {
+        logger.info { "Start checking UserRoleService" }
         transaction(database) {
             SchemaUtils.create(Users)
             SchemaUtils.create(UserEnvs)
@@ -174,6 +175,7 @@ class UserRoleService(
                 exec(it)
             }
         }
+        logger.info { "End checking UserRoleService" }
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =

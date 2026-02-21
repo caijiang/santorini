@@ -9,6 +9,8 @@ import io.santorini.model.ResourceType
 import io.santorini.model.ServiceRole
 import io.santorini.service.KubernetesClientService
 import io.santorini.service.impl.feishu.FeishuToken
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.*
 
 /**
@@ -16,7 +18,11 @@ import java.util.*
  */
 class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClient) : KubernetesClientService {
     private val logger = KotlinLogging.logger {}
-    override fun currentPodRootOwner(): HasMetadata = kubernetesClient.currentPod().rootOwner(kubernetesClient)
+    override suspend fun currentPodRootOwner(): HasMetadata {
+        return withContext(Dispatchers.IO) {
+            kubernetesClient.currentPod().rootOwner(kubernetesClient)
+        }
+    }
 
     override fun findResourcesInNamespace(namespace: String, type: ResourceType?): List<SantoriniResource> {
         return kubernetesClient.findResourcesInNamespace(namespace, type)
@@ -34,7 +40,12 @@ class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClien
         kubernetesClient.removeResource(namespace, name)
     }
 
-    override fun clusterResourceStat(): ClusterResourceStat = kubernetesClient.clusterResourceStat()
+    override suspend fun clusterResourceStat(): ClusterResourceStat {
+        return withContext(Dispatchers.IO) {
+            kubernetesClient.clusterResourceStat()
+        }
+    }
+
     override fun removeAllServiceRolesFromNamespace(root: HasMetadata, serviceAccountName: String, namespace: String) =
         kubernetesClient.removeAllServiceRolesFromNamespace(root, serviceAccountName, namespace)
 

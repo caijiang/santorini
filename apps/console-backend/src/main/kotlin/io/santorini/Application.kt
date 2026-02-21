@@ -2,6 +2,7 @@ package io.santorini
 
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.fabric8.kubernetes.client.KubernetesClientBuilder
+import io.fabric8.kubernetes.client.jdkhttp.JdkHttpClientFactory
 import io.github.caijiang.common.job.scheduler.KubernetesJobScheduler
 import io.github.caijiang.common.job.scheduler.Scheduler
 import io.github.caijiang.common.job.worker.PersistentJob
@@ -28,7 +29,10 @@ import io.santorini.service.impl.NoticeServiceImpl
 import io.santorini.service.impl.SiteServiceImpl
 import io.santorini.service.impl.feishu.FeishuServiceImpl
 import io.santorini.well.StatusException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.koin.core.parameter.ParametersHolder
@@ -38,6 +42,7 @@ import org.koin.ktor.ext.get
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
 import org.slf4j.event.Level
+import java.util.concurrent.Executors
 
 private val ktLogger = KotlinLogging.logger {}
 fun main(args: Array<String>) {
@@ -87,7 +92,11 @@ fun Application.consoleModuleEntry(
 //            jackson()
         }
     },
-    kubernetesClient: KubernetesClient = KubernetesClientBuilder().build(),
+    kubernetesClient: KubernetesClient = KubernetesClientBuilder()
+        .withHttpClientFactory(
+            JdkHttpClientFactory()
+        )
+        .build(),
     kubernetesClientService: KubernetesClientService = KubernetesClientServiceImpl(kubernetesClient),
     audit: OAuthPlatformUserDataAudit = EnvOAuthPlatformUserDataAudit,
     database: Database = Database.connect(
@@ -106,7 +115,7 @@ fun Application.consoleModuleEntry(
     },
     kubernetesInformerServiceLoader: Scope.(ParametersHolder) -> KubernetesInformerService = {
         KubernetesInformerServiceImpl(get(), get()).apply {
-            loopForLocker()
+            initLocker()
         }
     },
 ) {
@@ -176,21 +185,34 @@ fun Application.consoleModuleEntry(
             }
         })
     }
-    app.get<ScheduleJobService>().submitPersistentJob("* * * * *", object : PersistentJob {
-        override val name: String
-            get() = "santorini-$JOB_HEARTBEAT"
-        override val parameters: Map<String, String>
-            get() = emptyMap()
-        override val type: String
-            get() = JOB_HEARTBEAT
-    })
-    if ("true" == System.getenv("TEST"))
-        app.get<ScheduleJobService>().submitTemporaryJob(object : TemporaryJob {
+    val scheduleJobService = app.get<ScheduleJobService>()
+    val scopedDispatcher = CoroutineScope(Executors.newSingleThreadExecutor {
+        Thread(it).apply {
+            isDaemon = true
+            name = "init-thread"
+        }
+    }.asCoroutineDispatcher())
+    scopedDispatcher.launch {
+        scheduleJobService.submitPersistentJob("* * * * *", object : PersistentJob {
+            override val name: String
+                get() = "santorini-$JOB_HEARTBEAT"
             override val parameters: Map<String, String>
-                get() = mapOf()
+                get() = emptyMap()
             override val type: String
-                get() = JOB_FINE
+                get() = JOB_HEARTBEAT
         })
+        if ("true" == System.getenv("TEST"))
+            scheduleJobService.submitTemporaryJob(object : TemporaryJob {
+                override val parameters: Map<String, String>
+                    get() = mapOf()
+                override val type: String
+                    get() = JOB_FINE
+            })
+    }
+    val informer = app.get<KubernetesInformerService>()
+    scopedDispatcher.launch {
+        informer.loopForLocker()
+    }
 //    monitor.subscribe(ApplicationStarted) {
 //        try {
 //            val deploymentService = get<DeploymentService>()

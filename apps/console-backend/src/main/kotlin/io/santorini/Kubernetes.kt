@@ -6,7 +6,9 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.santorini.kubernetes.createTokenForServiceAccount
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.withContext
 
 /**
  * 配置 kubernetes 相关功能
@@ -23,7 +25,9 @@ fun Application.configureKubernetes(client: KubernetesClient) {
             if (user == null) {
                 call.respond(HttpStatusCode.Unauthorized)
             } else {
-                val token = client.createTokenForServiceAccount(user.serviceAccountName, client.namespace).await()
+                val token = withContext(Dispatchers.IO) {
+                    client.createTokenForServiceAccount(user.serviceAccountName, client.namespace).await()
+                }
                 call.respond(token.status.token)
             }
         }
