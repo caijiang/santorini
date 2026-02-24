@@ -20,10 +20,12 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
+import kotlin.uuid.toKotlinUuid
 
 private val logger = KotlinLogging.logger {}
 
 data class NoticeTargetUser(
+    val userId: Uuid,
     val name: String,
     /**
      * 飞书的 openId
@@ -118,6 +120,7 @@ class UserCareServiceMetaService(
             // 连表查询
             (UserCareServiceMetas innerJoin UserRoleService.Users)
                 .select(
+                    UserRoleService.Users.id,
                     UserRoleService.Users.thirdPlatform,
                     UserRoleService.Users.thirdId,
                     UserRoleService.Users.name,
@@ -129,9 +132,17 @@ class UserCareServiceMetaService(
                 }.map {
                     val platform = it[UserRoleService.Users.thirdPlatform]
                     if (platform == OAuthPlatform.Feishu) {
-                        NoticeTargetUser(it[UserRoleService.Users.name], it[UserRoleService.Users.thirdId])
+                        NoticeTargetUser(
+                            it[UserRoleService.Users.id].value.toKotlinUuid(),
+                            it[UserRoleService.Users.name],
+                            it[UserRoleService.Users.thirdId]
+                        )
                     } else
-                        NoticeTargetUser(it[UserRoleService.Users.name], null)
+                        NoticeTargetUser(
+                            it[UserRoleService.Users.id].value.toKotlinUuid(),
+                            it[UserRoleService.Users.name],
+                            null
+                        )
                 }
         }
     }

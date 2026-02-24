@@ -108,7 +108,17 @@ data class DeploymentDeployData(
      * 专家模式
      */
     val experiment: Boolean? = null,
-)
+) {
+    fun trim(): DeploymentDeployData {
+        return this.copy(
+            imageRepository = imageRepository.trim(),
+            imageTag = imageTag?.trim(),
+        )
+    }
+
+    val imageUrl: String
+        get() = imageTag?.let { "$imageRepository:$it" } ?: imageRepository
+}
 
 /**
  * 列表展示数据

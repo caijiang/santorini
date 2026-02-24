@@ -56,7 +56,7 @@ internal fun Application.configureConsoleDeployment() {
         post<DeploymentResource.Deploy> { deployData ->
             // 这个得检查权限
             withAuthorization {
-                val data = call.receive<DeploymentDeployData>()
+                val data = call.receive<DeploymentDeployData>().trim()
                 logger.info {
                     "提交部署数据:$it, data: $data"
                 }
@@ -65,7 +65,7 @@ internal fun Application.configureConsoleDeployment() {
                 try {
                     // 然后操作 kubernetes
                     call.respond(service.deploy(it.id, deployData, data).toKotlinUuid())
-                    noticeService.newDeployment(it, data)
+                    noticeService.newDeployment(it, data, deployData)
                 } catch (e: Exception) {
                     logger.info(e) { "处理部署时" }
                     call.respond(HttpStatusCode.BadRequest)

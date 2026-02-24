@@ -1,7 +1,9 @@
 package io.santorini.service.impl
 
+import io.fabric8.kubernetes.api.model.autoscaling.v2.HorizontalPodAutoscalerBuilder
+import io.fabric8.kubernetes.api.model.autoscaling.v2.MetricSpecBuilder
+import io.fabric8.kubernetes.api.model.autoscaling.v2.MetricStatusBuilder
 import io.fabric8.kubernetes.api.model.discovery.v1.EndpointSliceBuilder
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -9,6 +11,7 @@ import io.ktor.serialization.kotlinx.json.*
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.santorini.InSiteUserData
 import io.santorini.console.schema.*
 import io.santorini.model.ServiceType
 import io.santorini.service.AsyncTaskServiceImpl
@@ -20,15 +23,15 @@ import io.santorini.service.impl.feishu.workWithLocalFeishu
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Test
+import kotlin.uuid.Uuid
 
 /**
  * @author CJ
  */
 class NoticeServiceImplTest {
-    private val logger = KotlinLogging.logger {}
-
     private val testNamespace = "test"
     private val testServiceId = "demo-service"
+    private val demoUserId = Uuid.random()
 
     private fun withNoticeService(block: suspend NoticeService.() -> Unit) {
         runTest {
@@ -52,7 +55,7 @@ class NoticeServiceImplTest {
                                 eq(testNamespace), eq(testServiceId)
                             )
                         } returns listOf(
-                            NoticeTargetUser("abc", config.demoUserOpenId)
+                            NoticeTargetUser(demoUserId, "abc", config.demoUserOpenId)
                         )
                     },
                     mockk<ServiceMetaService>().apply {
@@ -123,8 +126,7 @@ class NoticeServiceImplTest {
                 EndpointSliceBuilder().build(),
             )
         }
-        logger.info { "sleep!" }
-        Thread.sleep(5000)
+        takeRest()
     }
 
     private fun mockMetadataLabels(): Map<String, String> = mapOf("kubernetes.io/service-name" to testServiceId)
@@ -133,10 +135,82 @@ class NoticeServiceImplTest {
 
     @Test
     fun autoScalingHappen() {
-
+        withNoticeService {
+            val obj = HorizontalPodAutoscalerBuilder()
+                .withNewMetadata()
+                .withNamespace(mockMetadataNamespace())
+                .withLabels<String, String>(mockMetadataLabels())
+                .endMetadata()
+                .withNewSpec()
+                .withNewScaleTargetRef()
+                .withName(testServiceId)
+                .endScaleTargetRef()
+                // 这是 cpu
+                .withMetrics(
+                    MetricSpecBuilder()
+                        .withType("Resource")
+                        .withNewResource()
+                        .withName("cpu")
+                        .withNewTarget()
+                        .withType("Utilization")
+                        .withAverageUtilization(50)
+                        .endTarget()
+                        .endResource()
+                        .build()
+                )
+                .endSpec()
+                .withNewStatus()
+                .withCurrentMetrics(
+                    MetricStatusBuilder()
+                        .withType("Resource")
+                        .withNewResource()
+                        .withNewCurrent()
+                        .withAverageUtilization(80)
+                        .endCurrent()
+                        .endResource()
+                        .build()
+                )
+                .endStatus()
+                .build()
+            autoScalingHappen(
+                1, 5,
+                obj,
+                obj,
+            )
+        }
+        takeRest()
     }
 
     @Test
     fun newDeployment() {
+        val id = Uuid.random()
+        withNoticeService {
+            this.newDeployment(
+                mockk<InSiteUserData>(relaxed = true).apply {
+                    val d = this
+                    every {
+                        d.name
+                    } returns "某个用户"
+                    every {
+                        d.id
+                    } returns id
+                },
+                mockk<DeploymentDeployData>(relaxed = true).apply {
+                    val d = this
+                    every {
+                        d.imageUrl
+                    } returns "target"
+                },
+                DeploymentResource.Deploy(
+                    DeploymentResource(), testServiceId, testNamespace
+                ),
+            )
+        }
+        takeRest()
+    }
+
+    private fun takeRest() {
+//        logger.info { "sleep!" }
+        Thread.sleep(500)
     }
 }

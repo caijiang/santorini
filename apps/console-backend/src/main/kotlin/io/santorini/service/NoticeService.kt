@@ -4,6 +4,7 @@ import io.fabric8.kubernetes.api.model.autoscaling.v2.HorizontalPodAutoscaler
 import io.fabric8.kubernetes.api.model.discovery.v1.EndpointSlice
 import io.santorini.InSiteUserData
 import io.santorini.console.schema.DeploymentDeployData
+import io.santorini.console.schema.DeploymentResource
 
 /**
  * 所有方法都应该立刻完成，并且不要抛出异常
@@ -28,5 +29,5 @@ interface NoticeService {
     /**
      * 新的部署通知
      */
-    fun newDeployment(userData: InSiteUserData, data: DeploymentDeployData)
+    fun newDeployment(userData: InSiteUserData, data: DeploymentDeployData, deploy: DeploymentResource.Deploy)
 }
