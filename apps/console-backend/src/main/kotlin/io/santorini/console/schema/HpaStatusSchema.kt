@@ -11,6 +11,8 @@ import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.math.BigDecimal
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 /**
@@ -188,6 +190,19 @@ class HpaStatusService(
                 it[targetType] = hpaTarget.type
                 it[targetValue] = hpaTarget.value
                 it[currentValue] = current
+            }
+        }
+    }
+
+    /**
+     * 删除没有必要的数据，一个礼拜前
+     */
+    suspend fun deleteUnnecessary() {
+        dbQuery {
+            HpaStatuses.deleteWhere {
+                createTime less (
+                        Clock.System.now().minus(7.days)
+                        )
             }
         }
     }

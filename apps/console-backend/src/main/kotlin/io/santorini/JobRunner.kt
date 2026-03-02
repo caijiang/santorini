@@ -5,6 +5,7 @@ import io.github.caijiang.common.job.worker.SerializableJob
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.*
 import io.santorini.console.schema.DeploymentService
+import io.santorini.console.schema.HpaStatusService
 import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.get
 
@@ -32,6 +33,7 @@ class JobRunner(
                 ktLogger.debug { "系统心跳" }
                 try {
                     deploymentService.heart()
+                    application.get<HpaStatusService>().deleteUnnecessary()
                 } catch (e: Exception) {
                     ktLogger.warn(e) {
                         "业务问题"
