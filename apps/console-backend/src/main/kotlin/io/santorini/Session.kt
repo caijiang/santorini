@@ -2,6 +2,7 @@ package io.santorini
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
+import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
@@ -18,7 +19,7 @@ fun RoutingCall.saveUserData(data: InSiteUserData?) {
     }
 }
 
-fun RoutingCall.queryUserData(): InSiteUserData? {
+fun ApplicationCall.queryUserData(): InSiteUserData? {
     val current = sessions.get<String>() ?: return null
     log.debug { "Getting user data from data: $current" }
     val s1 = AesGcmCrypto.decrypt(current, key)
@@ -32,14 +33,26 @@ suspend fun RoutingContext.withAuthorization(
     audit: suspend (InSiteUserData) -> Boolean = { true },
     block: suspend RoutingContext.(InSiteUserData) -> Unit
 ) {
-    val user = call.queryUserData()
+    call.withCallAuthorization(audit) {
+        block(it)
+    }
+}
+
+/**
+ * 按授权
+ */
+suspend fun ApplicationCall.withCallAuthorization(
+    audit: suspend (InSiteUserData) -> Boolean = { true },
+    block: suspend ApplicationCall.(InSiteUserData) -> Unit
+) {
+    val user = queryUserData()
     if (user == null) {
-        call.respond(HttpStatusCode.Unauthorized)
+        respond(HttpStatusCode.Unauthorized)
     } else {
         if (audit(user)) {
             block(user)
         } else {
-            call.respond(HttpStatusCode.Forbidden)
+            respond(HttpStatusCode.Forbidden)
         }
     }
 }

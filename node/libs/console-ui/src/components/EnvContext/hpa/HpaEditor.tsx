@@ -21,6 +21,7 @@ import {
   HorizontalPodAutoscaler,
   IIoK8sApiAutoscalingV2MetricSpec,
 } from 'kubernetes-models/autoscaling/v2';
+import HpaLiveLineTooltipContext from './HpaLiveLineTooltipContext';
 
 interface HpaEditorProps {
   service: ServiceConfigData;
@@ -69,9 +70,9 @@ function cpuUtilizationNumber(
 ) {
   return metrics?.find(
     (it) =>
-      it.type == 'Resource' &&
-      it.resource?.name == 'cpu' &&
-      it.resource?.target?.type == 'Utilization'
+      it.type === 'Resource' &&
+      it.resource?.name === 'cpu' &&
+      it.resource?.target?.type === 'Utilization'
   )?.resource?.target?.averageUtilization;
 }
 
@@ -80,9 +81,9 @@ function memoryUtilizationNumber(
 ) {
   return metrics?.find(
     (it) =>
-      it.type == 'Resource' &&
-      it.resource?.name == 'memory' &&
-      it.resource?.target?.type == 'Utilization'
+      it.type === 'Resource' &&
+      it.resource?.name === 'memory' &&
+      it.resource?.target?.type === 'Utilization'
   )?.resource?.target?.averageUtilization;
 }
 
@@ -118,27 +119,11 @@ function toHorizontalPodAutoscaler(
       metrics: [
         cpuUtilization(input.cpuUtilization),
         memoryUtilization(input.memoryUtilization),
-      ]
-        .filter((it) => !!it)
-        .map((it) => it!!),
+      ].filter((it) => !!it),
     },
   });
 }
 
-// spec:
-//   maxReplicas: 10
-//   metrics:
-//   - resource:
-//       name: memory
-//       target:
-//         averageUtilization: 13
-//         type: Utilization
-//     type: Resource
-//   minReplicas: 1
-//   scaleTargetRef:
-//     apiVersion: apps/v1
-//     kind: Deployment
-//     name: lecai-nginx
 /**
  * 自己管理是否已经打开的状态，不浪费流量
  * @constructor
@@ -184,7 +169,7 @@ const HpaEditor: React.FC<HpaEditorProps> = ({
     if (hpaLoading) return null;
     if (!hpa) return undefined;
     return toForm(hpa);
-  }, [open, hpaLoading]);
+  }, [open, hpaLoading, hpa]);
   useEffect(() => {
     const to = setTimeout(() => {
       form.resetFields();
@@ -193,16 +178,22 @@ const HpaEditor: React.FC<HpaEditorProps> = ({
       clearTimeout(to);
     };
   }, [initFormData, form]);
-  // console.debug('initFormData:', initFormData);
+
   return (
     <>
-      <Button
-        title={'编辑自动伸缩配置'}
-        onClick={() => setOpen(true)}
-        {...triggerProps}
+      <HpaLiveLineTooltipContext
+        serviceId={service.id}
+        envId={envId}
+        width={400}
       >
-        <ArrowsAltOutlined />
-      </Button>
+        <Button
+          title={'编辑自动伸缩配置'}
+          onClick={() => setOpen(true)}
+          {...triggerProps}
+        >
+          <ArrowsAltOutlined />
+        </Button>
+      </HpaLiveLineTooltipContext>
       <Modal
         destroyOnHidden
         title={'自动伸缩配置'}
@@ -245,7 +236,7 @@ const HpaEditor: React.FC<HpaEditorProps> = ({
               message.success(successMessage);
             }
           } catch (e) {
-            const { errorFields } = e as any;
+            const { errorFields } = e as never;
             if (errorFields) {
               return;
               // 验证错误？
@@ -284,7 +275,7 @@ const HpaEditor: React.FC<HpaEditorProps> = ({
                     rules={[
                       { required: true, message: '规模限制必须输入' },
                       {
-                        validator: (_: any, value: any) => {
+                        validator: (_: never, value: number[]) => {
                           if (!value || value.length !== 2) {
                             return Promise.reject(
                               new Error('规模限制必须输入')

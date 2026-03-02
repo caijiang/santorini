@@ -19,7 +19,7 @@ class KubernetesInformerServiceImplTest {
     @Test
     fun previewWatch() = runTest {
         workWithLocalKubernetesCluster(javaClass) {
-            val service = KubernetesInformerServiceImpl(this, mockk())
+            val service = KubernetesInformerServiceImpl(this, mockk(), mockk(), mockk())
             val namespace = "test-ns"
             // 不再继续研究，计划用应用获取到的操作作为
 //            val deploymentInformer = this.apps().deployments()

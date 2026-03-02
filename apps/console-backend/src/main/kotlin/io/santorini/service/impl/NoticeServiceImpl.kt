@@ -1,14 +1,13 @@
 package io.santorini.service.impl
 
-import io.fabric8.kubernetes.api.model.Quantity
 import io.fabric8.kubernetes.api.model.autoscaling.v2.HorizontalPodAutoscaler
-import io.fabric8.kubernetes.api.model.autoscaling.v2.MetricSpec
-import io.fabric8.kubernetes.api.model.autoscaling.v2.MetricValueStatus
-import io.fabric8.kubernetes.api.model.autoscaling.v2.ResourceMetricSource
 import io.fabric8.kubernetes.api.model.discovery.v1.EndpointSlice
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.santorini.InSiteUserData
 import io.santorini.console.schema.*
+import io.santorini.kubernetes.belongs
+import io.santorini.kubernetes.toCurrentValue
+import io.santorini.kubernetes.toHpaTarget
 import io.santorini.service.AsyncTaskService
 import io.santorini.service.FeishuService
 import io.santorini.service.NoticeService
@@ -102,14 +101,10 @@ class NoticeServiceImpl(
         newObj: HorizontalPodAutoscaler
     ) {
         asyncTaskService.submit {
-            val namespace = oldObj.metadata.namespace
-            // scaleTargetRef=CrossVersionObjectReference(apiVersion=apps/v1, kind=Deployment, name=demo-service-137, additionalProperties={}),
-            val serviceId = oldObj.spec?.scaleTargetRef?.name
+            val (namespace, serviceId) = oldObj.belongs()
             logger.debug { "start autoScalingHappen $oldDesiredReplicas,$newDesiredReplicas, $serviceId, $namespace" }
             workWithServiceMetaFocus(namespace, serviceId) { service, env ->
-                val metricSpec = oldObj.spec?.metrics?.firstOrNull {
-                    it.type == "Resource"
-                }
+                val target = oldObj.toHpaTarget()
 
                 val post = FeishuPost(
                     "${siteService.appName}正在汇报服务自动伸缩警告",
@@ -119,16 +114,20 @@ class NoticeServiceImpl(
                                     listOf(FeishuTags.text("的")) +
                                     service.toTagsWithoutLink() +
                                     listOfNotNull(
-                                        metricSpec?.resource?.toHumanReadString()?.let {
+                                        target?.toHumanReadString().let {
                                             FeishuTags.text("因为其自动伸缩设置[$it]")
                                         }
                                     ) +
                                     listOfNotNull(
-                                        newObj.status?.currentMetrics?.firstOrNull {
-                                            it.type == metricSpec?.type
-                                        }?.resource?.current?.toHumanReadString(metricSpec)?.let {
-                                            FeishuTags.text("当前$it，")
+                                        target?.let {
+                                            val v = newObj.toCurrentValue(it)
+                                            if (v == null)
+                                                null
+                                            else it.currentToHumanReadString(v)
                                         }
+                                            ?.let {
+                                                FeishuTags.text("当前$it，")
+                                            }
                                     ) +
                                     listOf(
                                         FeishuTags.text("集群规模正在从"),
@@ -214,66 +213,6 @@ class NoticeServiceImpl(
         }
     }
 
-}
-
-private fun MetricValueStatus.toHumanReadString(metricSpec: MetricSpec?): String {
-    val target = metricSpec?.resource?.target
-    if ("cpu".equals(metricSpec?.resource?.name, true)) {
-        if ("Utilization".equals(target?.type, ignoreCase = true)) {
-            return "平均CPU使用率${averageUtilization}%"
-        }
-        if ("Value".equals(target?.type, ignoreCase = true)) {
-            return "总CPU用量${Quantity.getAmountInBytes(value)}核"
-        }
-        if ("AverageValue".equals(target?.type, ignoreCase = true)) {
-            return "平均CPU用量${Quantity.getAmountInBytes(averageValue)}核"
-        }
-        throw IllegalArgumentException("并不支持:${target?.type}")
-    }
-    if ("memory".equals(metricSpec?.resource?.name, ignoreCase = true)) {
-        if ("Utilization".equals(target?.type, ignoreCase = true)) {
-            return "平均内存使用率${averageUtilization}%"
-        }
-        if ("Value".equals(target?.type, ignoreCase = true)) {
-            return "总内存用量${Quantity.getAmountInBytes(value) / (1024.toBigDecimal() * 1024.toBigDecimal())}M"
-        }
-        if ("AverageValue".equals(target?.type, ignoreCase = true)) {
-            return "平均内存用量${Quantity.getAmountInBytes(averageValue) / (1024.toBigDecimal() * 1024.toBigDecimal())}M"
-        }
-        throw IllegalArgumentException("并不支持:${target?.type}")
-    }
-    throw IllegalArgumentException("并不支持:${metricSpec?.resource?.name}")
-}
-
-private fun ResourceMetricSource?.toHumanReadString(): String? {
-    if (this == null) {
-        return null
-    }
-    if ("cpu".equals(name, ignoreCase = true)) {
-        if ("Utilization".equals(target.type, ignoreCase = true)) {
-            return "平均CPU使用率${target.averageUtilization}%"
-        }
-        if ("Value".equals(target.type, ignoreCase = true)) {
-            return "总CPU用量${Quantity.getAmountInBytes(target.value)}核"
-        }
-        if ("AverageValue".equals(target.type, ignoreCase = true)) {
-            return "平均CPU用量${Quantity.getAmountInBytes(target.averageValue)}核"
-        }
-        throw IllegalArgumentException("并不支持:${target.type}")
-    }
-    if ("memory".equals(name, ignoreCase = true)) {
-        if ("Utilization".equals(target.type, ignoreCase = true)) {
-            return "平均内存使用率${target.averageUtilization}%"
-        }
-        if ("Value".equals(target.type, ignoreCase = true)) {
-            return "总内存用量${Quantity.getAmountInBytes(target.value) / (1024.toBigDecimal() * 1024.toBigDecimal())}M"
-        }
-        if ("AverageValue".equals(target.type, ignoreCase = true)) {
-            return "平均内存用量${Quantity.getAmountInBytes(target.averageValue) / (1024.toBigDecimal() * 1024.toBigDecimal())}M"
-        }
-        throw IllegalArgumentException("并不支持:${target.type}")
-    }
-    throw IllegalArgumentException("并不支持:${name}")
 }
 
 private fun String.toTags(env: EnvData?): List<FeishuTag> {

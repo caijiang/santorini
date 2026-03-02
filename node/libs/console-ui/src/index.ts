@@ -19,6 +19,7 @@ import { kubeHpaApi } from './apis/kubernetes/hpa';
 import { advancedApi } from './apis/advanced';
 import { serverSideApplySlice } from './slices/serverSideApply';
 import { userCaresApi } from './apis/userCares';
+import { hpaLiveSlice } from './slices/hpaLiveSlice';
 
 export { useAppNameQuery };
 
@@ -42,6 +43,7 @@ export default {
     listenerMiddleware.middleware,
   ],
   reducers: {
+    [hpaLiveSlice.name]: hpaLiveSlice.reducer,
     [tokenApi.reducerPath]: tokenApi.reducer,
     [commonApi.reducerPath]: commonApi.reducer,
     [kubeServiceApi.reducerPath]: kubeServiceApi.reducer,

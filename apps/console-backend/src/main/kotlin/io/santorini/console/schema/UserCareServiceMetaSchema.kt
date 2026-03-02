@@ -46,7 +46,7 @@ class UserCareServiceMetaService(
     object UserCareServiceMetas : Table() {
         val user = reference("user_id", UserRoleService.Users)
         val env = reference("env_id", EnvService.Envs)
-        val service = reference("project_id", ServiceMetaService.ServiceMetas)
+        val service = reference("service_id", ServiceMetaService.ServiceMetas)
         val createTime = timestamp("create_time")
 
         override val primaryKey = PrimaryKey(

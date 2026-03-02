@@ -25,6 +25,7 @@ fun Application.configureConsole(kubernetesClient: KubernetesClient) {
     configureConsoleUser()
     configureConsoleEnvWiki()
     configureConsoleAdvanced()
+    configureHpaLive()
     installScheduler(
         ServerConfig(
             prefix = System.getenv("SCHEDULER_REQUEST_PREFIX") ?: "/santorini/no_body_knows",

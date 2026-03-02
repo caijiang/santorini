@@ -18,6 +18,7 @@ import io.ktor.server.application.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
+import io.ktor.server.sse.*
 import io.santorini.console.configureConsole
 import io.santorini.console.schema.*
 import io.santorini.informer.KubernetesInformerService
@@ -114,7 +115,7 @@ fun Application.consoleModuleEntry(
         )
     },
     kubernetesInformerServiceLoader: Scope.(ParametersHolder) -> KubernetesInformerService = {
-        KubernetesInformerServiceImpl(get(), get()).apply {
+        KubernetesInformerServiceImpl(get(), get(), get(), get()).apply {
             initLocker()
         }
     },
@@ -173,6 +174,9 @@ fun Application.consoleModuleEntry(
             }
             single {
                 UserCareServiceMetaService(database)
+            }
+            single {
+                HpaStatusService(database)
             }
             single<ScheduleJobService> {
                 scheduleJobServiceLoader(it, app)
@@ -240,6 +244,7 @@ fun Application.consoleModuleEntry(
             ktLogger.warn(e) { "关闭时，不太关心" }
         }
     }
+    install(SSE)
     install(StatusPages) {
         exception<StatusException> { call, cause ->
             call.respond(cause.status)
