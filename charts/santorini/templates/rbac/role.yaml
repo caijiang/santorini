@@ -6,6 +6,14 @@ metadata:
   labels:
     {{- include "common.labels.withoutName" . | nindent 4 }}
 rules:
+  - apiGroups: [ "coordination.k8s.io" ]
+    resources: [ "leases" ]
+    resourceNames: [ "{{ include "common.santoriniConsoleBackendName" . }}-inform" ]
+    verbs: [ "get","create","update","patch","delete","deletecollection","watch","list" ]
+  - apiGroups: [ "coordination.k8s.io" ]
+    resources: [ "leases" ]
+    resourceNames: [ ]
+    verbs: [ "create"]
   - apiGroups: [ "rbac.authorization.k8s.io" ]
     resources: [ "rolebindings" ]
     resourceNames: [ ]

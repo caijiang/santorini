@@ -49,7 +49,7 @@ rules:
   - apiGroups: [ "autoscaling" ]
     resources: [ "horizontalpodautoscalers" ]
     resourceNames: [ ]
-    verbs: [ "list","get","create", "update", "delete", "patch" ]
+    verbs: [ "list","get","create", "update", "delete", "patch","watch" ]
   - apiGroups: [ "" ]
     resources: [ "namespaces" ]
     resourceNames: [ ]
