@@ -5,6 +5,7 @@ import io.fabric8.kubernetes.client.KubernetesClient
 import io.fabric8.kubernetes.client.extended.leaderelection.LeaderCallbacks
 import io.fabric8.kubernetes.client.extended.leaderelection.LeaderElectionConfigBuilder
 import io.fabric8.kubernetes.client.extended.leaderelection.LeaderElector
+import io.fabric8.kubernetes.client.extended.leaderelection.resourcelock.LeaseLock
 import io.fabric8.kubernetes.client.informers.ResourceEventHandler
 import io.fabric8.kubernetes.client.informers.SharedIndexInformer
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -109,11 +110,11 @@ class KubernetesInformerServiceImpl(
         val callback = this.callback ?: return
 
         logger.info { "Kubernetes informer loop for $identity" }
-        val name = identity.substring(0, identity.lastIndexOf('-'))
+        val name = identity.findPureNameFromIdentify()
         val leaseName = "$name-inform"
         // 创建 LeaseLock
         val lock = withContext(Dispatchers.IO) {
-            io.fabric8.kubernetes.client.extended.leaderelection.resourcelock.LeaseLock(
+            LeaseLock(
                 kubernetesClient.namespace,
                 leaseName,
                 identity
@@ -144,4 +145,13 @@ class KubernetesInformerServiceImpl(
         elector.start()
         logger.info { "elector started." }
     }
+}
+
+/**
+ * 也就是 hostname
+ */
+fun String.findPureNameFromIdentify(): String {
+    val x = lastIndexOf("console-backend")
+    if (x != -1) return substring(0, x + "console-backend".length)
+    return substring(0, lastIndexOf('-'))
 }
