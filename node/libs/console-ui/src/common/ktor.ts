@@ -10,10 +10,12 @@ export interface PageResult<T> {
 
 // 这里是开发 ktor 服务端的几个简单约定
 export function toKtorRequest<
+  // eslint-disable-next-line
   DataType = Record<string, any>,
   ParamType = Record<string, string>
 >(
   requestUri: string,
+  // eslint-disable-next-line
   customParams?: (input: ParamType) => any
 ): ProTableProps<DataType, ParamType>['request'] {
   // , sorter, filter
@@ -27,7 +29,7 @@ export function toKtorRequest<
           : otherParams
         : undefined;
     // 如果没有请求分页
-    if (pageSize != undefined && current != undefined) {
+    if (pageSize !== undefined && current !== undefined) {
       const rs = await baseAxios<PageResult<DataType>>(uri, {
         params: {
           limit: pageSize,
@@ -61,10 +63,10 @@ export function toKtorRequest<
   };
 }
 
-export function toInnaNameRule(number: number = 15) {
+export function toInnaNameRule(n = 15) {
   return {
-    pattern: RegExp(`^[a-z]([a-z0-9-]{0,${number - 1}})$`),
-    message: `非法 IANA Name（必须是 1–${number} 位小写字母、数字或 -，且字母开头）`,
+    pattern: RegExp(`^[a-z]([a-z0-9-]{0,${n - 1}})$`),
+    message: `非法 IANA Name（必须是 1–${n} 位小写字母、数字或 -，且字母开头）`,
   };
 }
 

@@ -9,6 +9,7 @@ import io.github.caijiang.common.job.worker.PersistentJob
 import io.github.caijiang.common.job.worker.ScheduleJobService
 import io.github.caijiang.common.job.worker.TemporaryJob
 import io.github.caijiang.common.job.worker.bean.SchedulerScheduleJobService
+import io.github.caijiang.common.logging.LoggingUtils
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
@@ -55,6 +56,7 @@ fun main(args: Array<String>) {
  * 模块入口
  */
 fun Application.consoleModule() {
+    LoggingUtils.slf4jLoggerLevelFromEnvironment()
     consoleModuleEntry()
 }
 

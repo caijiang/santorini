@@ -4,6 +4,8 @@
       <env name="FEISHU_APP_ID" value="cli_a65cc60f00ee900c" />
       <env name="FEISHU_APP_SECRET" value="jNbIn9mYRmM8yBf1rMnIRdItgPQj2Fc3" />
       <env name="FEISHU_CALLBACK_URL" value="http://localhost:8080/callbackFeishu" />
+      <env name="HOSTNAME" value="gggggggg" />
+      <env name="LOG_LEVEL1_io.ktor.server.routing.Routing" value="trace" />
     </envs>
     <option name="MAIN_CLASS_NAME" value="io.ktor.server.cio.EngineMain" />
     <module name="santorini.apps.console-backend.main" />
