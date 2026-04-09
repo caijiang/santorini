@@ -30,4 +30,9 @@ interface NoticeService {
      * 新的部署通知
      */
     fun newDeployment(userData: InSiteUserData, data: DeploymentDeployData, deploy: DeploymentResource.Deploy)
+
+    /**
+     * 服务被调整
+     */
+    fun serviceMetaDataUpdated(userData: InSiteUserData, id: String)
 }

@@ -38,17 +38,19 @@ class NoticeServiceImpl(
         serviceId: String?,
         feishuBlock: suspend Set<FeishuUser>.(service: ServiceMetaData, env: EnvData?) -> Unit
     ) {
-        if (namespace == null || serviceId == null) {
+        if (serviceId == null) {
             logger.warn {
-                " workWithFeishu 没有合法信息的资源: namespace:${namespace}, serviceId:${serviceId}"
+                " workWithFeishu 没有合法信息的资源,service is null: namespace:${namespace}"
             }
         } else {
-            userCareServiceMetaService.listNoticeTarget(namespace, serviceId).feishuTasksWithoutNames {
+            userCareServiceMetaService.listNoticeTarget(namespace, serviceId).feishuTasksWithoutNames { userSet ->
                 // 获取服务信息
-                logger.debug { "listNoticeTarget, result: $it" }
+                logger.debug { "listNoticeTarget, result: $userSet" }
                 val service = serviceMetaService.readServiceMetaData(serviceId) ?: return@feishuTasksWithoutNames
-                val env = envService.read(listOf(namespace)).firstOrNull()
-                it.feishuBlock(service, env)
+                val env = namespace?.let {
+                    envService.read(listOf(it)).firstOrNull()
+                }
+                userSet.feishuBlock(service, env)
             }
         }
     }
@@ -213,6 +215,45 @@ class NoticeServiceImpl(
         }
     }
 
+    override fun serviceMetaDataUpdated(userData: InSiteUserData, id: String) {
+        logger.debug {
+            "serviceMetaDataUpdated ${userData},${id}"
+        }
+        asyncTaskService.submit {
+            workWithServiceMetaFocus(null, id) { service, env ->
+                val post = FeishuPost(
+                    "${siteService.appName}正在汇报服务配置被修改信息",
+                    listOf(
+                        FeishuParagraph(
+                            listOf(FeishuTags.text(userData.name, listOf("bold")), FeishuTags.text("正在修改")) +
+                                    service.toTagsWithoutLink() +
+                                    listOfNotNull(
+                                        FeishuTags.text("的配置。"),
+                                    )
+                        ),
+                        FeishuParagraph(
+                            listOf(
+                                FeishuTags.link(
+                                    "${siteService.siteHome}/services/${service.id}/edit",
+                                    "查看详情"
+                                )
+                            )
+                        )
+                    )
+                )
+
+                this.filter {
+                    it.user.userId != userData.id
+                }.forEach {
+                    asyncTaskService.submit {
+                        withContext(Dispatchers.IO) {
+                            feishuService.sendSingleMessage(it.feishuOpenId, post)
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 private fun String.toTags(env: EnvData?): List<FeishuTag> {

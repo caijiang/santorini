@@ -115,10 +115,13 @@ class UserCareServiceMetaService(
         }
     }
 
-    suspend fun listNoticeTarget(namespace: String, serviceId: String): List<NoticeTargetUser> {
+    /**
+     * @param namespace 如果缺省则忽视
+     */
+    suspend fun listNoticeTarget(namespace: String?, serviceId: String): List<NoticeTargetUser> {
         return dbQuery {
             // 连表查询
-            (UserCareServiceMetas innerJoin UserRoleService.Users)
+            val q1 = (UserCareServiceMetas innerJoin UserRoleService.Users)
                 .select(
                     UserRoleService.Users.id,
                     UserRoleService.Users.thirdPlatform,
@@ -127,23 +130,30 @@ class UserCareServiceMetaService(
                 )
                 .where {
                     service eq serviceId
-                }.andWhere {
-                    env eq namespace
-                }.map {
-                    val platform = it[UserRoleService.Users.thirdPlatform]
-                    if (platform == OAuthPlatform.Feishu) {
-                        NoticeTargetUser(
-                            it[UserRoleService.Users.id].value.toKotlinUuid(),
-                            it[UserRoleService.Users.name],
-                            it[UserRoleService.Users.thirdId]
-                        )
-                    } else
-                        NoticeTargetUser(
-                            it[UserRoleService.Users.id].value.toKotlinUuid(),
-                            it[UserRoleService.Users.name],
-                            null
-                        )
                 }
+
+            val q2 = namespace?.let {
+                q1.andWhere {
+                    env eq it
+                }
+            } ?: q1
+
+            q2.map {
+                val platform = it[UserRoleService.Users.thirdPlatform]
+                if (platform == OAuthPlatform.Feishu) {
+                    NoticeTargetUser(
+                        it[UserRoleService.Users.id].value.toKotlinUuid(),
+                        it[UserRoleService.Users.name],
+                        it[UserRoleService.Users.thirdId]
+                    )
+                } else
+                    NoticeTargetUser(
+                        it[UserRoleService.Users.id].value.toKotlinUuid(),
+                        it[UserRoleService.Users.name],
+                        null
+                    )
+            }
+                .distinct()
         }
     }
 

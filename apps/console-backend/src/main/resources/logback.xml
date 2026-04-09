@@ -15,6 +15,6 @@
     <!--    <logger name="io.santorini.schema" level="debug"/>-->
     <!--    <logger name="io.santorini.console" level="debug"/>-->
     <logger name="io.santorini.console.HpaLive" level="info"/>
-    <logger name="io.santorini.informer" level="trace"/>
+    <logger name="io.santorini.informer" level="info"/>
     <logger name="io.fabric8.kubernetes" level="info"/>
 </configuration>

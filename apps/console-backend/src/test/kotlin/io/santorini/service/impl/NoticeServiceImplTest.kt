@@ -52,7 +52,9 @@ class NoticeServiceImplTest {
                         val svc = this
                         coEvery {
                             svc.listNoticeTarget(
-                                eq(testNamespace), eq(testServiceId)
+                                matchNullable {
+                                    it == null || it == testNamespace
+                                }, eq(testServiceId)
                             )
                         } returns listOf(
                             NoticeTargetUser(demoUserId, "abc", config.demoUserOpenId)
@@ -204,6 +206,26 @@ class NoticeServiceImplTest {
                 DeploymentResource.Deploy(
                     DeploymentResource(), testServiceId, testNamespace
                 ),
+            )
+        }
+        takeRest()
+    }
+
+    @Test
+    fun serviceMetaDataUpdated() {
+        val id = Uuid.random()
+        withNoticeService {
+            this.serviceMetaDataUpdated(
+                mockk<InSiteUserData>(relaxed = true).apply {
+                    val d = this
+                    every {
+                        d.name
+                    } returns "某个用户"
+                    every {
+                        d.id
+                    } returns id
+                },
+                testServiceId,
             )
         }
         takeRest()

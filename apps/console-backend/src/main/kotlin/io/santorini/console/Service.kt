@@ -9,11 +9,12 @@ import io.ktor.server.resources.post
 import io.ktor.server.resources.put
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.santorini.OAuthPlatformUserDataAuditResult
 import io.santorini.console.schema.*
 import io.santorini.model.ServiceRole
+import io.santorini.service.NoticeService
 import io.santorini.withAuthorization
 import org.koin.ktor.ext.inject
+import org.koin.ktor.ext.get as koinGet
 
 private val logger = KotlinLogging.logger {}
 
@@ -22,6 +23,7 @@ internal fun Application.configureConsoleService() {
     val deploymentService = inject<DeploymentService>().value
     val userService = inject<UserRoleService>().value
     val userCareServiceMetaService = inject<UserCareServiceMetaService>().value
+    val noticeService = koinGet<NoticeService>()
     // 一般人员可以读取 env
     routing {
         //<editor-fold desc="用户可以管理自身专注">
@@ -54,14 +56,18 @@ internal fun Application.configureConsoleService() {
             }
         }
         put<ServiceMetaResource.Id> {
-            withAuthorization({
-                it.audit == OAuthPlatformUserDataAuditResult.Manager
-            }) { _ ->
-                val text = call.receiveText()
-                val context = receiveFromJson<ServiceMetaData>(text)
-                logger.info { "准备更新服务:$context" }
-                service.update(it.id, context)
-                call.respond(HttpStatusCode.OK)
+            withAuthorization { user ->
+                if (userService.readServiceRoleByUser(user.id)[it.id]?.contains(ServiceRole.Owner) != true) {
+                    logger.info { "用户:${user} 越权修改服务:${it.id}" }
+                    call.respond(HttpStatusCode.Forbidden)
+                } else {
+                    val text = call.receiveText()
+                    val context = receiveFromJson<ServiceMetaData>(text)
+                    logger.info { "准备更新服务:$context" }
+                    service.update(it.id, context)
+                    noticeService.serviceMetaDataUpdated(user, it.id)
+                    call.respond(HttpStatusCode.OK)
+                }
             }
         }
         get<ServiceMetaResource> {
