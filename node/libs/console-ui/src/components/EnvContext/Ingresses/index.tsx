@@ -1,14 +1,14 @@
 // noinspection HttpUrlsUsage
 
 import { IIngress } from 'kubernetes-models/networking.k8s.io/v1';
-import { HostSummary, useSyncHostMutation } from '../../../apis/host';
+import { HostSummary } from '../../../apis/host';
 import { CUEnv } from '../../../apis/env';
 import {
   useEditIngressMutation,
   useIngressesQuery,
   useRemoveIngressMutation,
 } from '../../../apis/kubernetes/ingress';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import _ from 'lodash';
 import { useEnvContext } from '../../../layouts/EnvLayout';
 import {
@@ -34,9 +34,10 @@ import {
 } from '@ant-design/icons';
 import yamlGenerator from '../../../apis/kubernetes/yamlGenerator';
 import PreAuthorize from '../../../tor/PreAuthorize';
+import { useVisitableQuery } from '../../../apis/service';
 
 function toHostSummary(ingress: IIngress): HostSummary {
-  const name = ingress.spec?.rules!![0].host!!;
+  const name = ingress.spec?.rules?.[0].host || '';
   return {
     hostname: name,
     issuerName:
@@ -46,7 +47,10 @@ function toHostSummary(ingress: IIngress): HostSummary {
   };
 }
 
-// 其实通过 hook 也能做到。。。
+/**
+ * 还应该做到，过滤掉当前用户不肯见的服务
+ * @param env
+ */
 function useIngresses(env: CUEnv): {
   ingresses: IIngress[] | undefined;
   reason?: string;
@@ -59,33 +63,32 @@ function useIngresses(env: CUEnv): {
    */
   hostNamesWithTl: string[] | undefined;
 } {
-  const { data: ingresses } = useIngressesQuery(env);
-  const [api] = useSyncHostMutation();
+  const { data: ingresses0 } = useIngressesQuery(env);
+  // 我需要知道我能够访问到实例
+  const { data: serviceIds } = useVisitableQuery(env.id);
+  const ingresses = useMemo(() => {
+    if (!ingresses0) return undefined;
+    if (!serviceIds) return undefined;
+    return ingresses0.filter((it) =>
+      it.spec?.rules?.some((r) =>
+        r.http?.paths?.some((path) => {
+          const name = path.backend?.service?.name;
+          return name && serviceIds.includes(name);
+        })
+      )
+    );
+  }, [ingresses0, serviceIds]);
   const [reason, setReason] = useState<string>();
   const mResult = useMemo(() => {
     setReason(undefined);
     try {
       return distinct(ingresses);
-      // @ts-ignore
-    } catch (e: Error) {
+      // eslint-disable-next-line
+    } catch (e: any) {
       setReason(e.message);
       return undefined;
     }
   }, [ingresses]);
-  // 不止是支持 没有签证的，也支持没有 tls的
-  // const { allHost, hostsWithTls:hostList }
-  const hostList = mResult?.hostsSyncWithServer;
-  // console.debug('hostsWithTls:', hostList);
-  useEffect(() => {
-    if (hostList) {
-      api(hostList)
-        .unwrap()
-        .catch((e) => {
-          console.error('e:', e);
-          setReason('服务端也拒绝了');
-        });
-    }
-  }, [hostList]);
   return {
     ingresses,
     reason,
@@ -98,28 +101,13 @@ function distinct(ingresses: IIngress[] | undefined) {
   // 这里找到一个处理口子
   // 形成 hostname->pair[issuerName,secretName]
   if (!ingresses) return undefined;
-  const hostSummaries = ingresses.map(toHostSummary);
-  const allHosts = hostSummaries;
+  const allHosts = ingresses.map(toHostSummary);
 
-  const grouped = _.groupBy(hostSummaries, (it) => it.hostname);
-  const hostsSyncWithServer = _.keys(grouped).map((name) => {
-    const list = grouped[name];
-    const list2 = _.uniqBy(list, (item) =>
-      JSON.stringify([item.issuerName, item.secretName])
-    );
-    if (list2.length != 1) {
-      throw new Error(
-        name + '具备不同的多个issuerName或者secretName,需要系统管理员对此调整'
-      );
-    }
-    return list2[0];
-  });
   return {
     allHostNames: _.uniq(allHosts.map((it) => it.hostname)),
     hostNamesWithTl: _.uniq(
       allHosts.filter((it) => it.secretName).map((it) => it.hostname)
     ),
-    hostsSyncWithServer: hostsSyncWithServer,
   };
 }
 
@@ -153,13 +141,13 @@ export default () => {
         }
       >
         {(!ingresses || !allHostNames) && <Skeleton />}
-        {ingresses && allHostNames && allHostNames.length == 0 && <Empty />}
+        {ingresses && allHostNames && allHostNames.length === 0 && <Empty />}
         {ingresses && allHostNames && allHostNames.length > 0 && (
           <Collapse
             items={allHostNames.map((hostName) => {
               const listData = ingresses
                 .filter((it) =>
-                  it.spec?.rules?.some((that) => that.host == hostName)
+                  it.spec?.rules?.some((that) => that.host === hostName)
                 )
                 .flatMap(toHttpPaths); // 把不同 path的平铺开
               const tlsHost = hostNamesWithTl?.includes(hostName);

@@ -7,6 +7,11 @@ export const hostApi = createApi({
   tagTypes: ['Hosts'],
   endpoints: (build) => {
     return {
+      hostsV2: build.query<HostSummary[], string>({
+        providesTags: ['Hosts'],
+        query: (it) => `/hostsV2/${it}`,
+      }),
+      //<editor-fold desc="即将作废">
       /**
        * 同步 host
        */
@@ -31,6 +36,7 @@ export const hostApi = createApi({
           body: arg,
         }),
       }),
+      //</editor-fold>
     };
   },
 });
@@ -40,6 +46,5 @@ export interface HostSummary {
   issuerName?: string;
   secretName?: string;
 }
-
-export const { useSyncHostMutation, useHostsQuery, useCreateHostMutation } =
-  hostApi;
+export const { useHostsV2Query } = hostApi;
+// 临时空间

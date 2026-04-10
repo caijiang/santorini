@@ -3,27 +3,27 @@ import {
   ProFormDependency,
   ProFormText,
 } from '@ant-design/pro-components';
-import { App, Button, Form, Spin, Typography } from 'antd';
+import { Button, Form, Spin, Typography } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { toInnaNameRule } from '../common/ktor';
-import { useCreateHostMutation, useHostsQuery } from '../apis/host';
 import { useMemo } from 'react';
 import _ from 'lodash';
 import { useEnvContext } from '../layouts/EnvLayout';
+import { newHost, useHosts } from '../slices/hostSlice';
+import { useDispatch } from 'react-redux';
 
 export default () => {
   const {
     data: { id: envId },
   } = useEnvContext();
-  const { message } = App.useApp();
   const [form] = Form.useForm();
-  const [api] = useCreateHostMutation();
-  const { data: hosts, isLoading } = useHostsQuery(undefined);
+  const dispatch = useDispatch();
+  const { data: hosts, isLoading } = useHosts(envId);
   const defaultName = useMemo(() => {
     if (!hosts) return undefined;
     const x1 = Object.entries(
       _.countBy(
-        hosts.filter((it) => !!it.issuerName).map((it) => it.issuerName!!)
+        hosts.filter((it) => !!it.issuerName).map((it) => it.issuerName)
       )
     );
     const x2 = _.maxBy(x1, (x) => x[0]);
@@ -37,15 +37,8 @@ export default () => {
   return (
     <ModalForm
       onFinish={async (x) => {
-        try {
-          await api(x).unwrap();
-          return true;
-        } catch (e) {
-          message.error(
-            '添加域名失败，可能是因为已经存在或者其他字段合法性问题'
-          );
-          return false;
-        }
+        dispatch(newHost({ ...x, namespace: envId }));
+        return true;
       }}
       title={'添加域名'}
       form={form}

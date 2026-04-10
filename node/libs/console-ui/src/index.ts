@@ -20,6 +20,7 @@ import { advancedApi } from './apis/advanced';
 import { serverSideApplySlice } from './slices/serverSideApply';
 import { userCaresApi } from './apis/userCares';
 import { hpaLiveSlice } from './slices/hpaLiveSlice';
+import { hostsSlice } from './slices/hostSlice';
 
 export { useAppNameQuery };
 
@@ -43,6 +44,7 @@ export default {
     listenerMiddleware.middleware,
   ],
   reducers: {
+    [hostsSlice.name]: hostsSlice.reducer,
     [hpaLiveSlice.name]: hpaLiveSlice.reducer,
     [tokenApi.reducerPath]: tokenApi.reducer,
     [commonApi.reducerPath]: commonApi.reducer,

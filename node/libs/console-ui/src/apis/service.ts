@@ -112,16 +112,17 @@ export interface DeploymentDeployData {
   serviceDataSnapshot?: string;
 }
 
+// eslint-disable-next-line
 export interface LastReleaseDeploymentSummary extends DeploymentDeployData {}
 
 export const serviceApi = createApi({
   reducerPath: 'serviceApi',
   baseQuery: stBaseQuery,
-  tagTypes: ['Services'],
+  tagTypes: ['Services', 'ServiceIds'],
   endpoints: (build) => {
     return {
       createService: build.mutation<undefined, ServiceConfigData>({
-        invalidatesTags: ['Services'],
+        invalidatesTags: ['Services', 'ServiceIds'],
         query: (body) => ({
           url: '/services',
           body: {
@@ -134,6 +135,16 @@ export const serviceApi = createApi({
       allService: build.query<ServiceConfigData[], undefined>({
         providesTags: ['Services'],
         query: () => `/services`,
+      }),
+      visitable: build.query<string[], string | undefined>({
+        providesTags: ['ServiceIds'],
+        query: (envId) => ({
+          url: '/services/visitable',
+          method: 'POST',
+          params: {
+            envId,
+          },
+        }),
       }),
       serviceById: build.query<ServiceConfigData | undefined, string>({
         providesTags: ['Services'],
@@ -162,4 +173,5 @@ export const {
   useCreateServiceMutation,
   useAllServiceQuery,
   useUpdateServiceMutation,
+  useVisitableQuery,
 } = serviceApi;

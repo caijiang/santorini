@@ -28,19 +28,21 @@ private val json = Json {
 /**
  * 默认 /var/run/secrets/kubernetes.io/serviceaccount/token
  */
-suspend fun workWithLocalKubernetesCluster(javaClass: Class<Any>, block: suspend KubernetesClient.() -> Unit) {
+suspend fun workWithLocalKubernetesCluster(
+    javaClass: Class<Any>,
+    block: suspend KubernetesClient.(LocalK8sClusterConfig) -> Unit
+) {
     javaClass.getResourceAsStream("/local-build-k8s-cluster-config.json")?.let { inputStream ->
         val data = inputStream.use {
             json.decodeFromStream<LocalK8sClusterConfig>(it)
         }
-// release-name-santorini-santorini-console-backend-758976479wsqcs
         val portWork = try {
             ServerSocket(data.port).use {
                 it.reuseAddress = true
                 it.bind(InetSocketAddress(data.port))
             }
             false
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             true
         }
 
@@ -66,7 +68,7 @@ suspend fun workWithLocalKubernetesCluster(javaClass: Class<Any>, block: suspend
                     )
                     .build()
             ).build()
-        block(client)
+        block(client, data)
     }
 }
 
@@ -82,6 +84,14 @@ fun KubernetesClient.demoUserServiceAccount(): String = findOrCreateServiceAccou
  */
 @Disabled
 class KubernetesClientServiceTest {
+
+    @Test
+    fun readIngressHostFromNamespace() = runTest {
+        workWithLocalKubernetesCluster(javaClass) {
+            val service = KubernetesClientServiceImpl(this)
+            println(service.readIngressHostFromNamespace(it.testCaseNamespace!!))
+        }
+    }
 
     @Test
     fun feishuToken() = runTest {

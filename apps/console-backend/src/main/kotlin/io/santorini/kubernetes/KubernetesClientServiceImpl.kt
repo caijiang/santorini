@@ -4,6 +4,7 @@ import io.fabric8.kubernetes.api.model.HasMetadata
 import io.fabric8.kubernetes.api.model.SecretBuilder
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.santorini.console.schema.HostData
 import io.santorini.kubernetes.model.ClusterResourceStat
 import io.santorini.model.ResourceType
 import io.santorini.model.ServiceRole
@@ -99,6 +100,54 @@ class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClien
                 )
                 .build()
         ).serverSideApply()
+    }
+
+    override fun readIngressHostFromNamespace(namespace: String): List<HostData> {
+        val x = kubernetesClient
+            .network()
+            .v1()
+            .ingresses()
+            .inNamespace(namespace)
+            .list()
+
+        val x1 = x.items.flatMap { ingress ->
+            val issuerName = ingress.metadata?.annotations?.get("cert-manager.io/cluster-issuer")
+            ingress.spec.rules.map { rule ->
+                val hostname = rule.host
+                val secretName = ingress.spec?.tls?.find {
+                    it.hosts.contains(hostname)
+                }?.secretName
+
+                HostData(hostname, issuerName, secretName).cleanShot()
+            }
+        }
+            // host 必须有效
+            .filter {
+                it.hostname.isNotBlank()
+            }
+            // 支持没有证书，但不支持 有签名但是没证书
+            .filter {
+                if (it.issuerName == null)
+                    true
+                else it.secretName != null
+            }
+
+        logger.debug {
+            "经过去重过滤前: $x1"
+        }
+        val names = x1.map { it.hostname }.distinct()
+
+        return names.map { name ->
+            val mc = x1.filter {
+                it.hostname == name
+            }
+            if (mc.size > 1) {
+                logger.warn {
+                    "在${namespace}流量入口:${name}存在多个:${mc}"
+                }
+            }
+            mc[0]
+        }
     }
 }
 

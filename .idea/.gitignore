@@ -12,3 +12,6 @@ dataSources.xml
 dataSources
 shelf
 deployment.xml
+AndroidProjectSystem.xml
+db-forest-config.xml
+go.imports.xml

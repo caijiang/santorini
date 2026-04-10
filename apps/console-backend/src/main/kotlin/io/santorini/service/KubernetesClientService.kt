@@ -2,6 +2,7 @@ package io.santorini.service
 
 import io.fabric8.kubernetes.api.model.HasMetadata
 import io.fabric8.kubernetes.client.KubernetesClient
+import io.santorini.console.schema.HostData
 import io.santorini.kubernetes.SantoriniResource
 import io.santorini.kubernetes.model.ClusterResourceStat
 import io.santorini.model.ResourceType
@@ -87,4 +88,11 @@ interface KubernetesClientService {
     fun saveFeishuToken(id: String, token: FeishuToken)
     //</editor-fold>
 
+    /**
+     * - 注意去重
+     * - 注意过滤无效
+     * - 如若发现 hostname 一直，但issuerName,secretName 不一致的；则给于警告
+     * @return host相关信息
+     */
+    fun readIngressHostFromNamespace(namespace: String): List<HostData>
 }

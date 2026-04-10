@@ -45,6 +45,7 @@ internal fun Application.configureConsoleService() {
             }
         }
         //</editor-fold>
+        //<editor-fold desc="维护服务">
         post<ServiceMetaResource> {
             withAuthorization {
                 val text = call.receiveText()
@@ -70,6 +71,18 @@ internal fun Application.configureConsoleService() {
                 }
             }
         }
+        //</editor-fold>
+        //<editor-fold desc="查看服务可见性">
+        post<ServiceMetaResource.Visitable> {
+            withAuthorization { user ->
+                call.respond(
+                    service.read(it.parent, user.id)
+                        .map { serviceMetaData ->
+                            serviceMetaData.id
+                        })
+            }
+        }
+        //</editor-fold>
         get<ServiceMetaResource> {
             withAuthorization { user ->
                 val pr = it.toPageRequest()

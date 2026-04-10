@@ -86,6 +86,13 @@ data class ServiceMetaResource(
     val envId: String? = null,
 ) : Pageable {
 
+    /**
+     * 可见性
+     */
+    @Resource("visitable")
+    @Serializable
+    data class Visitable(val parent: ServiceMetaResource = ServiceMetaResource())
+
     @Resource("{id}")
     @Serializable
     data class Id(val parent: ServiceMetaResource = ServiceMetaResource(), val id: String)

@@ -9,7 +9,6 @@ import {
   ProFormText,
 } from '@ant-design/pro-components';
 import { App, Skeleton, Tooltip } from 'antd';
-import { useHostsQuery } from '../../../apis/host';
 import { arrayToProSchemaValueEnumMap } from '../../../common/ktor';
 import AddHostEditor from '../../AddHostEditor';
 import NginxIngressAnnotationsInput from './NginxIngressAnnotationsInput';
@@ -32,6 +31,7 @@ import {
   useEditIngressMutation,
 } from '../../../apis/kubernetes/ingress';
 import { readNginxIngressAnnotations } from './IngressAnnotation';
+import { useHosts } from '../../../slices/hostSlice';
 
 interface PathEditorProps {
   data?: IngressPath;
@@ -73,17 +73,17 @@ function useResolveCUEditableIngress(data?: IngressPath | undefined):
   if (!service) return undefined;
   return {
     instance: {
-      host: rule!!.host!!,
-      pathType: path!!.pathType,
-      path: path!!.path,
+      host: rule?.host ?? '',
+      pathType: path?.pathType ?? 'Prefix',
+      path: path?.path ?? '/',
       annotations: readNginxIngressAnnotations(data.instance),
       backend: [
         service.id,
-        service.ports.find(
+        service?.ports?.find(
           (it) =>
-            it.number == path?.backend?.service?.port?.number ||
-            it.name == path?.backend?.service?.port?.name
-        )?.name!!,
+            it.number === path?.backend?.service?.port?.number ||
+            it.name === path?.backend?.service?.port?.name
+        )?.name ?? 'http',
       ],
     },
     service,
@@ -104,7 +104,7 @@ const PathEditor: React.FC<
   const [editApi] = useEditIngressMutation();
   // host 是基于选择
   const dispatch = useDispatch();
-  const { data: hosts } = useHostsQuery(undefined);
+  const { data: hosts } = useHosts(env.id);
   const { data: services1 } = useAllServiceQuery(undefined);
   const [backendOptions, setBackendOptions] = useState<BackendOption[]>();
   const currentResult = useResolveCUEditableIngress(data);
@@ -206,7 +206,7 @@ const PathEditor: React.FC<
             label={'路径'}
             name={'path'}
             rules={[
-              { required: pathType != 'ImplementationSpecific' },
+              { required: pathType !== 'ImplementationSpecific' },
               {
                 pattern: RegExp(`^/.*$`),
                 message: `路径必须以 “/” 开头`,
@@ -224,6 +224,7 @@ const PathEditor: React.FC<
             href={
               'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/'
             }
+            rel="noreferrer"
           >
             配置参考手册
           </a>
@@ -240,22 +241,22 @@ const PathEditor: React.FC<
           options: backendOptions,
           loadData: async (input) => {
             // 只能处理一个
-            if (input.length == 0) return;
+            if (input.length === 0) return;
             const one = input[0] as BackendOption;
             if (one.children) return;
-            // @ts-ignore
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-expect-error
             const detail = (await dispatch(
-              // @ts-ignore
               serviceApi.endpoints.serviceById.initiate(
                 one.value
-              ) as UnknownAction
-            ).unwrap()) as ServiceConfigData;
+              ) as unknown as UnknownAction
+            ).unwrap()) as unknown as ServiceConfigData;
             setBackendOptions(
               backendOptions.map((it) => {
-                if (it.value == one.value) {
+                if (it.value === one.value) {
                   return {
                     ...it,
-                    disabled: detail.ports.length == 0,
+                    disabled: detail.ports.length === 0,
                     children: detail.ports.map((thatPort) => ({
                       value: thatPort.name,
                       label: thatPort.name,
