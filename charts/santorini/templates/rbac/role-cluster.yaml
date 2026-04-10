@@ -6,6 +6,10 @@ metadata:
   labels:
     {{- include "common.labels.withoutName" . | nindent 4 }}
 rules:
+  - apiGroups: [ "networking.k8s.io" ]
+    resources: [ "ingresses" ]
+    resourceNames: [ ]
+    verbs: [ "get","list" ]
   - apiGroups: [ "batch" ]
     resources: [ "jobs","cronjobs" ]
     resourceNames: [ ]
