@@ -12,6 +12,7 @@ import io.santorini.demoPlatformUserData
 import io.santorini.io.santorini.test.LocalK8sClusterConfig
 import io.santorini.kubernetes.*
 import io.santorini.service.impl.feishu.FeishuToken
+import io.santorini.service.impl.feishu.KubernetesFeishuTokenStore
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -96,24 +97,24 @@ class KubernetesClientServiceTest {
     @Test
     fun feishuToken() = runTest {
         workWithLocalKubernetesCluster(javaClass) {
-            val service = KubernetesClientServiceImpl(this)
+            val store = KubernetesFeishuTokenStore(KubernetesClientServiceImpl(this))
             val id = "project_"
             try {
-                service.queryFeishuToken(id).shouldBeNull()
+                store.query(id).shouldBeNull()
                 val token1 = FeishuToken(
                     "????1ab", System.currentTimeMillis()
                 )
-                service.saveFeishuToken(
+                store.save(
                     id, token1
                 )
-                service.queryFeishuToken(id).shouldBe(token1, "跟刚新增的一样")
+                store.query(id).shouldBe(token1, "跟刚新增的一样")
                 val token2 = FeishuToken(
                     "??1ab", System.currentTimeMillis()
                 )
-                service.saveFeishuToken(
+                store.save(
                     id, token2
                 )
-                service.queryFeishuToken(id).shouldBe(token2, "跟刚更新的一样")
+                store.query(id).shouldBe(token2, "跟刚更新的一样")
             } finally {
                 this.services().inNamespace(this.namespace)
                     .withName("feishu-access-token-project")

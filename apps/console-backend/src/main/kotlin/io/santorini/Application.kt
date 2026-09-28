@@ -24,12 +24,15 @@ import io.santorini.console.configureConsole
 import io.santorini.console.schema.*
 import io.santorini.informer.KubernetesInformerService
 import io.santorini.informer.KubernetesInformerServiceImpl
+import io.santorini.kubernetes.KubernetesClientService
 import io.santorini.kubernetes.KubernetesClientServiceImpl
 import io.santorini.scope.AppBackgroundScope
 import io.santorini.service.*
 import io.santorini.service.impl.NoticeServiceImpl
 import io.santorini.service.impl.SiteServiceImpl
 import io.santorini.service.impl.feishu.FeishuServiceImpl
+import io.santorini.service.impl.feishu.FeishuTokenStore
+import io.santorini.service.impl.feishu.KubernetesFeishuTokenStore
 import io.santorini.well.StatusException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -141,8 +144,11 @@ fun Application.consoleModuleEntry(
             single {
                 httpClient
             }
+            single<FeishuTokenStore> {
+                KubernetesFeishuTokenStore(get())
+            }
             single<FeishuService> {
-                FeishuServiceImpl(kubernetesClientService, httpClient)
+                FeishuServiceImpl(get(), httpClient)
             }
             single {
                 AppBackgroundScope()

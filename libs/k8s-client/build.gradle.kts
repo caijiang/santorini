@@ -6,3 +6,10 @@ plugins {
     kotlin("plugin.serialization")
 //    alias("kotlin.serialization")
 }
+
+dependencies {
+    // utils 已经 api 暴露了 fabric8 与 santorini-model，这里不重复声明
+    api(project(":utils"))
+    implementation(libs.kotlin.kotlinLogging)
+    implementation(libs.bundles.kotlinxEcosystem)
+}

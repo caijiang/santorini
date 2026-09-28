@@ -8,9 +8,9 @@ import io.ktor.server.resources.*
 import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.santorini.console.schema.HostData
 import io.santorini.console.schema.HostResource
 import io.santorini.console.schema.HostService
+import io.santorini.kubernetes.model.HostData
 import io.santorini.withAuthorization
 import org.koin.ktor.ext.inject
 
@@ -45,7 +45,7 @@ internal fun Application.configureConsoleHost() {
                 try {
                     service.create(call.receive<HostData>().cleanShot())
                     call.respond(HttpStatusCode.OK)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     call.respond(HttpStatusCode.BadRequest)
                 }
             }

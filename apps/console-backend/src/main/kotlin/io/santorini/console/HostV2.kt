@@ -5,7 +5,7 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.santorini.console.schema.HostService
-import io.santorini.service.KubernetesClientService
+import io.santorini.kubernetes.KubernetesClientService
 import org.koin.ktor.ext.get as koinGet
 
 private val logger = KotlinLogging.logger {}

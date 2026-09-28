@@ -1,13 +1,11 @@
-package io.santorini.service
+package io.santorini.kubernetes
 
 import io.fabric8.kubernetes.api.model.HasMetadata
 import io.fabric8.kubernetes.client.KubernetesClient
-import io.santorini.console.schema.HostData
-import io.santorini.kubernetes.SantoriniResource
 import io.santorini.kubernetes.model.ClusterResourceStat
+import io.santorini.kubernetes.model.HostData
 import io.santorini.model.ResourceType
 import io.santorini.model.ServiceRole
-import io.santorini.service.impl.feishu.FeishuToken
 
 /**
  * 与 kubernetesClient 的所有交互
@@ -15,6 +13,11 @@ import io.santorini.service.impl.feishu.FeishuToken
  */
 interface KubernetesClientService {
     val kubernetesClient: KubernetesClient
+
+    /**
+     * 当前所在命名空间
+     */
+    val namespace: String
 
     /**
      * 获取当前 pod 的所有者信息
@@ -48,6 +51,25 @@ interface KubernetesClientService {
     fun removeResource(namespace: String, name: String)
     //</editor-fold>
 
+    //<editor-fold desc="Secret 键值读写">
+    /**
+     * 读取 Secret 的 data，value 已按 UTF-8 解码
+     *
+     * @return Secret 不存在时返回 null
+     */
+    fun readStringSecret(namespace: String, name: String): Map<String, String>?
+
+    /**
+     * 创建或覆盖一个 Opaque Secret 的 data
+     */
+    fun applyStringSecret(
+        namespace: String,
+        name: String,
+        data: Map<String, String>,
+        labels: Map<String, String> = mapOf("santorini.io/manageable" to "true")
+    )
+    //</editor-fold>
+
     /**
      * 获取当前集群运行状态
      */
@@ -78,14 +100,6 @@ interface KubernetesClientService {
         namespace: String,
         serviceRoles: Map<String, List<ServiceRole>>
     )
-    //</editor-fold>
-
-    //<editor-fold desc="飞书相关">
-    /**
-     * 获取 feishu token
-     */
-    fun queryFeishuToken(id: String): FeishuToken?
-    fun saveFeishuToken(id: String, token: FeishuToken)
     //</editor-fold>
 
     /**

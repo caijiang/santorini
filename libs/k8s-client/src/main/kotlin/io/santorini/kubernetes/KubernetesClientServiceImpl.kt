@@ -1,24 +1,24 @@
 package io.santorini.kubernetes
 
 import io.fabric8.kubernetes.api.model.HasMetadata
-import io.fabric8.kubernetes.api.model.SecretBuilder
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.santorini.console.schema.HostData
 import io.santorini.kubernetes.model.ClusterResourceStat
+import io.santorini.kubernetes.model.HostData
 import io.santorini.model.ResourceType
 import io.santorini.model.ServiceRole
-import io.santorini.service.KubernetesClientService
-import io.santorini.service.impl.feishu.FeishuToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.*
 
 /**
  * @author CJ
  */
 class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClient) : KubernetesClientService {
     private val logger = KotlinLogging.logger {}
+
+    override val namespace: String
+        get() = kubernetesClient.namespace
+
     override suspend fun currentPodRootOwner(): HasMetadata {
         return withContext(Dispatchers.IO) {
             kubernetesClient.currentPod().rootOwner(kubernetesClient)
@@ -39,6 +39,19 @@ class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClien
 
     override fun removeResource(namespace: String, name: String) {
         kubernetesClient.removeResource(namespace, name)
+    }
+
+    override fun readStringSecret(namespace: String, name: String): Map<String, String>? {
+        return kubernetesClient.readStringSecret(namespace, name)
+    }
+
+    override fun applyStringSecret(
+        namespace: String,
+        name: String,
+        data: Map<String, String>,
+        labels: Map<String, String>
+    ) {
+        kubernetesClient.applyStringSecret(namespace, name, data, labels)
     }
 
     override suspend fun clusterResourceStat(): ClusterResourceStat {
@@ -64,43 +77,6 @@ class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClien
         namespace: String,
         serviceRoles: Map<String, List<ServiceRole>>
     ) = kubernetesClient.makesureRightServiceRoles(root, serviceAccountName, namespace, serviceRoles)
-
-    override fun queryFeishuToken(id: String): FeishuToken? {
-        val secret = kubernetesClient.secrets().inNamespace(kubernetesClient.namespace)
-            .withName("feishu-access-token-${id.safeInK8s()}")
-            .get()
-        if (secret == null) return null
-
-        return try {
-            val decoded = secret.data.mapValues { (_, v) ->
-                String(Base64.getDecoder().decode(v))
-            }
-            FeishuToken(
-                decoded["token"] as String,
-                decoded["expiration"]!!.toLong(),
-            )
-        } catch (e: Exception) {
-            logger.error(e) { "Error while fetching token" }
-            null
-        }
-    }
-
-    override fun saveFeishuToken(id: String, token: FeishuToken) {
-        kubernetesClient.secrets().resource(
-            SecretBuilder()
-                .withNewMetadata()
-                .withNamespace(kubernetesClient.namespace)
-                .withName("feishu-access-token-${id.safeInK8s()}")
-                .endMetadata()
-                .withStringData<String, String>(
-                    mapOf(
-                        "token" to token.token,
-                        "expiration" to token.expireTimeSeconds.toString()
-                    )
-                )
-                .build()
-        ).serverSideApply()
-    }
 
     override fun readIngressHostFromNamespace(namespace: String): List<HostData> {
         val x = kubernetesClient
@@ -149,8 +125,4 @@ class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClien
             mc[0]
         }
     }
-}
-
-private fun String.safeInK8s(): String {
-    return this.replace("[^a-zA-Z0-9]".toRegex(), "")
 }

@@ -8,9 +8,9 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.date.*
 import io.santorini.AesGcmCrypto
+import io.santorini.kubernetes.KubernetesClientService
 import io.santorini.kubernetes.currentPod
 import io.santorini.kubernetes.rootOwner
-import io.santorini.service.KubernetesClientService
 import io.santorini.service.SiteService
 import io.santorini.withAuthorization
 import kotlinx.coroutines.Dispatchers

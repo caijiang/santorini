@@ -7,8 +7,8 @@ import io.santorini.*
 import io.santorini.console.model.*
 import io.santorini.console.schema.ServiceMetaService.ServiceMetas
 import io.santorini.console.schema.UserRoleService.UserEnvs.env
+import io.santorini.kubernetes.KubernetesClientService
 import io.santorini.model.ServiceRole
-import io.santorini.service.KubernetesClientService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.FixedOffsetTimeZone
@@ -145,7 +145,7 @@ class UserRoleService(
         val createTime = timestamp("create_time")
 
         init {
-            UserEnvs.uniqueIndex(user, env)
+            uniqueIndex(user, env)
         }
     }
 
@@ -159,7 +159,7 @@ class UserRoleService(
         val createTime = timestamp("create_time")
 
         init {
-            UserServiceRoles.uniqueIndex(user, service, role)
+            uniqueIndex(user, service, role)
         }
     }
 

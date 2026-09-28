@@ -9,7 +9,6 @@ import io.mockk.Call
 import io.mockk.every
 import io.mockk.mockk
 import io.santorini.io.santorini.test.LocalFeishuConfig
-import io.santorini.service.KubernetesClientService
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -36,20 +35,20 @@ class FeishuServiceImplTest {
     fun sendMessage() = runTest {
         workWithLocalFeishu(javaClass) {
             val config = this
-            val kubernetesClientService = mockk<KubernetesClientService>()
+            val feishuTokenStore = mockk<FeishuTokenStore>()
             var mockToken: FeishuToken? = null
             every {
-                kubernetesClientService.queryFeishuToken(eq(config.id))
+                feishuTokenStore.query(eq(config.id))
             } returns mockToken
             every {
-                kubernetesClientService.saveFeishuToken(eq(config.id), any())
+                feishuTokenStore.save(eq(config.id), any())
             } answers (object : Answer<Unit> {
                 override fun answer(call: Call) {
                     mockToken = call.invocation.args[1] as FeishuToken?
                 }
             })
             val service = FeishuServiceImpl(
-                kubernetesClientService, HttpClient(Apache) {
+                feishuTokenStore, HttpClient(Apache) {
                     install(ContentNegotiation) {
                         json(Json)
 //            jackson()

@@ -63,12 +63,16 @@ fun KubernetesClient.applyStringSecret(
             .withType("Opaque")
             .withImmutable(false)
 //            .withStringData<String, String>(data)
-            .withData<String, String>(data.mapValues { (_, v) -> Base64.getEncoder().encodeToString(v.toByteArray()) })
+            .withData<String, String>(
+                data.mapValues { (_, v) ->
+                    Base64.getEncoder().encodeToString(v.toByteArray(Charsets.UTF_8))
+                }
+            )
             .build()
 
     try {
         resource(item).create()
-    } catch (e: Exception) {
+    } catch (_: Exception) {
 //        println("Error while creating service account and assign roles: ${e.message}")
 
         secrets().inNamespace(namespace)
@@ -76,5 +80,17 @@ fun KubernetesClient.applyStringSecret(
             .delete()
 
         resource(item).create()
+    }
+}
+
+/**
+ * 读取 Secret 的 data，并把每个 value 按 UTF-8 解码为字符串。
+ *
+ * @return Secret 不存在时返回 null；存在但没有 data 时返回空 map
+ */
+fun KubernetesClient.readStringSecret(namespace: String, name: String): Map<String, String>? {
+    val item = secrets().inNamespace(namespace).withName(name).get() ?: return null
+    return item.data.orEmpty().mapValues { (_, v) ->
+        String(Base64.getDecoder().decode(v), Charsets.UTF_8)
     }
 }

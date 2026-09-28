@@ -13,10 +13,10 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.santorini.OAuthPlatformUserDataAuditResult
 import io.santorini.console.schema.*
+import io.santorini.kubernetes.KubernetesClientService
 import io.santorini.kubernetes.removeOne
 import io.santorini.kubernetes.updateOne
 import io.santorini.model.ResourceType
-import io.santorini.service.KubernetesClientService
 import io.santorini.withAuthorization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

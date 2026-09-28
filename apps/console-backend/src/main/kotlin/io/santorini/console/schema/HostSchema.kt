@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.resources.*
 import io.santorini.console.model.Pageable
 import io.santorini.console.schema.ServiceMetaService.ServiceMetas
+import io.santorini.kubernetes.model.HostData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -17,20 +18,6 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.time.Clock
 
 private val logger = KotlinLogging.logger {}
-
-@Serializable
-data class HostData(
-    val hostname: String,
-    val issuerName: String? = null,
-    val secretName: String? = null,
-) {
-    fun cleanShot(): HostData {
-        return copy(
-            issuerName = if (issuerName?.isBlank() == true) null else issuerName,
-            secretName = if (secretName?.isBlank() == true) null else secretName
-        )
-    }
-}
 
 @Resource("/hosts")
 @Serializable

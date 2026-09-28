@@ -15,10 +15,10 @@ import io.santorini.InSiteUserData
 import io.santorini.console.schema.*
 import io.santorini.model.ServiceType
 import io.santorini.service.AsyncTaskServiceImpl
-import io.santorini.service.KubernetesClientService
 import io.santorini.service.NoticeService
 import io.santorini.service.SiteService
 import io.santorini.service.impl.feishu.FeishuServiceImpl
+import io.santorini.service.impl.feishu.FeishuTokenStore
 import io.santorini.service.impl.feishu.workWithLocalFeishu
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -82,13 +82,13 @@ class NoticeServiceImplTest {
                         } returns listOf()
                     },
                     FeishuServiceImpl(
-                        mockk<KubernetesClientService>().apply {
-                            val service = this
-                            coEvery {
-                                service.queryFeishuToken(eq(config.id))
+                        mockk<FeishuTokenStore>().apply {
+                            val store = this
+                            every {
+                                store.query(eq(config.id))
                             } returns null
-                            coEvery {
-                                service.saveFeishuToken(any(), any())
+                            every {
+                                store.save(any(), any())
                             } returns Unit
                         },
                         HttpClient(Apache) {

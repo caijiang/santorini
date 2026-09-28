@@ -6,7 +6,6 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.santorini.service.FeishuService
-import io.santorini.service.KubernetesClientService
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -21,7 +20,7 @@ import kotlin.time.Duration.Companion.seconds
  * @author CJ
  */
 class FeishuServiceImpl(
-    private val kubernetesClientService: KubernetesClientService,
+    private val feishuTokenStore: FeishuTokenStore,
     private val httpClient: HttpClient,
     private val id: String = System.getenv("FEISHU_APP_ID") ?: "notwork",
     private val secret: String = System.getenv("FEISHU_APP_SECRET") ?: "notwork",
@@ -70,7 +69,7 @@ class FeishuServiceImpl(
             return currentToken?.token!!
         }
         // 查看远端 token
-        val t = kubernetesClientService.queryFeishuToken(id)
+        val t = feishuTokenStore.query(id)
         if (t?.workInNext(10.minutes) == true) {
             currentToken = t
             return t.token
@@ -98,7 +97,7 @@ class FeishuServiceImpl(
         )
 
         currentToken = newToken
-        kubernetesClientService.saveFeishuToken(id, newToken)
+        feishuTokenStore.save(id, newToken)
         return newToken.token
     }
 
