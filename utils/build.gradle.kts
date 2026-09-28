@@ -10,6 +10,7 @@ plugins {
 }
 
 dependencies {
+    api("com.fasterxml.jackson.core:jackson-databind:2.22.3")
     api("io.fabric8:kubernetes-client:7.4.0")
     api(project(":share:santorini-model"))
     implementation(libs.kotlin.kotlinLogging)

@@ -1,6 +1,7 @@
 package io.santorini.kubernetes
 
 import io.fabric8.kubernetes.api.model.HasMetadata
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.santorini.kubernetes.model.ClusterResourceStat
 import io.santorini.kubernetes.model.HostData
@@ -109,4 +110,18 @@ interface KubernetesClientService {
      * @return host相关信息
      */
     fun readIngressHostFromNamespace(namespace: String): List<HostData>
+
+    //<editor-fold desc="Ingress 管理">
+    /**
+     * 创建或覆盖一个 Ingress
+     */
+    fun applyIngress(namespace: String, ingress: Ingress)
+
+    /**
+     * 删除 rule host 与 hostname 匹配的所有 Ingress
+     *
+     * @return 是否发生了删除
+     */
+    fun removeIngressWithHost(namespace: String, hostname: String): Boolean
+    //</editor-fold>
 }

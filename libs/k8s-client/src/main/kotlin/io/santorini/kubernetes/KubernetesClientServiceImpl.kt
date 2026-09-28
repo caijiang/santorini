@@ -1,6 +1,7 @@
 package io.santorini.kubernetes
 
 import io.fabric8.kubernetes.api.model.HasMetadata
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress
 import io.fabric8.kubernetes.client.KubernetesClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.santorini.kubernetes.model.ClusterResourceStat
@@ -124,5 +125,13 @@ class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClien
             }
             mc[0]
         }
+    }
+
+    override fun applyIngress(namespace: String, ingress: Ingress) {
+        kubernetesClient.applyIngress(namespace, ingress)
+    }
+
+    override fun removeIngressWithHost(namespace: String, hostname: String): Boolean {
+        return kubernetesClient.removeIngressWithHost(namespace, hostname)
     }
 }

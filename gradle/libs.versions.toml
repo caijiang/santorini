@@ -12,6 +12,7 @@ kotlinxSerializationJSON = "1.7.2"
 kotlinxCoroutines = "1.8.1"
 ktor = "3.3.2"
 logback = "1.5.25"
+cas = "3.6.1"
 
 [libraries]
 koin-ktor = { module = "io.insert-koin:koin-ktor", version.ref = "koin" }
@@ -25,6 +26,8 @@ exposed-migration-jdbc = { module = "org.jetbrains.exposed:exposed-migration-jdb
 
 fabric8-kubernetes-client = { module = "io.fabric8:kubernetes-client", version.ref = "fabric8" }
 fabric8-kubernetes-httpclient-jdk = { module = "io.fabric8:kubernetes-httpclient-jdk", version.ref = "fabric8" }
+
+aliyun-cas = { module = "com.aliyun:cas20200407", version.ref = "cas" }
 
 kotlin-kotlinLogging = { module = "io.github.oshai:kotlin-logging", version = "7.0.13" }
 

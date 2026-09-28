@@ -35,6 +35,7 @@ tasks.withType<KotlinCompilationTask<*>> {
 //}
 
 tasks.register<UploadAndExecuteSshTask>("uploadAndExecuteSsh") {
+    description = "Upload and execute ssh command on the server"
     targetFiles.from(layout.buildDirectory.file("jib-image.tar"))
     dependsOn("buildImage")
 }
