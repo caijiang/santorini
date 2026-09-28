@@ -29,6 +29,7 @@ import io.santorini.test.mockDeploymentServicePreDeployWorkFineWith
 import io.santorini.test.mockKubernetesInformerServiceLoader
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
+import io.santorini.tools.isolatedTestDatabase
 import me.jiangcai.cr.Deployable
 import kotlin.test.Test
 import kotlin.uuid.ExperimentalUuidApi
@@ -45,6 +46,7 @@ class DeploymentKtTest {
         val imageService = mockk<ImageService>()
         application {
             consoleModuleEntry(
+                database = isolatedTestDatabase("DeploymentKtTest"),
                 kubernetesClient = kubernetesClient, imageServiceLoader = {
                     imageService
                 },

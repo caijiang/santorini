@@ -42,9 +42,9 @@ tasks.register<UploadAndExecuteSshTask>("uploadAndExecuteSsh") {
 tasks.named("buildImage") {
     finalizedBy("uploadAndExecuteSsh")
 }
-tasks.named("test") {
-    finalizedBy(":charts:santorini:test")
-}
+// 这里不要 finalizedBy(":charts:santorini:test")。
+// chart 校验依赖 helm 插件与网络，挂到 test 后面后它的失败会算在这次构建上（看起来就像测试挂了），
+// 且 gradlew build 会被与本模块无关的工具链问题打断。要跑就显式跑 :charts:santorini:test。
 
 //tasks.named("clean") {
 //    finalizedBy(tasks.named<UploadAndExecuteSshTask>("uploadAndExecuteSsh").apply {
@@ -68,6 +68,7 @@ dependencies {
     implementation(project(":share:santorini-model"))
     implementation(project(":libs:container-registry"))
     implementation(project(":libs:k8s-client"))
+    implementation(project(":libs:easy-domain"))
     implementation(libs.bundles.fabric8Kubernetes)
     implementation(libs.ktor.server.sse)
     implementation(libs.ktor.serialization.kotlinx.json)

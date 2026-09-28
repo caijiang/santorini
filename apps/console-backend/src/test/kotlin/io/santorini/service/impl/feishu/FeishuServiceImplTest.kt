@@ -12,19 +12,33 @@ import io.santorini.io.santorini.test.LocalFeishuConfig
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
+import org.junit.jupiter.api.Assumptions
 import kotlin.test.Test
 
 private val json = Json {
     ignoreUnknownKeys = true
 }
 
+/**
+ * 真实外呼飞书的用例：只有本机放了 `local-build-feishu-config.json`、并且**显式声明** `SANTORINI_E2E=true` 时才跑。
+ *
+ * 开关放在环境变量上而不是"文件在不在"：这个文件就在开发机上，用文件判断等于默认每次真发消息，
+ * 飞书的限流/代理抖动会被记成单元测试失败。
+ * 要跑：`SANTORINI_E2E=true ./gradlew :apps:console-backend:test --tests "*FeishuServiceImplTest"`
+ *
+ * 条件不满足时 assume 成跳过而不是静默 return —— 否则报告里显示 PASSED，看起来像测过了。
+ */
 suspend fun workWithLocalFeishu(javaClass: Class<Any>, block: suspend LocalFeishuConfig.() -> Unit) {
-    javaClass.getResourceAsStream("/local-build-feishu-config.json")?.let { inputStream ->
-        val data = inputStream.use {
-            json.decodeFromStream<LocalFeishuConfig>(it)
-        }
-        block(data)
+    Assumptions.assumeTrue(
+        System.getenv("SANTORINI_E2E") == "true",
+        "未声明 SANTORINI_E2E=true，跳过真实外呼飞书的用例"
+    )
+    val inputStream = javaClass.getResourceAsStream("/local-build-feishu-config.json")
+    Assumptions.assumeTrue(inputStream != null, "缺少 local-build-feishu-config.json，跳过真实外呼飞书的用例")
+    val data = inputStream!!.use {
+        json.decodeFromStream<LocalFeishuConfig>(it)
     }
+    block(data)
 }
 
 /**

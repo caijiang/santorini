@@ -29,6 +29,7 @@ import io.santorini.test.mockThatConfigMapNameWill
 import io.santorini.test.mockThatSecretNameWill
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
+import io.santorini.tools.isolatedTestDatabase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -44,6 +45,7 @@ class EnvKtTest {
         every { clientService.kubernetesClient } returns kubernetesClient
         application {
             consoleModuleEntry(
+                database = isolatedTestDatabase("EnvKtTest"),
                 kubernetesClient = kubernetesClient, kubernetesClientService = clientService,
                 scheduleJobServiceLoader = { _, _ -> MockJobService },
                 kubernetesInformerServiceLoader = mockKubernetesInformerServiceLoader,

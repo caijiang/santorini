@@ -20,6 +20,7 @@ import io.santorini.test.mockKubernetesInformerServiceLoader
 import io.santorini.test.mockUserModule
 import io.santorini.tools.addServiceMeta
 import io.santorini.tools.createStandardClient
+import io.santorini.tools.isolatedTestDatabase
 import kotlin.test.Test
 
 /**
@@ -30,6 +31,7 @@ class ServiceKtTest {
     fun 服务单元测试() = testApplication {
         application {
             consoleModuleEntry(
+                database = isolatedTestDatabase("ServiceKtTest"),
                 scheduleJobServiceLoader = { _, _ -> MockJobService },
                 kubernetesInformerServiceLoader = mockKubernetesInformerServiceLoader,
             )

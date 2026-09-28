@@ -10,6 +10,7 @@ import io.santorini.io.santorini.test.MockJobService
 import io.santorini.test.mockKubernetesInformerServiceLoader
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
+import io.santorini.tools.isolatedTestDatabase
 import kotlin.test.Test
 
 /**
@@ -21,6 +22,7 @@ class SecurityKtTest {
         testApplication {
             application {
                 consoleModuleEntry(
+                    database = isolatedTestDatabase("SecurityKtTest"),
                     scheduleJobServiceLoader = { _, _ -> MockJobService },
                     kubernetesInformerServiceLoader = mockKubernetesInformerServiceLoader,
                 )

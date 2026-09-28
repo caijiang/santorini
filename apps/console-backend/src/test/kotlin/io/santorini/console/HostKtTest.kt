@@ -12,6 +12,7 @@ import io.santorini.kubernetes.model.HostData
 import io.santorini.test.mockKubernetesInformerServiceLoader
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient
+import io.santorini.tools.isolatedTestDatabase
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 
@@ -25,6 +26,7 @@ class HostKtTest {
     fun testHost() = testApplication {
         application {
             consoleModuleEntry(
+                database = isolatedTestDatabase("HostKtTest"),
                 scheduleJobServiceLoader = { _, _ -> MockJobService },
                 kubernetesInformerServiceLoader = mockKubernetesInformerServiceLoader,
             )
