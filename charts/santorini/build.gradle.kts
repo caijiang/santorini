@@ -15,10 +15,11 @@ fun isCommandAvailable(cmd: String): Boolean {
 }
 
 tasks.register("test") {
+    description = "测试 chart"
     group = "verification"
     this.notCompatibleWithConfigurationCache("不想搞")
     doFirst {
-        val work = isCommandAvailable("helm")
+        val work = isCommandAvailable("helm") && isCommandAvailable("wget")
         if (work) {
             logger.info("helm command available")
             val shell = System.getenv("SHELL") ?: "/bin/sh"

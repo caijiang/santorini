@@ -28,26 +28,18 @@ kotlin {
     jvmToolchain(21)
     jvm()
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                val kotlinxDatetime = libs.findVersion("kotlinxDatetime").get()
-                implementation(libs.findLibrary("kotlinxSerialization").get())
-                implementation(libs.findLibrary("kotlinxCoroutines").get())
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetime")
-            }
+        commonMain.dependencies {
+            val kotlinxDatetime = libs.findVersion("kotlinxDatetime").get()
+            implementation(libs.findLibrary("kotlinxSerialization").get())
+            implementation(libs.findLibrary("kotlinxCoroutines").get())
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetime")
         }
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test")) // 通用 Kotlin 测试库
-//                implementation(libs.findLibrary("kotlinxCoroutines-test").get())
-            }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
         }
-        // JVM 平台特定配置
-        val jvmTest by getting {
-            dependencies {
-//                implementation(libs.findLibrary("mockk").get())
-//                implementation(libs.findLibrary("kotlinxCoroutines-test").get())
-            }
+        jvmTest.dependencies {
+//            implementation(libs.findLibrary("mockk").get())
+//            implementation(libs.findLibrary("kotlinxCoroutines-test").get())
         }
     }
 }

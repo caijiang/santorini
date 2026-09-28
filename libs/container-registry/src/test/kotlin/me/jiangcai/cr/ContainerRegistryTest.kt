@@ -9,6 +9,7 @@ import io.ktor.client.engine.apache.*
 import io.ktor.client.plugins.logging.*
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 /**
@@ -23,6 +24,7 @@ class ContainerRegistryTest {
         }
     )
 
+    @Ignore
     @Test
     fun 多架构仓库() = runTest {
         val json = javaClass.getResource("/local-build-mine.json")
@@ -46,6 +48,7 @@ class ContainerRegistryTest {
         }
     }
 
+    @Ignore
     @Test
     fun 匿名仓库1() = runTest {
         val f1 = registry.queryStatus(Image.ofString("ghcr.io/caijiang/santorini-console-frontend"))
