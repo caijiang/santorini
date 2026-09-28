@@ -67,6 +67,7 @@ dependencies {
     implementation(project(":utils"))
     implementation(project(":share:santorini-model"))
     implementation(project(":libs:container-registry"))
+    implementation(project(":libs:k8s-client"))
     implementation(libs.bundles.fabric8Kubernetes)
     implementation(libs.ktor.server.sse)
     implementation(libs.ktor.serialization.kotlinx.json)

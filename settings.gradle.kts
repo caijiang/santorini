@@ -48,3 +48,6 @@ include("libs:gitea-wiki")
 findProject(":libs:gitea-wiki")?.name = "gitea-wiki"
 include("libs:k8s-node-prepare")
 findProject(":libs:k8s-node-prepare")?.name = "k8s-node-prepare"
+
+include("libs:easy-domain")
+include("libs:k8s-client")
