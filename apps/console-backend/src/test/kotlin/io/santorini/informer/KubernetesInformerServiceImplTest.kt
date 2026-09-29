@@ -4,7 +4,7 @@ import io.fabric8.kubernetes.client.extended.leaderelection.LeaderCallbacks
 import io.mockk.mockk
 import io.santorini.informer.k8s.autoScalingHappen
 import io.santorini.informer.k8s.serviceInstanceUnstable
-import io.santorini.io.santorini.service.workWithLocalKubernetesCluster
+import io.santorini.service.workWithLocalKubernetesCluster
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Disabled
 import kotlin.test.Test

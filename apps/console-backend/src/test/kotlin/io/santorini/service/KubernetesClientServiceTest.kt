@@ -1,4 +1,4 @@
-package io.santorini.io.santorini.service
+package io.santorini.service
 
 import io.fabric8.kubernetes.client.ConfigBuilder
 import io.fabric8.kubernetes.client.KubernetesClient
