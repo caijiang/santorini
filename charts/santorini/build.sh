@@ -9,7 +9,8 @@ if helm plugin list | awk '{print $1}' | grep -x "$PLUGIN_NAME"; then
   echo "Helm plugin '$PLUGIN_NAME' already installed."
 else
   echo "Installing Helm plugin '$PLUGIN_NAME'..."
-  helm plugin install "$PLUGIN_REPO"
+  # 本地 git 不支持 helm 的 provenance 校验时必须显式关闭
+  helm plugin install "$PLUGIN_REPO" --verify=false
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,7 +24,10 @@ fi
 mkdir -p ${SCRIPT_DIR}/files
 
 if [ ! -f "${SCRIPT_DIR}/files/nacos_3.0.2.sql" ]; then
-  wget -O ${SCRIPT_DIR}/files/nacos_3.0.2.sql https://raw.githubusercontent.com/alibaba/nacos/3.0.2/distribution/conf/mysql-schema.sql
+  mkdir -p "${SCRIPT_DIR}/files"
+  # 不依赖 wget：macOS 默认没有 wget，curl 系统自带
+  curl -fsSL "https://raw.githubusercontent.com/alibaba/nacos/3.0.2/distribution/conf/mysql-schema.sql" \
+    -o "${SCRIPT_DIR}/files/nacos_3.0.2.sql"
 fi
 
 helm unittest ${SCRIPT_DIR}

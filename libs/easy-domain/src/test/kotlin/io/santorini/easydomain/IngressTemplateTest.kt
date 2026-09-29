@@ -17,7 +17,7 @@ class IngressTemplateTest {
 
         assertEquals(domain, ingress.spec.rules[0].host)
         assertEquals(domain, ingress.spec.tls[0].hosts[0])
-        assertEquals(domain, ingress.spec.tls[0].secretName)
+        assertEquals("tls-a-example-com", ingress.spec.tls[0].secretName)
         assertEquals("letsencrypt", ingress.metadata.annotations["cert-manager.io/cluster-issuer"])
     }
 

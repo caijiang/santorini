@@ -49,7 +49,7 @@ class DomainServiceTest {
         verify(exactly = 1) { k8s.applyIngress(namespace, capture(slot)) }
         assertEquals("new.example.com", slot.captured.spec.rules[0].host)
         assertEquals("new-example-com", slot.captured.metadata.name)
-        assertEquals("new.example.com", slot.captured.spec.tls[0].secretName)
+        assertEquals("tls-new-example-com", slot.captured.spec.tls[0].secretName)
     }
 
     @Test

@@ -46,11 +46,16 @@ class IngressTemplate(val yaml: String) {
         }
         // 资源名由域名决定：k8s 资源名不允许 '.'，统一净化。
         // 这样同一域名重复添加幂等（同名覆盖），不同域名之间也不会因模板里的静态 name 而冲突。
-        return IngressBuilder(ingress)
+        val ingress1 = IngressBuilder(ingress)
             .editMetadata()
             .withName(sanitizedName(domain))
             .endMetadata()
             .build()
+
+        ingress1.spec?.tls?.firstOrNull()
+            ?.secretName = "tls-" + sanitizedName(domain)
+
+        return ingress1
     }
 
     /**
