@@ -94,6 +94,21 @@ class KubernetesClientServiceTest {
         }
     }
 
+    /**
+     * 跨 namespace 读取的实地探针：确认 list 回来的 ingress 都带上了 namespace，
+     * 否则跨 namespace 扫描会静默退化成"一个都读不到"。
+     */
+    @Test
+    fun readIngressHostFromAllNamespaces() = runTest {
+        workWithLocalKubernetesCluster(javaClass) {
+            val service = KubernetesClientServiceImpl(this)
+            val hosts = service.readIngressHostFromAllNamespaces()
+            hosts.forEach {
+                println("${it.namespace}\t${it.hostname}\tissuer=${it.issuerName}\tsecret=${it.secretName}")
+            }
+        }
+    }
+
     @Test
     fun feishuToken() = runTest {
         workWithLocalKubernetesCluster(javaClass) {

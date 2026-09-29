@@ -8,20 +8,16 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.santorini.kubernetes.KubernetesClientService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * easy-domain 一键装配。
+ * easy-domain 域名管理的一键装配。
  *
  * - `EASY_DOMAIN_NAMESPACE` + 模板未配齐：什么都不挂，仅 info 提示
- * - 阿里云配置未配齐：域名管理可用，证书同步不启用
  *
- * 新增域名成功后自动触发一次证书同步（后台执行，失败只记日志）。
+ * 这里**只**挂域名管理路由。证书同步与本路由无关（不由"新增域名"触发），
+ * 需要用 [certSyncService] 单独装配、由宿主的调度任务驱动。
  */
 fun Application.easyDomain(
     config: EasyDomainConfig,
@@ -35,25 +31,6 @@ fun Application.easyDomain(
 
     val template = IngressTemplate(config.ingressTemplate!!)
     val domainService = DomainServiceImpl(kubernetesClientService, config.namespace!!, template)
-
-    val certSyncService = if (config.certSyncEnabled) {
-        logger.info { "easy-domain 证书同步启用，endpoint=${config.aliyunEndpoint}" }
-        CertSyncServiceImpl(
-            kubernetesClientService,
-            config.namespace,
-            DnsScopeMatcher(config.dnsCidrs, config.dnsCnameSuffixes),
-            CasCertificateUploader(
-                config.aliyunAccessKeyId!!,
-                config.aliyunAccessKeySecret!!,
-                config.aliyunEndpoint!!,
-            ),
-        )
-    } else {
-        logger.info { "easy-domain 证书同步未启用：需要阿里云 RAM 账号与 endpoint" }
-        null
-    }
-
-    val certSyncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // 宿主可能已装 ContentNegotiation；插件重复安装会抛异常，这里守一下
     if (pluginOrNull(ContentNegotiation) == null) {
@@ -79,12 +56,6 @@ fun Application.easyDomain(
                     call.respond(HttpStatusCode.Created, domain)
                 } catch (e: IllegalArgumentException) {
                     call.respond(HttpStatusCode.BadRequest, e.message ?: "invalid domain")
-                }
-                certSyncService?.let { service ->
-                    certSyncScope.launch {
-                        runCatching { service.syncEligibleCerts() }
-                            .onFailure { logger.warn(it) { "域名 $domain 新增后的证书同步失败" } }
-                    }
                 }
             }
             delete("/{domain}") {

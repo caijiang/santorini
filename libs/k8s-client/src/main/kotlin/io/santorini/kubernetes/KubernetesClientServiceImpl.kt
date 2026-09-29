@@ -80,14 +80,43 @@ class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClien
     ) = kubernetesClient.makesureRightServiceRoles(root, serviceAccountName, namespace, serviceRoles)
 
     override fun readIngressHostFromNamespace(namespace: String): List<HostData> {
-        val x = kubernetesClient
+        val ingresses = kubernetesClient
             .network()
             .v1()
             .ingresses()
             .inNamespace(namespace)
             .list()
+            .items
 
-        val x1 = x.items.flatMap { ingress ->
+        return hostDataOf(namespace, ingresses)
+    }
+
+    override fun readIngressHostFromAllNamespaces(): List<HostData> {
+        return kubernetesClient
+            .network()
+            .v1()
+            .ingresses()
+            .inAnyNamespace()
+            .list()
+            .items
+            .groupBy { it.metadata?.namespace }
+            .flatMap { (namespace, ingresses) ->
+                if (namespace == null) {
+                    logger.warn { "存在没有 namespace 的 ingress，已忽略: ${ingresses.map { it.metadata?.name }}" }
+                    emptyList()
+                } else {
+                    hostDataOf(namespace, ingresses)
+                }
+            }
+    }
+
+    /**
+     * 把一批 ingress 解析成去重后的入口信息。
+     *
+     * 去重发生在 **namespace 内部**：同名 host 只保留第一个，出现多个时告警。
+     */
+    private fun hostDataOf(namespace: String, ingresses: List<Ingress>): List<HostData> {
+        val parsed = ingresses.flatMap { ingress ->
             val issuerName = ingress.metadata?.annotations?.get("cert-manager.io/cluster-issuer")
             ingress.spec.rules.map { rule ->
                 val hostname = rule.host
@@ -95,7 +124,7 @@ class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClien
                     it.hosts.contains(hostname)
                 }?.secretName
 
-                HostData(hostname, issuerName, secretName).cleanShot()
+                HostData(hostname, issuerName, secretName, namespace).cleanShot()
             }
         }
             // host 必须有效
@@ -110,12 +139,12 @@ class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClien
             }
 
         logger.debug {
-            "经过去重过滤前: $x1"
+            "经过去重过滤前: $parsed"
         }
-        val names = x1.map { it.hostname }.distinct()
+        val names = parsed.map { it.hostname }.distinct()
 
         return names.map { name ->
-            val mc = x1.filter {
+            val mc = parsed.filter {
                 it.hostname == name
             }
             if (mc.size > 1) {

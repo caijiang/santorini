@@ -7,9 +7,11 @@ import java.io.File
  *
  * 两个功能各自独立开闭：
  * - 域名管理：[namespace] 与 [ingressTemplate] 齐备 → [domainFeatureEnabled]
- * - 证书同步：在域名管理的基础上，阿里云 RAM 账号与 [aliyunEndpoint] 齐备 → [certSyncEnabled]
+ * - 证书同步：阿里云 RAM 账号与 [aliyunEndpoint] 齐备 → [certSyncEnabled]
  *
- * @param namespace         环境变量 `EASY_DOMAIN_NAMESPACE`，专用 namespace，功能 1、2 的操作对象
+ * 注意证书同步**不限定 namespace**：它扫描集群里所有 ingress，因此不需要 [namespace]。
+ *
+ * @param namespace         环境变量 `EASY_DOMAIN_NAMESPACE`，域名管理专用 namespace
  * @param ingressTemplate   渲染前的 Ingress YAML 模板正文，`{{domain}}` 为占位符
  * @param dnsCidrs          A 记录允许的 IP 段（CIDR），来自 `EASY_DOMAIN_DNS_CIDRS`，逗号分隔
  * @param dnsCnameSuffixes  CNAME 允许的目标后缀，来自 `EASY_DOMAIN_DNS_CNAME_SUFFIXES`，逗号分隔
@@ -30,10 +32,18 @@ data class EasyDomainConfig(
         get() = !namespace.isNullOrBlank() && !ingressTemplate.isNullOrBlank()
 
     val certSyncEnabled: Boolean
-        get() = !namespace.isNullOrBlank()
-                && !aliyunAccessKeyId.isNullOrBlank()
+        get() = !aliyunAccessKeyId.isNullOrBlank()
                 && !aliyunAccessKeySecret.isNullOrBlank()
                 && !aliyunEndpoint.isNullOrBlank()
+
+    /**
+     * DNS 范围是否配了至少一条。
+     *
+     * 一条都没配时同步不会报错，但每个 host 都匹配不上——表现为静默空转，
+     * 所以装配阶段要据此给出告警。
+     */
+    val dnsScopeConfigured: Boolean
+        get() = dnsCidrs.isNotEmpty() || dnsCnameSuffixes.isNotEmpty()
 
     companion object {
         const val ENV_NAMESPACE = "EASY_DOMAIN_NAMESPACE"

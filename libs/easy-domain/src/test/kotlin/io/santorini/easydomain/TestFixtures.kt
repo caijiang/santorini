@@ -32,6 +32,9 @@ object TestFixtures {
                           number: 80
     """.trimIndent()
 
-    fun hostData(hostname: String, secretName: String? = hostname.replace(".", "-")) =
-        HostData(hostname, "letsencrypt", secretName).cleanShot()
+    fun hostData(
+        hostname: String,
+        secretName: String? = hostname.replace(".", "-"),
+        namespace: String? = null,
+    ) = HostData(hostname, "letsencrypt", secretName, namespace).cleanShot()
 }

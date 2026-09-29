@@ -2,10 +2,13 @@
 
 package io.santorini.easydomain
 
+import io.kotest.assertions.withClue
+import io.kotest.matchers.collections.shouldHaveSize
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import io.santorini.kubernetes.KubernetesClientService
+import io.santorini.kubernetes.model.HostData
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -13,7 +16,8 @@ import kotlin.test.assertTrue
 
 class CertSyncServiceTest {
 
-    private val namespace = "easy-domains"
+    private val nsA = "app-a"
+    private val nsB = "app-b"
 
     // openssl 生成的真实自签证书，CN=in-scope.example.com
     private val certPem = """
@@ -42,12 +46,18 @@ class CertSyncServiceTest {
     // 私钥内容不参与任何解析，只要形状正确
     private val keyPem = """
         -----BEGIN PRIVATE KEY-----
-        MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC=
+        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDLi2xbKB8dms2L
         -----END PRIVATE KEY-----
     """.trimIndent()
 
     private fun secretData(cert: String = certPem, key: String = keyPem): Map<String, String> =
         mapOf("tls.crt" to cert, "tls.key" to key)
+
+    private fun host(
+        hostname: String,
+        namespace: String = nsA,
+        secretName: String? = hostname.replace(".", "-"),
+    ): HostData = HostData(hostname, "letsencrypt", secretName, namespace).cleanShot()
 
     private fun fakeUploader(existing: Set<String> = emptySet()): Pair<AlbCertificateUploader, MutableList<String>> {
         val uploaded = mutableListOf<String>()
@@ -61,16 +71,22 @@ class CertSyncServiceTest {
         return uploader to uploaded
     }
 
+    /**
+     * @param secrets key 为 `namespace/secretName`
+     */
     private fun mockK8s(
-        hosts: List<String>,
+        hosts: List<HostData>,
         secrets: Map<String, Map<String, String>> = emptyMap(),
     ): KubernetesClientService {
         val k8s = mockk<KubernetesClientService>()
-        every { k8s.readIngressHostFromNamespace(namespace) } returns
-                hosts.map { TestFixtures.hostData(it) }
-        hosts.forEach { host ->
-            val secretName = host.replace(".", "-")
-            every { k8s.readStringSecret(namespace, secretName) } returns secrets[secretName]
+        every { k8s.readIngressHostFromAllNamespaces() } returns hosts
+        hosts.forEach { h ->
+            every {
+                k8s.readStringSecret(
+                    h.namespace!!,
+                    h.secretName!!
+                )
+            } returns secrets["${h.namespace}/${h.secretName}"]
         }
         return k8s
     }
@@ -86,7 +102,7 @@ class CertSyncServiceTest {
         uploader: AlbCertificateUploader,
         cnameSuffixes: List<String> = listOf("scope.example.com"),
         dns: DnsResolver = FakeDns("x.scope.example.com"),
-    ) = CertSyncServiceImpl(k8s, namespace, DnsScopeMatcher(listOf(), cnameSuffixes, dns), uploader)
+    ) = CertSyncServiceImpl(k8s, DnsScopeMatcher(listOf(), cnameSuffixes, dns), uploader)
 
     @Test
     fun `证书指纹计算与 openssl sha256 对齐`() {
@@ -99,8 +115,8 @@ class CertSyncServiceTest {
     @Test
     fun `DNS 命中的域名被同步`() = runTest {
         val k8s = mockK8s(
-            hosts = listOf("in-scope.example.com"),
-            secrets = mapOf("in-scope-example-com" to secretData()),
+            hosts = listOf(host("in-scope.example.com")),
+            secrets = mapOf("$nsA/in-scope-example-com" to secretData()),
         )
         val (uploader, uploaded) = fakeUploader()
         val sync = service(k8s, uploader)
@@ -110,15 +126,63 @@ class CertSyncServiceTest {
         assertEquals(listOf("in-scope.example.com"), report.synced)
         assertEquals(1, uploaded.size)
         assertTrue(uploaded[0].startsWith("santorini-in-scope-example-com-"))
-        verify { k8s.readStringSecret(namespace, "in-scope-example-com") }
+        verify { k8s.readStringSecret(nsA, "in-scope-example-com") }
+    }
+
+    @Test
+    fun `跨 namespace 的入口各自从所属 namespace 读 secret`() = runTest {
+        val k8s = mockK8s(
+            hosts = listOf(
+                host("in-scope.example.com", namespace = nsA),
+                host("other.example.com", namespace = nsB),
+            ),
+            secrets = mapOf(
+                "$nsA/in-scope-example-com" to secretData(),
+                "$nsB/other-example-com" to secretData(),
+            ),
+        )
+        val (uploader, uploaded) = fakeUploader()
+        val sync = service(k8s, uploader)
+
+        val report = sync.syncEligibleCerts()
+
+        assertEquals(setOf("in-scope.example.com", "other.example.com"), report.synced.toSet())
+        assertEquals(2, uploaded.size)
+        verify { k8s.readStringSecret(nsA, "in-scope-example-com") }
+        verify { k8s.readStringSecret(nsB, "other-example-com") }
+    }
+
+    @Test
+    fun `同名 host 出现在多个 namespace 时只同步排序首个`() = runTest {
+        val k8s = mockK8s(
+            hosts = listOf(
+                host("in-scope.example.com", namespace = nsB, secretName = "b-secret"),
+                host("in-scope.example.com", namespace = nsA, secretName = "a-secret"),
+            ),
+            secrets = mapOf(
+                "$nsA/a-secret" to secretData(),
+                "$nsB/b-secret" to secretData(),
+            ),
+        )
+        val (uploader, uploaded) = fakeUploader()
+        val sync = service(k8s, uploader)
+
+        val report = sync.syncEligibleCerts()
+
+        assertEquals(listOf("in-scope.example.com"), report.synced)
+        withClue("成功同步") {
+            uploaded shouldHaveSize 1
+        }
+        verify { k8s.readStringSecret(nsA, "a-secret") }
+        verify(exactly = 0) { k8s.readStringSecret(nsB, "b-secret") }
     }
 
     @Test
     fun `指纹已在证书池的跳过`() = runTest {
         val fingerprint = certificateSha256Fingerprint(certPem)
         val k8s = mockK8s(
-            hosts = listOf("in-scope.example.com"),
-            secrets = mapOf("in-scope-example-com" to secretData()),
+            hosts = listOf(host("in-scope.example.com")),
+            secrets = mapOf("$nsA/in-scope-example-com" to secretData()),
         )
         val (uploader, uploaded) = fakeUploader(setOf(fingerprint))
         val sync = service(k8s, uploader)
@@ -132,7 +196,7 @@ class CertSyncServiceTest {
 
     @Test
     fun `DNS 不命中的域名不参与同步`() = runTest {
-        val k8s = mockK8s(hosts = listOf("out-of-scope.example.com"))
+        val k8s = mockK8s(hosts = listOf(host("out-of-scope.example.com")))
         val (uploader, uploaded) = fakeUploader()
         val sync = service(k8s, uploader, dns = FakeDns(null))
 
@@ -146,10 +210,10 @@ class CertSyncServiceTest {
     @Test
     fun `secret 缺失或内容非法记为失败而不是抛出`() = runTest {
         val k8s = mockK8s(
-            hosts = listOf("no-secret.example.com", "bad-secret.example.com"),
+            hosts = listOf(host("no-secret.example.com"), host("bad-secret.example.com")),
             secrets = mapOf(
-                "no-secret-example-com" to emptyMap(),
-                "bad-secret-example-com" to mapOf("tls.crt" to "not-a-cert", "tls.key" to keyPem),
+                "$nsA/no-secret-example-com" to emptyMap(),
+                "$nsA/bad-secret-example-com" to mapOf("tls.crt" to "not-a-cert", "tls.key" to keyPem),
             ),
         )
         val (uploader, uploaded) = fakeUploader()
@@ -166,8 +230,8 @@ class CertSyncServiceTest {
     @Test
     fun `证书名包含指纹，同一张证书天然同名`() = runTest {
         val k8s = mockK8s(
-            hosts = listOf("in-scope.example.com"),
-            secrets = mapOf("in-scope-example-com" to secretData()),
+            hosts = listOf(host("in-scope.example.com")),
+            secrets = mapOf("$nsA/in-scope-example-com" to secretData()),
         )
         val uploaded = mutableListOf<String>()
         val uploader = object : AlbCertificateUploader {

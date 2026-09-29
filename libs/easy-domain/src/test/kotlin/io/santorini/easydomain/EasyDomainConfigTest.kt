@@ -46,6 +46,30 @@ class EasyDomainConfigTest {
     }
 
     @Test
+    fun `证书同步不依赖 namespace，与域名管理各自独立`() {
+        val config = EasyDomainConfig.fromEnv { key ->
+            when (key) {
+                EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_ID -> "id"
+                EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_SECRET -> "secret"
+                EasyDomainConfig.ENV_ALIYUN_ENDPOINT -> "cas.aliyuncs.com"
+                else -> null
+            }
+        }
+        assertFalse(config.domainFeatureEnabled)
+        assertTrue(config.certSyncEnabled)
+    }
+
+    @Test
+    fun `DNS 范围一个都没配时 dnsScopeConfigured 为 false`() {
+        assertFalse(EasyDomainConfig.fromEnv { null }.dnsScopeConfigured)
+        assertTrue(
+            EasyDomainConfig.fromEnv { key ->
+                if (key == EasyDomainConfig.ENV_DNS_CIDRS) "10.0.0.0/8" else null
+            }.dnsScopeConfigured
+        )
+    }
+
+    @Test
     fun `模板正文与模板文件互斥`() {
         val e = assertFailsWith<IllegalStateException> {
             EasyDomainConfig.fromEnv { key ->

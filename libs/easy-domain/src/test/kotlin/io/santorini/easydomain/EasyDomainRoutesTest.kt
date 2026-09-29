@@ -1,7 +1,11 @@
-@file:Suppress("NonAsciiCharacters")
+@file:Suppress("NonAsciiCharacters", "RemoveRedundantBackticks")
 
 package io.santorini.easydomain
 
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress
+import io.kotest.assertions.fail
+import io.kotest.assertions.withClue
+import io.kotest.matchers.shouldBe
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -12,8 +16,8 @@ import io.mockk.slot
 import io.mockk.verify
 import io.santorini.kubernetes.KubernetesClientService
 import io.santorini.kubernetes.model.HostData
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class EasyDomainRoutesTest {
 
@@ -38,6 +42,35 @@ class EasyDomainRoutesTest {
         }
     }
 
+    /** 阿里云配置齐全的配置：证书同步已启用，但它与路由无关 */
+    private fun configWithCertSync() = EasyDomainConfig.fromEnv { key ->
+        when (key) {
+            EasyDomainConfig.ENV_NAMESPACE -> namespace
+            EasyDomainConfig.ENV_TEMPLATE -> TestFixtures.TEMPLATE_YAML
+            EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_ID -> "id"
+            EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_SECRET -> "secret"
+            EasyDomainConfig.ENV_ALIYUN_ENDPOINT -> "cas.aliyuncs.com"
+            else -> null
+        }
+    }
+
+    /**
+     * 断言状态码，**失败时把响应体一并带出**。
+     *
+     * 裸 `assertEquals(OK, status)` 的失败信息只有 expected/actual，而 Ktor 路由出问题时
+     * 真正有价值的是 body 里写了什么（错误详情、校验提示）。把它绑进同一条失败信息，
+     * 省掉"改断言 -> 重跑 -> 看 body"的一轮往返。
+     *
+     * 注意：成功路径不读 body，避免消费掉后面还要用的响应流。
+     */
+    private suspend fun HttpResponse.shouldHaveStatus(expected: HttpStatusCode) {
+        if (status == expected) return
+        fail("期望 $expected，实际 $status，响应体「${bodyAsText()}」")
+    }
+
+    /** JSON 数组按**结构化**比较，而不是比较原始字符串（前者不绑定空格与转义细节）。 */
+    private fun String.asJsonStringList(): List<String> = Json.decodeFromString(this)
+
     @Test
     fun `GET domains 返回域名列表`() = testApplication {
         val k8s = mockK8s(
@@ -45,10 +78,10 @@ class EasyDomainRoutesTest {
         )
         application { easyDomain(config(), k8s) }
 
-        val response = client.get("/domains")
-
-        assertEquals(HttpStatusCode.OK, response.status)
-        assertEquals("""["a.example.com","b.example.com"]""", response.bodyAsText())
+        client.get("/domains").apply {
+            shouldHaveStatus(HttpStatusCode.OK)
+            bodyAsText().asJsonStringList() shouldBe listOf("a.example.com", "b.example.com")
+        }
     }
 
     @Test
@@ -56,13 +89,16 @@ class EasyDomainRoutesTest {
         val k8s = mockK8s()
         application { easyDomain(config(), k8s) }
 
-        val response = client.post("/domains/new.example.com")
+        client.post("/domains/new.example.com").apply {
+            shouldHaveStatus(HttpStatusCode.Created)
+            bodyAsText() shouldBe "new.example.com"
+        }
 
-        assertEquals(HttpStatusCode.Created, response.status)
-        assertEquals("new.example.com", response.bodyAsText())
-        val slot = slot<io.fabric8.kubernetes.api.model.networking.v1.Ingress>()
-        verify(exactly = 1) { k8s.applyIngress(namespace, capture(slot)) }
-        assertEquals("new-example-com", slot.captured.metadata.name)
+        val ingress = slot<Ingress>()
+        verify(exactly = 1) { k8s.applyIngress(namespace, capture(ingress)) }
+        withClue("ingress 名应由域名净化而来，否则多域名会互相覆盖") {
+            ingress.captured.metadata.name shouldBe "new-example-com"
+        }
     }
 
     @Test
@@ -70,9 +106,8 @@ class EasyDomainRoutesTest {
         val k8s = mockK8s()
         application { easyDomain(config(), k8s) }
 
-        val response = client.post("/domains/bad_domain")
+        client.post("/domains/bad_domain").shouldHaveStatus(HttpStatusCode.BadRequest)
 
-        assertEquals(HttpStatusCode.BadRequest, response.status)
         verify(exactly = 0) { k8s.applyIngress(any(), any()) }
     }
 
@@ -81,9 +116,7 @@ class EasyDomainRoutesTest {
         val k8s = mockK8s(listOf(TestFixtures.hostData("taken.example.com")))
         application { easyDomain(config(), k8s) }
 
-        val response = client.post("/domains/taken.example.com")
-
-        assertEquals(HttpStatusCode.BadRequest, response.status)
+        client.post("/domains/taken.example.com").shouldHaveStatus(HttpStatusCode.BadRequest)
     }
 
     @Test
@@ -92,8 +125,8 @@ class EasyDomainRoutesTest {
         every { k8s.removeIngressWithHost(namespace, "gone.example.com") } returns true
         application { easyDomain(config(), k8s) }
 
-        assertEquals(HttpStatusCode.NoContent, client.delete("/domains/gone.example.com").status)
-        assertEquals(HttpStatusCode.NotFound, client.delete("/domains/nothing.example.com").status)
+        client.delete("/domains/gone.example.com").shouldHaveStatus(HttpStatusCode.NoContent)
+        client.delete("/domains/nothing.example.com").shouldHaveStatus(HttpStatusCode.NotFound)
     }
 
     @Test
@@ -101,15 +134,32 @@ class EasyDomainRoutesTest {
         val k8s = mockK8s(listOf(TestFixtures.hostData("a.example.com")))
         application { easyDomain(config(), k8s) }
 
-        assertEquals(HttpStatusCode.OK, client.get("/domains/a.example.com").status)
-        assertEquals("a.example.com", client.get("/domains/a.example.com").bodyAsText())
-        assertEquals(HttpStatusCode.NotFound, client.get("/domains/missing.example.com").status)
+        client.get("/domains/a.example.com").apply {
+            shouldHaveStatus(HttpStatusCode.OK)
+            bodyAsText() shouldBe "a.example.com"
+        }
+        client.get("/domains/missing.example.com").shouldHaveStatus(HttpStatusCode.NotFound)
     }
 
     @Test
     fun `未配置 namespace 时不挂路由`() = testApplication {
         application { easyDomain(EasyDomainConfig.fromEnv { null }, mockK8s()) }
 
-        assertEquals(HttpStatusCode.NotFound, client.get("/domains").status)
+        client.get("/domains").shouldHaveStatus(HttpStatusCode.NotFound)
+    }
+
+    /**
+     * 证书同步的触发时机由宿主的调度任务决定："证书刚签发"才是它的输入，
+     * "用户新增域名"不是——证书要等 cert-manager 走完 ACME 流程才存在。
+     */
+    @Test
+    fun `新增域名不触发证书同步`() = testApplication {
+        val k8s = mockK8s()
+        application { easyDomain(configWithCertSync(), k8s) }
+
+        client.post("/domains/new.example.com").shouldHaveStatus(HttpStatusCode.Created)
+
+        verify(exactly = 0) { k8s.readIngressHostFromAllNamespaces() }
+        verify(exactly = 0) { k8s.readStringSecret(any(), any()) }
     }
 }
