@@ -71,6 +71,19 @@ export function toInnaNameRule(n = 15) {
 }
 
 /**
+ * 域名规则，是服务端 `validateDomain`（easy-domain DomainService.kt）的前端镜像。
+ *
+ * 前端拦一道只是为了让用户早点看到原因，服务端仍然会再校验一次。
+ */
+export function toDomainRule() {
+  return {
+    pattern: /^(\*\.)?([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}$/,
+    message:
+      '非法域名（支持 *.example.com 通配符；各段只能由小写字母、数字与 - 组成，且不能以 - 开头或结尾）',
+  };
+}
+
+/**
  * //    有效标签值：
  * //    必须为 63 个字符或更少（可以为空）
  * //    除非标签值为空，必须以字母数字字符（[a-z0-9A-Z]）开头和结尾

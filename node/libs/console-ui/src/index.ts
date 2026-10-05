@@ -21,6 +21,7 @@ import { serverSideApplySlice } from './slices/serverSideApply';
 import { userCaresApi } from './apis/userCares';
 import { hpaLiveSlice } from './slices/hpaLiveSlice';
 import { hostsSlice } from './slices/hostSlice';
+import { easyDomainApi } from './apis/easyDomain';
 
 export { useAppNameQuery };
 
@@ -41,6 +42,7 @@ export default {
     miscApi.middleware,
     userApi.middleware,
     userCaresApi.middleware,
+    easyDomainApi.middleware,
     listenerMiddleware.middleware,
   ],
   reducers: {
@@ -61,6 +63,7 @@ export default {
     [miscApi.reducerPath]: miscApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
     [userCaresApi.reducerPath]: userCaresApi.reducer,
+    [easyDomainApi.reducerPath]: easyDomainApi.reducer,
     [serverSideApplySlice.name]: serverSideApplySlice.reducer,
   },
   routesInRoot: publicRoutes,
