@@ -49,7 +49,7 @@ class EasyDomainRoutesTest {
             EasyDomainConfig.ENV_TEMPLATE -> TestFixtures.TEMPLATE_YAML
             EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_ID -> "id"
             EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_SECRET -> "secret"
-            EasyDomainConfig.ENV_ALIYUN_ENDPOINT -> "cas.aliyuncs.com"
+            EasyDomainConfig.ENV_ALIYUN_REGION -> "cn-hangzhou"
             else -> null
         }
     }

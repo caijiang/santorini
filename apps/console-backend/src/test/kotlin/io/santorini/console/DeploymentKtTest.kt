@@ -20,14 +20,10 @@ import io.mockk.mockkStatic
 import io.santorini.LoginUserData
 import io.santorini.console.schema.*
 import io.santorini.consoleModuleEntry
-import io.santorini.io.santorini.test.MockJobService
 import io.santorini.kubernetes.*
 import io.santorini.model.*
 import io.santorini.service.ImageService
-import io.santorini.test.mockComputeResources
-import io.santorini.test.mockDeploymentServicePreDeployWorkFineWith
-import io.santorini.test.mockKubernetesInformerServiceLoader
-import io.santorini.test.mockUserModule
+import io.santorini.test.*
 import io.santorini.tools.createStandardClient
 import io.santorini.tools.isolatedTestDatabase
 import me.jiangcai.cr.Deployable

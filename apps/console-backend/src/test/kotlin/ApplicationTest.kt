@@ -3,7 +3,7 @@ package io.santorini
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import io.santorini.io.santorini.test.MockJobService
+import io.santorini.test.MockJobService
 import io.santorini.test.mockKubernetesInformerServiceLoader
 import io.santorini.tools.database
 import org.junit.jupiter.api.AfterAll

@@ -18,16 +18,12 @@ import io.mockk.mockkStatic
 import io.mockk.verify
 import io.santorini.console.schema.EnvData
 import io.santorini.consoleModuleEntry
-import io.santorini.io.santorini.test.MockJobService
 import io.santorini.kubernetes.KubernetesClientService
 import io.santorini.kubernetes.createEnvResourceInPlain
 import io.santorini.kubernetes.createEnvResourceInSecret
 import io.santorini.kubernetes.updateOne
 import io.santorini.model.ResourceType
-import io.santorini.test.mockKubernetesInformerServiceLoader
-import io.santorini.test.mockThatConfigMapNameWill
-import io.santorini.test.mockThatSecretNameWill
-import io.santorini.test.mockUserModule
+import io.santorini.test.*
 import io.santorini.tools.createStandardClient
 import io.santorini.tools.isolatedTestDatabase
 import kotlin.test.Test

@@ -14,7 +14,7 @@ masterEmail有了就用传入的:
         email: foo@bar.com
         privateKeySecretRef:
           name: release-name-santorini-common-letsencrypt-issuer-account-key
-        profile: tlsserver
+        profile: classic
         server: https://acme-v02.api.letsencrypt.org/directory
         solvers:
           - http01:
@@ -36,7 +36,7 @@ masterEmail有了就用传入的:
         email: manager@example.com
         privateKeySecretRef:
           name: release-name-santorini-common-letsencrypt-issuer-account-key
-        profile: tlsserver
+        profile: classic
         server: https://acme-v02.api.letsencrypt.org/directory
         solvers:
           - http01:

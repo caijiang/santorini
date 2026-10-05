@@ -9,10 +9,10 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.santorini.demoPlatformUserData
-import io.santorini.io.santorini.test.LocalK8sClusterConfig
 import io.santorini.kubernetes.*
 import io.santorini.service.impl.feishu.FeishuToken
 import io.santorini.service.impl.feishu.KubernetesFeishuTokenStore
+import io.santorini.test.LocalK8sClusterConfig
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream

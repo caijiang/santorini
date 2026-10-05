@@ -7,8 +7,8 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.santorini.consoleModuleEntry
-import io.santorini.io.santorini.test.MockJobService
 import io.santorini.kubernetes.model.HostData
+import io.santorini.test.MockJobService
 import io.santorini.test.mockKubernetesInformerServiceLoader
 import io.santorini.test.mockUserModule
 import io.santorini.tools.createStandardClient

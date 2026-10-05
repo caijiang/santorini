@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+
 plugins {
     // Apply the shared build logic from a convention plugin.
     // The shared code is located in `buildSrc/src/main/kotlin/kotlin-jvm.gradle.kts`.
@@ -5,6 +7,15 @@ plugins {
     // Apply Kotlin Serialization plugin from `gradle/libs.versions.toml`.
     kotlin("plugin.serialization")
 //    alias("kotlin.serialization")
+}
+
+tasks.withType<KotlinCompilationTask<*>> {
+    compilerOptions {
+        optIn.add("kotlin.time.ExperimentalTime")
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
+        optIn.add("kotlinx.serialization.ExperimentalSerializationApi")
+//        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
 }
 
 dependencies {
@@ -16,6 +27,7 @@ dependencies {
     implementation(libs.ktor.server.content.negotiation)
     implementation("org.bouncycastle:bcprov-jdk18on:1.84")
     implementation(libs.aliyun.cas)
+    implementation(libs.aliyun.alb)
 
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)

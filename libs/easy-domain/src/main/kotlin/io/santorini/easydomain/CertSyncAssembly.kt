@@ -25,7 +25,7 @@ fun certSyncService(
     kubernetesClientService: KubernetesClientService,
 ): CertSyncService? {
     if (!config.certSyncEnabled) {
-        logger.info { "easy-domain 证书同步未启用：需要阿里云 RAM 账号与 endpoint" }
+        logger.info { "easy-domain 证书同步未启用：需要阿里云 RAM 账号与 region" }
         return null
     }
     if (!config.dnsScopeConfigured) {
@@ -34,7 +34,7 @@ fun certSyncService(
                     "${EasyDomainConfig.ENV_DNS_CNAME_SUFFIXES}），所有入口都不会命中，同步将空转"
         }
     }
-    logger.info { "easy-domain 证书同步装配完成：endpoint=${config.aliyunEndpoint}，扫描全部 namespace" }
+    logger.info { "easy-domain 证书同步装配完成：region=${config.aliyunRegion}，扫描全部 namespace" }
 
     return CertSyncServiceImpl(
         kubernetesClientService,
@@ -42,7 +42,8 @@ fun certSyncService(
         CasCertificateUploader(
             config.aliyunAccessKeyId!!,
             config.aliyunAccessKeySecret!!,
-            config.aliyunEndpoint!!,
+            config.aliyunRegion!!,
+            config.aliyunAlbListenerId!!
         ),
     )
 }

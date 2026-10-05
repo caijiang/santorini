@@ -37,7 +37,8 @@ class EasyDomainConfigTest {
                 EasyDomainConfig.ENV_TEMPLATE -> "yaml"
                 EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_ID -> "id"
                 EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_SECRET -> "secret"
-                EasyDomainConfig.ENV_ALIYUN_ENDPOINT -> "cas.aliyuncs.com"
+                EasyDomainConfig.ENV_ALIYUN_REGION -> "cn-hangzhou"
+                EasyDomainConfig.ENV_ALIYUN_ALB_LISTENER_ID -> "foo"
                 else -> null
             }
         }
@@ -51,7 +52,8 @@ class EasyDomainConfigTest {
             when (key) {
                 EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_ID -> "id"
                 EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_SECRET -> "secret"
-                EasyDomainConfig.ENV_ALIYUN_ENDPOINT -> "cas.aliyuncs.com"
+                EasyDomainConfig.ENV_ALIYUN_REGION -> "cn-hangzhou"
+                EasyDomainConfig.ENV_ALIYUN_ALB_LISTENER_ID -> "foo"
                 else -> null
             }
         }

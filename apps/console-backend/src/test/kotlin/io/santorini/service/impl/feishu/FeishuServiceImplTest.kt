@@ -8,7 +8,7 @@ import io.mockk.Answer
 import io.mockk.Call
 import io.mockk.every
 import io.mockk.mockk
-import io.santorini.io.santorini.test.LocalFeishuConfig
+import io.santorini.test.LocalFeishuConfig
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream

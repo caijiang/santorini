@@ -62,8 +62,8 @@ class CertSyncServiceTest {
     private fun fakeUploader(existing: Set<String> = emptySet()): Pair<AlbCertificateUploader, MutableList<String>> {
         val uploaded = mutableListOf<String>()
         val uploader = object : AlbCertificateUploader {
-            override fun listUploadedFingerprints(domain: String): Set<String> = existing
-            override fun upload(name: String, certPem: String, privateKeyPem: String): Long {
+            override suspend fun listUploadedFingerprints(domain: String): Set<String> = existing
+            override suspend fun upload(name: String, certPem: String, privateKeyPem: String): Long {
                 uploaded.add(name)
                 return 1L
             }
@@ -179,7 +179,7 @@ class CertSyncServiceTest {
 
     @Test
     fun `指纹已在证书池的跳过`() = runTest {
-        val fingerprint = certificateSha256Fingerprint(certPem)
+        val fingerprint = certificateSha1Fingerprint(certPem)
         val k8s = mockK8s(
             hosts = listOf(host("in-scope.example.com")),
             secrets = mapOf("$nsA/in-scope-example-com" to secretData()),
@@ -235,8 +235,8 @@ class CertSyncServiceTest {
         )
         val uploaded = mutableListOf<String>()
         val uploader = object : AlbCertificateUploader {
-            override fun listUploadedFingerprints(domain: String): Set<String> = emptySet()
-            override fun upload(name: String, certPem: String, privateKeyPem: String): Long {
+            override suspend fun listUploadedFingerprints(domain: String): Set<String> = emptySet()
+            override suspend fun upload(name: String, certPem: String, privateKeyPem: String): Long {
                 uploaded.add(name)
                 return 1L
             }

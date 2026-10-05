@@ -1,4 +1,4 @@
-package io.santorini.io.santorini.test
+package io.santorini.test
 
 import io.github.caijiang.common.job.worker.PersistentJob
 import io.github.caijiang.common.job.worker.ScheduleJobService

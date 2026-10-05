@@ -22,11 +22,11 @@ import io.santorini.console.schema.EnvData
 import io.santorini.console.schema.ServiceMetaData
 import io.santorini.console.schema.UserData
 import io.santorini.consoleModuleEntry
-import io.santorini.io.santorini.test.MockJobService
 import io.santorini.kubernetes.KubernetesClientService
 import io.santorini.model.Lifecycle
 import io.santorini.model.ServiceRole
 import io.santorini.model.ServiceType
+import io.santorini.test.MockJobService
 import io.santorini.test.mockKubernetesInformerServiceLoader
 import io.santorini.test.mockUserModule
 import io.santorini.tools.addServiceMeta

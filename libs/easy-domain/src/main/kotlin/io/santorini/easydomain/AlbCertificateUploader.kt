@@ -1,13 +1,24 @@
 package io.santorini.easydomain
 
+import com.aliyun.auth.credentials.Credential
+import com.aliyun.auth.credentials.ICredential
+import com.aliyun.auth.credentials.provider.DefaultCredentialProvider
+import com.aliyun.auth.credentials.provider.ICredentialProvider
+import com.aliyun.sdk.service.alb20200616.AsyncClient
+import com.aliyun.sdk.service.alb20200616.models.AssociateAdditionalCertificatesWithListenerRequest
+import com.aliyun.sdk.service.alb20200616.models.ListListenerCertificatesRequest
+import com.aliyun.sdk.service.cas20200407.models.ListUserCertificateOrderRequest
+import com.aliyun.sdk.service.cas20200407.models.UploadUserCertificateRequest
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.io.ByteArrayInputStream
+import io.santorini.easydomain.aliyun.listAllListenerCertificates
+import io.santorini.easydomain.aliyun.listAllUserCertificateOrder
+import io.santorini.easydomain.aliyun.supportDomain
+import io.santorini.easydomain.aliyun.toUserCertificateDetailRequest
+import kotlinx.coroutines.future.await
+import java.io.Closeable
 import java.security.MessageDigest
 import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
-import java.util.*
 
-@Suppress("unused")
 private val logger = KotlinLogging.logger {}
 
 /**
@@ -21,57 +32,129 @@ interface AlbCertificateUploader {
      * @param domain 证书绑定的域名
      * @return 该域名已上传证书的指纹集合（SHA-256，大写 HEX，无分隔符）
      */
-    fun listUploadedFingerprints(domain: String): Set<String>
+    suspend fun listUploadedFingerprints(domain: String): Set<String>
 
     /**
      * 上传一张证书到证书池
      *
      * @return CAS 侧的证书 ID
      */
-    fun upload(name: String, certPem: String, privateKeyPem: String): Long
+    suspend fun upload(name: String, certPem: String, privateKeyPem: String): Long
 }
 
 /**
- * 基于官方 SDK [com.aliyun.cas20200407] 的实现。
+ * 基于官方 SDK [com.aliyun] 的实现。
  */
 class CasCertificateUploader(
     accessKeyId: String,
     accessKeySecret: String,
-    endpoint: String,
-) : AlbCertificateUploader {
-    private val logger = KotlinLogging.logger {}
+    private val region: String,
+    private val listenerId: String
+) : AlbCertificateUploader, Closeable {
 
-    private val client: com.aliyun.cas20200407.Client by lazy {
-        val config = com.aliyun.teaopenapi.models.Config()
-            .setAccessKeyId(accessKeyId)
-            .setAccessKeySecret(accessKeySecret)
-        config.endpoint = endpoint
-        com.aliyun.cas20200407.Client(config)
+    private val provider = DefaultCredentialProvider.builder()
+        .addCustomizeProviders(
+            object : ICredentialProvider {
+                override fun getCredentials(): ICredential {
+                    return Credential.builder()
+                        .accessKeyId(accessKeyId)
+                        .accessKeySecret(accessKeySecret)
+                        .build()
+                }
+
+                override fun close() {
+                }
+            }
+        )
+        .build()
+    private val albClient by lazy {
+        AsyncClient.builder()
+            .region(region)
+            .credentialsProvider(provider)
+            .build()
     }
 
-    override fun listUploadedFingerprints(domain: String): Set<String> {
-        val request = com.aliyun.cas20200407.models.ListUserCertificateOrderRequest()
-            .setOrderType("UPLOAD")
-            .setKeyword(domain)
-            .setCurrentPage(1L)
-            .setShowSize(100L)
-        val body = client.listUserCertificateOrder(request).body ?: return emptySet()
-        val fps = body.certificateOrderList.orEmpty()
-            .mapNotNull { it.sha2?.uppercase() }
-            .toSet()
-        logger.debug { "CAS 上证书池中域名 $domain 已有 ${fps.size} 张证书" }
-        return fps
+    private val casClient by lazy {
+        com.aliyun.sdk.service.cas20200407.AsyncClient.builder()
+            .region(region)
+            .credentialsProvider(provider)
+            .build()
     }
 
-    override fun upload(name: String, certPem: String, privateKeyPem: String): Long {
-        val request = com.aliyun.cas20200407.models.UploadUserCertificateRequest()
-            .setName(name)
-            .setCert(certPem)
-            .setKey(privateKeyPem)
-        val body = client.uploadUserCertificate(request).body
-            ?: error("CAS UploadUserCertificate 无响应体")
-        logger.info { "已上传证书 $name 到 CAS（certId=${body.certId}）" }
-        return body.certId
+    override suspend fun listUploadedFingerprints(domain: String): Set<String> {
+        // 要确保即在 alb 也在 cas
+        val certsInAlb = albClient.listAllListenerCertificates(
+            ListListenerCertificatesRequest.builder()
+                .certificateType("Server")
+                .listenerId(listenerId)
+        )
+
+        logger.debug { "ALB $listenerId 上证书${certsInAlb.size}张证书" }
+
+        return certsInAlb.mapNotNull {
+            val x = casClient.getUserCertificateDetail(it.toUserCertificateDetailRequest())
+                .await().body
+            if (x.supportDomain(domain)) {
+                x.fingerprint
+            } else
+                null
+        }.toSet()
+    }
+
+    override suspend fun upload(name: String, certPem: String, privateKeyPem: String): Long {
+        // 上传要稍微复杂一些, 先在 cas 上过一道(幂等),然后再在 alb 上过一道.
+        val fingerprint = certificateSha1Fingerprint(certPem)
+
+        val casCurrent = casClient.listAllUserCertificateOrder(
+            ListUserCertificateOrderRequest.builder()
+                .orderType("CERT")
+        )
+
+        val id = casCurrent.find {
+            it.fingerprint.equals(fingerprint, ignoreCase = true)
+        }?.certificateId ?: run {
+            logger.debug { "目前没有适配的证书，上传之" }
+
+            val result = casClient.uploadUserCertificate(
+                UploadUserCertificateRequest.builder()
+                    .name(name)
+                    .cert(certPem)
+                    .key(privateKeyPem)
+                    .clientToken("upload-$name")
+                    .build()
+            ).await().body
+
+            logger.info {
+                "cas上传证书: ${result.requestId} ${result.certId}"
+            }
+            result.certId
+        }
+
+        logger.debug { "计划分配证书${id}" }
+
+        val result = albClient.associateAdditionalCertificatesWithListener(
+            AssociateAdditionalCertificatesWithListenerRequest.builder()
+                .listenerId(listenerId)
+                .certificates(
+                    listOf(
+                        AssociateAdditionalCertificatesWithListenerRequest.Certificates.builder()
+                            .certificateId("$id-$region")
+                            .build()
+                    )
+                )
+                .build()
+        ).await()
+
+        logger.info {
+            "ALB分配证书结果:${result.body.requestId} ${result.body.jobId}"
+        }
+
+        return id
+    }
+
+    override fun close() {
+        albClient.close()
+        casClient.close()
     }
 }
 
@@ -79,13 +162,17 @@ class CasCertificateUploader(
  * 计算证书 PEM 的 SHA-256 指纹（大写 HEX，无分隔符），与 CAS 列表返回的 `Sha2` 对齐。
  */
 fun certificateSha256Fingerprint(certPem: String): String {
-    val base64 = certPem
-        .replace("-----BEGIN CERTIFICATE-----", "")
-        .replace("-----END CERTIFICATE-----", "")
-        .replace("\\s".toRegex(), "")
-    val der = Base64.getDecoder().decode(base64)
-    val factory = CertificateFactory.getInstance("X.509")
-    val cert = factory.generateCertificate(ByteArrayInputStream(der)) as X509Certificate
-    val digest = MessageDigest.getInstance("SHA-256").digest(cert.encoded)
-    return digest.joinToString("") { "%02X".format(it) }
+    val leaf = CertificateFactory.getInstance("X.509")
+        .generateCertificates(certPem.byteInputStream())
+        .first()
+    return MessageDigest.getInstance("SHA-256").digest(leaf.encoded)
+        .joinToString("") { "%02X".format(it) }
+}
+
+fun certificateSha1Fingerprint(certPem: String): String {
+    val leaf = CertificateFactory.getInstance("X.509")
+        .generateCertificates(certPem.byteInputStream())
+        .first()
+    return MessageDigest.getInstance("SHA-1").digest(leaf.encoded)
+        .joinToString("") { "%02X".format(it) }
 }

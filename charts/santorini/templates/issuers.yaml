@@ -13,9 +13,13 @@ spec:
     # Let's Encrypt will use this to contact you about expiring
     # certificates, and issues related to your account.
     email: "{{- include "santorini.masterEmail" . }}"
-    # If the ACME server supports profiles, you can specify the profile name here.
-    # See #acme-certificate-profiles below.
-    profile: tlsserver
+    # ACME 证书 profile（Let's Encrypt 支持 classic / tlsserver / shortlived）。
+    # 必须用 classic：tlsserver（45 天）与 shortlived（约 6 天）都会【省略 Common Name】，
+    # 叶子证书的 Subject 变成空序列 → 阿里云 CAS 的 UploadUserCertificate 会直接报
+    # 「没有 commonName」（CAS 从 Subject 的 CN 推导主域名），证书传不进证书池，
+    # ALB 也就引用不到。classic 会把 CSR 指定的 CN（未指定则第一个 SAN）写入 Subject。
+    # ⚠️ 若将来 classic 也取消 CN，先确认 CAS 已支持无 CN 证书再切。
+    profile: classic
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       # Secret resource that will be used to store the account's private key.

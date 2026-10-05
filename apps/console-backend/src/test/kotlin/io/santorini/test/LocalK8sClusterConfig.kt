@@ -1,4 +1,4 @@
-package io.santorini.io.santorini.test
+package io.santorini.test
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonIgnoreUnknownKeys

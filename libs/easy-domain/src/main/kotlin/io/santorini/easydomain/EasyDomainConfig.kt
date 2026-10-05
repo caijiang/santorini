@@ -7,7 +7,7 @@ import java.io.File
  *
  * 两个功能各自独立开闭：
  * - 域名管理：[namespace] 与 [ingressTemplate] 齐备 → [domainFeatureEnabled]
- * - 证书同步：阿里云 RAM 账号与 [aliyunEndpoint] 齐备 → [certSyncEnabled]
+ * - 证书同步：阿里云 RAM 账号与 [aliyunRegion] 齐备 → [certSyncEnabled]
  *
  * 注意证书同步**不限定 namespace**：它扫描集群里所有 ingress，因此不需要 [namespace]。
  *
@@ -17,7 +17,7 @@ import java.io.File
  * @param dnsCnameSuffixes  CNAME 允许的目标后缀，来自 `EASY_DOMAIN_DNS_CNAME_SUFFIXES`，逗号分隔
  * @param aliyunAccessKeyId 环境变量 `EASY_DOMAIN_ALIYUN_ACCESS_KEY_ID`
  * @param aliyunAccessKeySecret 环境变量 `EASY_DOMAIN_ALIYUN_ACCESS_KEY_SECRET`
- * @param aliyunEndpoint    环境变量 `EASY_DOMAIN_ALIYUN_ENDPOINT`，如 `cas.aliyuncs.com`
+ * @param aliyunRegion    环境变量 `EASY_DOMAIN_ALIYUN_REGION`，如 `cn-hangzhou`
  */
 data class EasyDomainConfig(
     val namespace: String?,
@@ -26,7 +26,8 @@ data class EasyDomainConfig(
     val dnsCnameSuffixes: List<String>,
     val aliyunAccessKeyId: String?,
     val aliyunAccessKeySecret: String?,
-    val aliyunEndpoint: String?,
+    val aliyunRegion: String?,
+    val aliyunAlbListenerId: String?,
 ) {
     val domainFeatureEnabled: Boolean
         get() = !namespace.isNullOrBlank() && !ingressTemplate.isNullOrBlank()
@@ -34,7 +35,8 @@ data class EasyDomainConfig(
     val certSyncEnabled: Boolean
         get() = !aliyunAccessKeyId.isNullOrBlank()
                 && !aliyunAccessKeySecret.isNullOrBlank()
-                && !aliyunEndpoint.isNullOrBlank()
+                && !aliyunRegion.isNullOrBlank()
+                && !aliyunAlbListenerId.isNullOrBlank()
 
     /**
      * DNS 范围是否配了至少一条。
@@ -53,7 +55,8 @@ data class EasyDomainConfig(
         const val ENV_DNS_CNAME_SUFFIXES = "EASY_DOMAIN_DNS_CNAME_SUFFIXES"
         const val ENV_ALIYUN_ACCESS_KEY_ID = "EASY_DOMAIN_ALIYUN_ACCESS_KEY_ID"
         const val ENV_ALIYUN_ACCESS_KEY_SECRET = "EASY_DOMAIN_ALIYUN_ACCESS_KEY_SECRET"
-        const val ENV_ALIYUN_ENDPOINT = "EASY_DOMAIN_ALIYUN_ENDPOINT"
+        const val ENV_ALIYUN_REGION = "EASY_DOMAIN_ALIYUN_REGION"
+        const val ENV_ALIYUN_ALB_LISTENER_ID = "EASY_DOMAIN_ALIYUN_ALB_LISTENER_ID"
 
         /**
          * @param env 取环境变量的函数，默认系统环境；测试可注入
@@ -81,7 +84,8 @@ data class EasyDomainConfig(
                 dnsCnameSuffixes = csv(ENV_DNS_CNAME_SUFFIXES),
                 aliyunAccessKeyId = env(ENV_ALIYUN_ACCESS_KEY_ID)?.takeIf { it.isNotBlank() },
                 aliyunAccessKeySecret = env(ENV_ALIYUN_ACCESS_KEY_SECRET)?.takeIf { it.isNotBlank() },
-                aliyunEndpoint = env(ENV_ALIYUN_ENDPOINT)?.takeIf { it.isNotBlank() },
+                aliyunRegion = env(ENV_ALIYUN_REGION)?.takeIf { it.isNotBlank() },
+                aliyunAlbListenerId = env(ENV_ALIYUN_ALB_LISTENER_ID)?.takeIf { it.isNotBlank() },
             )
         }
     }

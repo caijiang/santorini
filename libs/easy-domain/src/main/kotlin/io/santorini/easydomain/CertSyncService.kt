@@ -65,7 +65,7 @@ class CertSyncServiceImpl(
                     continue
                 }
 
-                val fingerprint = certificateSha256Fingerprint(certPem)
+                val fingerprint = certificateSha1Fingerprint(certPem)
                 val existing = uploader.listUploadedFingerprints(domain)
                 if (fingerprint in existing) {
                     logger.debug { "证书 $domain 已在证书池（指纹相同），跳过" }
