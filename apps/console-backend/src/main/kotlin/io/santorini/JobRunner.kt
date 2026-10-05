@@ -6,6 +6,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.*
 import io.santorini.console.schema.DeploymentService
 import io.santorini.console.schema.HpaStatusService
+import io.santorini.easydomain.EasyDomainConfig
+import io.santorini.easydomain.certSyncService
 import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.get
 
@@ -34,6 +36,12 @@ class JobRunner(
                 try {
                     deploymentService.heart()
                     application.get<HpaStatusService>().deleteUnnecessary()
+                    val report = certSyncService(
+                        EasyDomainConfig.fromEnv(), application.get()
+                    )?.syncEligibleCerts()
+                    ktLogger.info {
+                        "CertSyncReport: $report"
+                    }
                 } catch (e: Exception) {
                     ktLogger.warn(e) {
                         "业务问题"

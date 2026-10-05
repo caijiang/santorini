@@ -22,6 +22,8 @@ import io.ktor.server.response.*
 import io.ktor.server.sse.*
 import io.santorini.console.configureConsole
 import io.santorini.console.schema.*
+import io.santorini.easydomain.EasyDomainConfig
+import io.santorini.easydomain.easyDomain
 import io.santorini.informer.KubernetesInformerService
 import io.santorini.informer.KubernetesInformerServiceImpl
 import io.santorini.kubernetes.KubernetesClientService
@@ -271,4 +273,5 @@ fun Application.consoleModuleEntry(
     configureRouting()
     configureKubernetes(kubernetesClient)
     configureConsole(kubernetesClient)
+    easyDomain(EasyDomainConfig.fromEnv(), kubernetesClientService)
 }
