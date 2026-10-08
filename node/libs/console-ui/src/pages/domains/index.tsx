@@ -20,6 +20,18 @@ interface DomainRow {
 }
 
 /**
+ * `mutation().unwrap()` 拒绝的是一个对象（`FetchBaseQueryError`），
+ * 直接塞进模板串只会打出「[object Object]」，看不出任何原因。
+ */
+const failureReason = (e: unknown) => {
+  const err = e as { status?: number | string; data?: unknown } | undefined;
+  if (typeof err?.data === 'string' && err.data) return err.data;
+  const fromBody = (err?.data as { message?: string } | undefined)?.message;
+  if (fromBody) return fromBody;
+  return err?.status == null ? String(e) : `HTTP ${err.status}`;
+};
+
+/**
  * 域名管理，对应 easy-domain 的 `/domains`。
  *
  * 服务端只认域名：Ingress 按模板渲染，namespace 由服务端环境变量决定，
@@ -37,6 +49,7 @@ const DomainTable = () => {
   const { message } = App.useApp();
   const { data: domains, isLoading } = useDomainsQuery(undefined);
   const [createApi] = useCreateDomainMutation();
+
   const [deleteApi] = useDeleteDomainMutation();
   // ProTable 的 record 必须是对象，而接口给的是域名数组
   const dataSource = useMemo<DomainRow[]>(
@@ -64,7 +77,7 @@ const DomainTable = () => {
               await message.success(`成功添加域名-${hostname}`);
               return true;
             } catch (e) {
-              await message.error(`添加域名失败，原因:${e}`);
+              await message.error(`添加域名失败，原因:${failureReason(e)}`);
               return false;
             }
           }}
@@ -102,7 +115,7 @@ const DomainTable = () => {
                 try {
                   await deleteApi(hostname).unwrap();
                 } catch (e) {
-                  await message.error(`删除域名失败，原因:${e}`);
+                  await message.error(`删除域名失败，原因:${failureReason(e)}`);
                 }
               }}
             >

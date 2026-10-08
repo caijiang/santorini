@@ -116,7 +116,10 @@ class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClien
      * 去重发生在 **namespace 内部**：同名 host 只保留第一个，出现多个时告警。
      */
     private fun hostDataOf(namespace: String, ingresses: List<Ingress>): List<HostData> {
-        val parsed = ingresses.flatMap { ingress ->
+        val parsed = ingresses
+            // 移除 acme.cert-manager.io/http01-solver=true
+            .filter { it.metadata?.labels?.get("acme.cert-manager.io/http01-solver") == "true" }
+            .flatMap { ingress ->
             val issuerName = ingress.metadata?.annotations?.get("cert-manager.io/cluster-issuer")
             ingress.spec.rules.map { rule ->
                 val hostname = rule.host

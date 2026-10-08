@@ -6,6 +6,7 @@ import io.fabric8.kubernetes.api.model.networking.v1.Ingress
 import io.kotest.assertions.fail
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -71,6 +72,9 @@ class EasyDomainRoutesTest {
     /** JSON 数组按**结构化**比较，而不是比较原始字符串（前者不绑定空格与转义细节）。 */
     private fun String.asJsonStringList(): List<String> = Json.decodeFromString(this)
 
+    /** 同上，用于对象型 body。 */
+    private fun String.asJsonStringMap(): Map<String, String> = Json.decodeFromString(this)
+
     @Test
     fun `GET domains 返回域名列表`() = testApplication {
         val k8s = mockK8s(
@@ -84,15 +88,37 @@ class EasyDomainRoutesTest {
         }
     }
 
+    /**
+     * 契约守卫：新增成功的响应**不能**是 `text/plain` 的裸字符串。
+     *
+     * 这里曾经写的是 `call.respond(HttpStatusCode.Created, domain)`。`respond(String)` 不会走
+     * ContentNegotiation 的 kotlinx 转换器，而是被 Ktor 内置的 `DefaultTextContentConverter`
+     * 接走、发成 `Content-Type: text/plain`。前端的 `fetchBaseQuery` 默认按 JSON 解析非空
+     * body，直接抛 SyntaxError 折算成 `PARSING_ERROR`；再叠上共享 `apiBase` 的
+     * `retry(..., maxRetries = 1)`（默认重试条件**不看错误类型**），同一个 POST 被重发一次，
+     * 第二次撞上"域名已存在"返回 400，界面于是表现成
+     * 「201 之后又发一遍同样的请求，然后报错」。
+     */
     @Test
-    fun `POST domains 新增成功返回 201 并落地 ingress`() = testApplication {
+    fun `新增成功的响应不带 text-plain 的 body`() = testApplication {
         val k8s = mockK8s()
         application { easyDomain(config(), k8s) }
 
         client.post("/domains/new.example.com").apply {
             shouldHaveStatus(HttpStatusCode.Created)
-            bodyAsText() shouldBe "new.example.com"
+            withClue("text/plain 的 body 会让前端按 JSON 解析失败，并触发一次多余的 POST 重试") {
+                contentType()?.withoutParameters() shouldNotBe ContentType.Text.Plain
+            }
+            bodyAsText() shouldBe ""
         }
+    }
+
+    @Test
+    fun `POST domains 新增成功返回 201 并落地 ingress`() = testApplication {
+        val k8s = mockK8s()
+        application { easyDomain(config(), k8s) }
+
+        client.post("/domains/new.example.com").shouldHaveStatus(HttpStatusCode.Created)
 
         val ingress = slot<Ingress>()
         verify(exactly = 1) { k8s.applyIngress(namespace, capture(ingress)) }
@@ -136,7 +162,8 @@ class EasyDomainRoutesTest {
 
         client.get("/domains/a.example.com").apply {
             shouldHaveStatus(HttpStatusCode.OK)
-            bodyAsText() shouldBe "a.example.com"
+            // 标量也要包一层对象：裸 String 会被发成 text/plain（见上面那条契约守卫）
+            bodyAsText().asJsonStringMap() shouldBe mapOf("domain" to "a.example.com")
         }
         client.get("/domains/missing.example.com").shouldHaveStatus(HttpStatusCode.NotFound)
     }

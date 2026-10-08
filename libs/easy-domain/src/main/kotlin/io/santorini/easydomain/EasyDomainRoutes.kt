@@ -18,6 +18,15 @@ private val logger = KotlinLogging.logger {}
  *
  * 这里**只**挂域名管理路由。证书同步与本路由无关（不由"新增域名"触发），
  * 需要用 [certSyncService] 单独装配、由宿主的调度任务驱动。
+ *
+ * ## 响应体只允许是 JSON（或空）
+ *
+ * `call.respond(someString)` 不会走 ContentNegotiation 的 kotlinx 转换器 —— Ktor 内置的
+ * `DefaultTextContentConverter` 会先接走，发出 `Content-Type: text/plain`。
+ * 而前端的 `fetchBaseQuery` 默认 `responseHandler: 'json'`，对非空 body 一律 `JSON.parse`，
+ * 于是 `text/plain` 的裸字符串会变成 `PARSING_ERROR`；又因为共享的 `apiBase` 用
+ * `retry(..., maxRetries = 1)` 且默认重试条件不看错误类型，**同一个 POST 会被重发一次**。
+ * 要返回标量就包一层对象（见 `GET /domains/{domain}`），否则干脆不带 body。
  */
 fun Application.easyDomain(
     config: EasyDomainConfig,
@@ -46,16 +55,22 @@ fun Application.easyDomain(
             }
             get("/{domain}") {
                 val domain = call.parameters["domain"]!!
-                if (domainService.exists(domain)) call.respond(domain)
+                if (domainService.exists(domain)) call.respond(mapOf("domain" to domain))
                 else call.respond(HttpStatusCode.NotFound)
             }
             post("/{domain}") {
                 val domain = call.parameters["domain"]!!
                 try {
                     domainService.addDomain(domain)
-                    call.respond(HttpStatusCode.Created, domain)
+                    // 不返回 body：本接口是 JSON API，而 `respond(domain)` 里的裸 String
+                    // 会被 Ktor 的 DefaultTextContentConverter 接走、发成 text/plain，
+                    // 前端的 JSON 解析会直接抛 SyntaxError（见本文件顶部说明）
+                    call.respond(HttpStatusCode.Created)
                 } catch (e: IllegalArgumentException) {
-                    call.respond(HttpStatusCode.BadRequest, e.message ?: "invalid domain")
+                    // 出错原因只进日志：本仓的约定是 4xx 不带 body（见 console-backend Env.kt），
+                    // 带 body 反而会让共享 http 层多弹一个空提示
+                    logger.warn { "拒绝新增域名 $domain：${e.message}" }
+                    call.respond(HttpStatusCode.BadRequest)
                 }
             }
             delete("/{domain}") {
@@ -64,7 +79,8 @@ fun Application.easyDomain(
                     if (domainService.removeDomain(domain)) call.respond(HttpStatusCode.NoContent)
                     else call.respond(HttpStatusCode.NotFound)
                 } catch (e: IllegalArgumentException) {
-                    call.respond(HttpStatusCode.BadRequest, e.message ?: "invalid domain")
+                    logger.warn { "拒绝删除域名 $domain：${e.message}" }
+                    call.respond(HttpStatusCode.BadRequest)
                 }
             }
         }

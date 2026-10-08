@@ -44,6 +44,12 @@ interface AlbCertificateUploader {
 
 /**
  * 基于官方 SDK [com.aliyun] 的实现。
+ * 关联 api有:
+ * - https://next.api.aliyun.com/document/Alb/2020-06-16/ListListenerCertificates
+ * - https://next.api.aliyun.com/api/cas/2020-04-07/GetUserCertificateDetail
+ * - https://next.api.aliyun.com/api/cas/2020-04-07/ListUserCertificateOrder
+ * - https://next.api.aliyun.com/api/cas/2020-04-07/UploadUserCertificate
+ * - https://next.api.aliyun.com/document/Alb/2020-06-16/AssociateAdditionalCertificatesWithListener
  */
 class CasCertificateUploader(
     accessKeyId: String,

@@ -37,23 +37,41 @@ function createStore() {
 }
 
 /**
- * 拦下请求并记录，统一用 200 + JSON 应答（这里只关心请求长什么样）
+ * 拦下请求并记录，用给定的 responder 应答
  */
-function stubHttp(body: unknown = null): CaughtRequest[] {
+function stubFetch(respond: (hit: CaughtRequest) => Response): CaughtRequest[] {
   const caught: CaughtRequest[] = [];
   vi.stubGlobal(
     'fetch',
     vi.fn(async (request: BrowserLikeRequest) => {
       const url = new URL(request.url);
-      caught.push({ path: url.pathname + url.search, method: request.method });
-      return new Response(JSON.stringify(body), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const hit = { path: url.pathname + url.search, method: request.method };
+      caught.push(hit);
+      return respond(hit);
     })
   );
   vi.stubGlobal('Request', BrowserLikeRequest);
   return caught;
+}
+
+/**
+ * 统一用 JSON 应答（这里大多只关心请求长什么样）。
+ *
+ * `body` 传 `null` 表示**不带 body** —— 服务端新增成功就是 201 + 空 body，
+ * 别再用一个 JSON 字符串去假装它，假契约会让真问题溜过去。
+ */
+function stubHttp(
+  body: unknown = null,
+  init: ResponseInit = {}
+): CaughtRequest[] {
+  return stubFetch(
+    () =>
+      new Response(body === null ? null : JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        ...init,
+      })
+  );
 }
 
 describe('easy-domain 域名管理接口', () => {
@@ -71,8 +89,8 @@ describe('easy-domain 域名管理接口', () => {
     expect(caught).toEqual([{ path: '/api/domains', method: 'GET' }]);
   });
 
-  it('新增：POST /api/domains/{domain}', async () => {
-    const caught = stubHttp('new.example.com');
+  it('新增：POST /api/domains/{domain}，201 且无 body 即成功', async () => {
+    const caught = stubHttp(null, { status: 201 });
     const store = createStore();
 
     await store
@@ -86,8 +104,43 @@ describe('easy-domain 域名管理接口', () => {
     ]);
   });
 
+  /**
+   * 上一轮的现场复现：后端那时把 201 的 body 写成了裸字符串
+   * （Ktor 的 `respond(String)` 不发 JSON，而是发 `text/plain`）。
+   *
+   * 代价有两份：一是前端按 JSON 解析失败 → `PARSING_ERROR`；
+   * 二是共享的 `apiBase` 是 `retry(..., { maxRetries: 1 })`，而它的默认重试条件
+   * 只看次数、**不看错误类型**，于是同一个 POST 又被原样发了一遍 ——
+   * 对一个非幂等的写接口，这是白送的一次副作用。
+   *
+   * 这条用例把"响应体不是 JSON = 一次多余的写请求"钉住；服务端改契约前先看它。
+   */
+  it('响应体不是 JSON 时：POST 失败，并因 baseQuery 重试被发出两次', async () => {
+    const caught = stubFetch(
+      () =>
+        new Response('new.example.com', {
+          status: 201,
+          headers: { 'Content-Type': 'text/plain; charset=UTF-8' },
+        })
+    );
+    const store = createStore();
+
+    await expect(
+      store
+        .dispatch(
+          easyDomainApi.endpoints.createDomain.initiate('new.example.com')
+        )
+        .unwrap()
+    ).rejects.toMatchObject({ status: 'PARSING_ERROR', originalStatus: 201 });
+
+    expect(caught).toEqual([
+      { path: '/api/domains/new.example.com', method: 'POST' },
+      { path: '/api/domains/new.example.com', method: 'POST' },
+    ]);
+  });
+
   it('删除：DELETE /api/domains/{domain}', async () => {
-    const caught = stubHttp();
+    const caught = stubHttp(null, { status: 204 });
     const store = createStore();
 
     await store

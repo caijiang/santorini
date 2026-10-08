@@ -21,7 +21,7 @@ export const easyDomainApi = createApi({
         providesTags: ['Domains'],
         query: () => '/domains',
       }),
-      createDomain: build.mutation<string, string>({
+      createDomain: build.mutation<undefined, string>({
         invalidatesTags: ['Domains'],
         query: (domain) => ({
           // 合法域名（字母数字、-、.、*.）本来就无需转义，这里是防御性的：
