@@ -118,7 +118,7 @@ class KubernetesClientServiceImpl(override val kubernetesClient: KubernetesClien
     private fun hostDataOf(namespace: String, ingresses: List<Ingress>): List<HostData> {
         val parsed = ingresses
             // 移除 acme.cert-manager.io/http01-solver=true
-            .filter { it.metadata?.labels?.get("acme.cert-manager.io/http01-solver") == "true" }
+            .filter { it.metadata?.labels?.get("acme.cert-manager.io/http01-solver") != "true" }
             .flatMap { ingress ->
             val issuerName = ingress.metadata?.annotations?.get("cert-manager.io/cluster-issuer")
             ingress.spec.rules.map { rule ->

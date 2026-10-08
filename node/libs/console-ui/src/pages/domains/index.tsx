@@ -38,7 +38,7 @@ const failureReason = (e: unknown) => {
  * 所以这个页面不属于任何环境（不在 /envFor/:env 下）。
  */
 export default () => (
-  <PageContainer title={'域名管理'}>
+  <PageContainer title={'域名管理'} subTitle={'仅针对需要额外签署的域名'}>
     <PreAuthorize childrenType={'page'} haveAnyRole={['ingress', 'root']}>
       <DomainTable />
     </PreAuthorize>
@@ -47,7 +47,7 @@ export default () => (
 
 const DomainTable = () => {
   const { message } = App.useApp();
-  const { data: domains, isLoading } = useDomainsQuery(undefined);
+  const { data: domains, isFetching, refetch } = useDomainsQuery(undefined);
   const [createApi] = useCreateDomainMutation();
 
   const [deleteApi] = useDeleteDomainMutation();
@@ -61,7 +61,19 @@ const DomainTable = () => {
       rowKey={'hostname'}
       search={false}
       dataSource={dataSource}
-      loading={isLoading}
+      // isFetching 而不是 isLoading：后者只在首屏为真，点刷新时表格会没有任何反馈
+      loading={isFetching}
+      options={{
+        /**
+         * 工具栏那个刷新按钮的 onClick 就是 `options.reload`，默认值是
+         * `actionRef.current.reload()`。而 `dataSource` 模式下 ProTable 内部那次
+         * reload 只会去调它自己的 `request`（本页没有 request），于是默认实现是个
+         * **空动作** —— 必须显式接到 RTK Query 的 refetch 上。
+         */
+        reload: () => {
+          void refetch();
+        },
+      }}
       toolBarRender={() => [
         <ModalForm<{ hostname: string }>
           key={'create'}
