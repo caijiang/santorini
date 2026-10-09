@@ -89,6 +89,25 @@ describe('easy-domain 域名管理接口', () => {
     expect(caught).toEqual([{ path: '/api/domains', method: 'GET' }]);
   });
 
+  it('同步信息：GET /api/domains/syncInfo', async () => {
+    const caught = stubHttp({
+      dnsCidrs: ['10.0.0.0/8'],
+      dnsCnameSuffixes: ['example.com'],
+      aliyunRegion: 'cn-hangzhou',
+      aliyunAlbListenerId: 'lsn-1',
+      certSyncEnabled: true,
+    });
+    const store = createStore();
+
+    const info = await store
+      .dispatch(easyDomainApi.endpoints.syncInfo.initiate(undefined))
+      .unwrap();
+
+    expect(info.aliyunAlbListenerId).toBe('lsn-1');
+    // 路径钉死：服务端把 syncInfo 挂到别处时，这条会红
+    expect(caught).toEqual([{ path: '/api/domains/syncInfo', method: 'GET' }]);
+  });
+
   it('新增：POST /api/domains/{domain}，201 且无 body 即成功', async () => {
     const caught = stubHttp(null, { status: 201 });
     const store = createStore();
@@ -162,7 +181,7 @@ describe('easy-domain 域名管理接口', () => {
       .dispatch(easyDomainApi.endpoints.createDomain.initiate('*.example.com'))
       .unwrap();
 
-    expect(caught[0]!.path).toBe('/api/domains/*.example.com');
+    expect(caught[0]?.path).toBe('/api/domains/*.example.com');
   });
 
   it('新增成功后，正在订阅的列表会自动重新拉取（Domains tag 失效）', async () => {

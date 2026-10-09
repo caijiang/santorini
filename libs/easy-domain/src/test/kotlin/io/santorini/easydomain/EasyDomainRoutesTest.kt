@@ -7,6 +7,7 @@ import io.kotest.assertions.fail
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldNotContain
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -23,6 +24,10 @@ import kotlin.test.Test
 class EasyDomainRoutesTest {
 
     private val namespace = "easy-domains"
+
+    /** 哨兵值：只要出现在响应体里，就说明凭据被带出去了 */
+    private val SECRET_ACCESS_KEY_ID = "test-access-key-id"
+    private val SECRET_ACCESS_KEY_SECRET = "test-access-key-secret"
 
     private fun mockK8s(
         existing: List<HostData> = emptyList(),
@@ -43,14 +48,21 @@ class EasyDomainRoutesTest {
         }
     }
 
-    /** 阿里云配置齐全的配置：证书同步已启用，但它与路由无关 */
-    private fun configWithCertSync() = EasyDomainConfig.fromEnv { key ->
+    /**
+     * 阿里云配置齐全的配置：证书同步已启用，但它与路由无关。
+     *
+     * @param listenerId 传 null 表示只配了账号，没配 ALB 监听 —— 此时证书同步**未**启用
+     */
+    private fun configWithCertSync(listenerId: String? = null) = EasyDomainConfig.fromEnv { key ->
         when (key) {
             EasyDomainConfig.ENV_NAMESPACE -> namespace
             EasyDomainConfig.ENV_TEMPLATE -> TestFixtures.TEMPLATE_YAML
-            EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_ID -> "id"
-            EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_SECRET -> "secret"
+            EasyDomainConfig.ENV_DNS_CIDRS -> "10.0.0.0/8,100.64.0.0/10"
+            EasyDomainConfig.ENV_DNS_CNAME_SUFFIXES -> "example.com"
+            EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_ID -> SECRET_ACCESS_KEY_ID
+            EasyDomainConfig.ENV_ALIYUN_ACCESS_KEY_SECRET -> SECRET_ACCESS_KEY_SECRET
             EasyDomainConfig.ENV_ALIYUN_REGION -> "cn-hangzhou"
+            EasyDomainConfig.ENV_ALIYUN_ALB_LISTENER_ID -> listenerId
             else -> null
         }
     }
@@ -166,6 +178,51 @@ class EasyDomainRoutesTest {
             bodyAsText().asJsonStringMap() shouldBe mapOf("domain" to "a.example.com")
         }
         client.get("/domains/missing.example.com").shouldHaveStatus(HttpStatusCode.NotFound)
+    }
+
+    /**
+     * 页面顶部"证书去向"那段说明的数据源。
+     *
+     * 断言两件事：字段齐（页面能拼出"传到哪"），以及**凭据不外泄** ——
+     * 这条路由与 `/domains` 一样没有鉴权（公网可达），多带一个字节都是白送。
+     */
+    @Test
+    fun `GET domains syncInfo 回显同步范围与证书去向，且不含凭据`() = testApplication {
+        val k8s = mockK8s()
+        application { easyDomain(configWithCertSync(listenerId = "lsn-test"), k8s) }
+
+        val raw = client.get("/domains/syncInfo").apply {
+            shouldHaveStatus(HttpStatusCode.OK)
+        }.bodyAsText()
+
+        Json.decodeFromString<DomainSyncInfo>(raw) shouldBe DomainSyncInfo(
+            dnsCidrs = listOf("10.0.0.0/8", "100.64.0.0/10"),
+            dnsCnameSuffixes = listOf("example.com"),
+            aliyunRegion = "cn-hangzhou",
+            aliyunAlbListenerId = "lsn-test",
+            certSyncEnabled = true,
+        )
+        raw shouldNotContain SECRET_ACCESS_KEY_ID
+        raw shouldNotContain SECRET_ACCESS_KEY_SECRET
+    }
+
+    /**
+     * 只配了账号、没配 ALB 监听时同步是关的。页面据此改说"未启用"，
+     * 而不是拿一个不存在的监听去编故事。
+     */
+    @Test
+    fun `syncInfo 在缺少 ALB 监听时 certSyncEnabled 为 false`() = testApplication {
+        val k8s = mockK8s()
+        application { easyDomain(configWithCertSync(listenerId = null), k8s) }
+
+        val raw = client.get("/domains/syncInfo").apply {
+            shouldHaveStatus(HttpStatusCode.OK)
+        }.bodyAsText()
+
+        Json.decodeFromString<DomainSyncInfo>(raw).apply {
+            certSyncEnabled shouldBe false
+            aliyunAlbListenerId shouldBe null
+        }
     }
 
     @Test

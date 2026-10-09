@@ -8,6 +8,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.santorini.kubernetes.KubernetesClientService
+import kotlinx.serialization.Serializable
 
 private val logger = KotlinLogging.logger {}
 
@@ -53,6 +54,16 @@ fun Application.easyDomain(
             get {
                 call.respond(domainService.listDomains())
             }
+            /**
+             * 只读的"同步范围 + 证书去向"，给页面顶部那段说明用。
+             *
+             * 它不碰 K8s，纯粹是配置回显，所以不走 [DomainService]。
+             * 常量段 `syncInfo` 也不会被 `/{domain}` 抢走：Ktor 的路由解析里常量段
+             * 的优先级高于参数段，何况合法域名必须含 `.`，两者本就撞不上。
+             */
+            get("/syncInfo") {
+                call.respond(config.syncInfo())
+            }
             get("/{domain}") {
                 val domain = call.parameters["domain"]!!
                 if (domainService.exists(domain)) call.respond(mapOf("domain" to domain))
@@ -86,3 +97,33 @@ fun Application.easyDomain(
         }
     }
 }
+
+/**
+ * 域名管理页面说明用的只读信息。
+ *
+ * 有意**只包含用来描述"证书去哪了"的字段**：阿里云 AK/SK 一个都不带，
+ * 凭据是否配置被折算成 [certSyncEnabled] —— 那已经足够页面判断该说"已同步到哪"
+ * 还是"同步未启用"，而把「有没有配密钥」暴露成可枚举的细节没有任何收益。
+ *
+ * @param dnsCidrs            A 记录允许的 IP 段（CIDR）
+ * @param dnsCnameSuffixes    CNAME 允许的目标后缀；与 [dnsCidrs] 是"或"关系
+ * @param aliyunRegion        证书最终落脚的地域
+ * @param aliyunAlbListenerId 证书最终挂载的 ALB 监听
+ * @param certSyncEnabled     证书同步是否已完整配置（AK/SK + region + listener 缺一不可）
+ */
+@Serializable
+data class DomainSyncInfo(
+    val dnsCidrs: List<String>,
+    val dnsCnameSuffixes: List<String>,
+    val aliyunRegion: String?,
+    val aliyunAlbListenerId: String?,
+    val certSyncEnabled: Boolean,
+)
+
+fun EasyDomainConfig.syncInfo(): DomainSyncInfo = DomainSyncInfo(
+    dnsCidrs = dnsCidrs,
+    dnsCnameSuffixes = dnsCnameSuffixes,
+    aliyunRegion = aliyunRegion,
+    aliyunAlbListenerId = aliyunAlbListenerId,
+    certSyncEnabled = certSyncEnabled,
+)

@@ -4,16 +4,18 @@ import {
   ProFormText,
   ProTable,
 } from '@ant-design/pro-components';
-import { App, Button, Popconfirm, Typography } from 'antd';
+import { Alert, App, Button, Popconfirm, Typography } from 'antd';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 import {
   useCreateDomainMutation,
   useDeleteDomainMutation,
   useDomainsQuery,
+  useSyncInfoQuery,
 } from '../../apis/easyDomain';
 import { toDomainRule } from '../../common/ktor';
 import PreAuthorize from '../../tor/PreAuthorize';
+import { certPathText, syncScopeText } from './syncNotice';
 
 interface DomainRow {
   hostname: string;
@@ -40,10 +42,42 @@ const failureReason = (e: unknown) => {
 export default () => (
   <PageContainer title={'域名管理'} subTitle={'仅针对需要额外签署的域名'}>
     <PreAuthorize childrenType={'page'} haveAnyRole={['ingress', 'root']}>
+      <DomainSyncNotice />
       <DomainTable />
     </PreAuthorize>
   </PageContainer>
 );
+
+/**
+ * 证书去向的说明。
+ *
+ * 信息没拿到（接口未挂载、请求失败）时什么都不显示 —— 表格那边自己会报错，
+ * 这里再猜一句只会误导。
+ */
+const DomainSyncNotice = () => {
+  const { data: info } = useSyncInfoQuery(undefined);
+  if (!info) return null;
+
+  return (
+    <Alert
+      // 同步没配齐是个"做了一半"的状态：域名能加、但证书不会上去，值得用 warning
+      type={info.certSyncEnabled ? 'info' : 'warning'}
+      showIcon
+      message={'证书去向'}
+      description={
+        info.certSyncEnabled ? (
+          <>
+            <div>{certPathText(info)}</div>
+            <div>同步范围：{syncScopeText(info)}</div>
+          </>
+        ) : (
+          certPathText(info)
+        )
+      }
+      style={{ marginBottom: 16 }}
+    />
+  );
+};
 
 const DomainTable = () => {
   const { message } = App.useApp();
