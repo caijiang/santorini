@@ -12,10 +12,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.slot
-import io.mockk.verify
+import io.mockk.*
 import io.santorini.kubernetes.KubernetesClientService
 import io.santorini.kubernetes.model.HostData
 import kotlinx.serialization.json.Json
@@ -189,7 +186,13 @@ class EasyDomainRoutesTest {
     @Test
     fun `GET domains syncInfo 回显同步范围与证书去向，且不含凭据`() = testApplication {
         val k8s = mockK8s()
-        application { easyDomain(configWithCertSync(listenerId = "lsn-test"), k8s) }
+        application {
+            easyDomain(configWithCertSync(listenerId = "lsn-test"), k8s, {
+                mockk<AlbCertificateUploader>(relaxed = true).apply {
+                    coEvery { loadBalancerId() } returns "alb-1"
+                }
+            })
+        }
 
         val raw = client.get("/domains/syncInfo").apply {
             shouldHaveStatus(HttpStatusCode.OK)
@@ -201,6 +204,7 @@ class EasyDomainRoutesTest {
             aliyunRegion = "cn-hangzhou",
             aliyunAlbListenerId = "lsn-test",
             certSyncEnabled = true,
+            aliyunLoadBalancerId = "alb-1"
         )
         raw shouldNotContain SECRET_ACCESS_KEY_ID
         raw shouldNotContain SECRET_ACCESS_KEY_SECRET

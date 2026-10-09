@@ -144,6 +144,7 @@ yDFx8r7i9vIJU5HS3moZLkYWAOilMaV9N56A9Bgb6dNcHkvg3NoaYA==
             println("upload:$result2")
 
             uploader.listUploadedFingerprints(it.domain) shouldHaveSize 1
+            println("loadBalancerId:" + uploader.loadBalancerId())
         }
     }
 

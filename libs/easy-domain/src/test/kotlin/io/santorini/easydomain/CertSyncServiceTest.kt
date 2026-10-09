@@ -68,6 +68,8 @@ class CertSyncServiceTest {
                 return 1L
             }
 
+            override suspend fun loadBalancerId(): String? = null
+
             override fun close() {
             }
         }
@@ -243,6 +245,8 @@ class CertSyncServiceTest {
                 uploaded.add(name)
                 return 1L
             }
+
+            override suspend fun loadBalancerId(): String? = null
 
             override fun close() {
             }

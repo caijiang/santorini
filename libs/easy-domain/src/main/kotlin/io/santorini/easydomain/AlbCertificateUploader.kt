@@ -6,6 +6,7 @@ import com.aliyun.auth.credentials.provider.DefaultCredentialProvider
 import com.aliyun.auth.credentials.provider.ICredentialProvider
 import com.aliyun.sdk.service.alb20200616.AsyncClient
 import com.aliyun.sdk.service.alb20200616.models.AssociateAdditionalCertificatesWithListenerRequest
+import com.aliyun.sdk.service.alb20200616.models.GetListenerAttributeRequest
 import com.aliyun.sdk.service.alb20200616.models.ListListenerCertificatesRequest
 import com.aliyun.sdk.service.cas20200407.models.ListUserCertificateOrderRequest
 import com.aliyun.sdk.service.cas20200407.models.UploadUserCertificateRequest
@@ -39,6 +40,11 @@ interface AlbCertificateUploader : Closeable {
      * @return CAS 侧的证书 ID
      */
     suspend fun upload(name: String, certPem: String, privateKeyPem: String): Long
+
+    /**
+     * @return 获取 alb-id
+     */
+    suspend fun loadBalancerId(): String?
 }
 
 /**
@@ -185,6 +191,14 @@ class CasCertificateUploader(
         }
 
         return id
+    }
+
+    override suspend fun loadBalancerId(): String? {
+        return albClient.getListenerAttribute(
+            GetListenerAttributeRequest.builder()
+                .listenerId(listenerId)
+                .build()
+        ).await()?.body?.loadBalancerId
     }
 
     override fun close() {

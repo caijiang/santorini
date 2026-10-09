@@ -2,6 +2,7 @@ package io.santorini.easydomain
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.santorini.easydomain.aliyun.AliyunNetworkDetector
+import io.santorini.easydomain.aliyun.AliyunNetworkKind
 import io.santorini.kubernetes.KubernetesClientService
 
 private val logger = KotlinLogging.logger {}
@@ -38,22 +39,35 @@ fun certSyncService(
                     "${EasyDomainConfig.ENV_DNS_CNAME_SUFFIXES}），所有入口都不会命中，同步将空转"
         }
     }
-    val region = config.aliyunRegion!!
-    val networkKind = config.aliyunNetwork ?: AliyunNetworkDetector.detect().kindFor(region)
-    logger.info {
-        "easy-domain 证书同步装配完成：region=$region，接入点=${networkKind.name.lowercase()}，" +
-                "扫描全部 namespace"
-    }
 
     return CertSyncServiceImpl(
         kubernetesClientService,
         DnsScopeMatcher(config.dnsCidrs, config.dnsCnameSuffixes),
-        CasCertificateUploader(
-            config.aliyunAccessKeyId!!,
-            config.aliyunAccessKeySecret!!,
-            region,
-            config.aliyunAlbListenerId!!,
-            networkKind,
-        ),
+        config.toAlbCertificateUploader { region, kind ->
+            logger.info {
+                "easy-domain 证书同步装配完成：region=$region，接入点=${kind.name.lowercase()}，" +
+                        "扫描全部 namespace"
+            }
+        }!!,
+    )
+}
+
+fun EasyDomainConfig.toAlbCertificateUploader(
+    otherWork: (String, AliyunNetworkKind)
+    -> Unit = { _, _ -> }
+): AlbCertificateUploader? {
+    if (!certSyncEnabled) {
+        return null
+    }
+
+    val region = aliyunRegion!!
+    val networkKind = aliyunNetwork ?: AliyunNetworkDetector.detect().kindFor(region)
+    otherWork(region, networkKind)
+    return CasCertificateUploader(
+        aliyunAccessKeyId!!,
+        aliyunAccessKeySecret!!,
+        region,
+        aliyunAlbListenerId!!,
+        networkKind,
     )
 }
