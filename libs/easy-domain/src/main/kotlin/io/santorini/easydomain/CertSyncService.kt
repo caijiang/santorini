@@ -5,6 +5,7 @@ import io.santorini.kubernetes.KubernetesClientService
 import io.santorini.kubernetes.model.HostData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.Closeable
 
 private val logger = KotlinLogging.logger {}
 
@@ -30,7 +31,7 @@ data class CertSyncReport(
  * - 幂等靠 CAS 侧指纹比对：同一张证书（内容不变）只上传一次，本地无状态。
  *   因此定时重复调用是安全的，代价只是一次 ingress 列举 + 若干次证书比对。
  */
-interface CertSyncService {
+interface CertSyncService : Closeable {
     suspend fun syncEligibleCerts(): CertSyncReport
 }
 
@@ -127,5 +128,9 @@ class CertSyncServiceImpl(
         val maxSecretLen = 63 - "santorini-".length - fp.length - 1
         val secret = if (secretName.length > maxSecretLen) secretName.take(maxSecretLen) else secretName
         return "santorini-$secret-$fp"
+    }
+
+    override fun close() {
+        uploader.close()
     }
 }

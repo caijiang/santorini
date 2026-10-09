@@ -1,12 +1,16 @@
 package io.santorini.easydomain
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.santorini.easydomain.aliyun.AliyunNetworkDetector
 import io.santorini.kubernetes.KubernetesClientService
 
 private val logger = KotlinLogging.logger {}
 
 /**
  * 按配置装配证书同步服务；阿里云配置不全时返回 null。
+ *
+ * 接入点（公网 / VPC）在这里定：显式配置优先，否则按当前网络环境探测一次
+ * （[AliyunNetworkDetector] 结果在进程内缓存，重复装配不会重复探测）。
  *
  * **触发时机由宿主决定**——本模块不监听"证书刚签发"这类事件（K8s 侧没有便宜的订阅点，
  * 详见 README），因此典型用法是把它交给调度任务：
@@ -34,7 +38,12 @@ fun certSyncService(
                     "${EasyDomainConfig.ENV_DNS_CNAME_SUFFIXES}），所有入口都不会命中，同步将空转"
         }
     }
-    logger.info { "easy-domain 证书同步装配完成：region=${config.aliyunRegion}，扫描全部 namespace" }
+    val region = config.aliyunRegion!!
+    val networkKind = config.aliyunNetwork ?: AliyunNetworkDetector.detect().kindFor(region)
+    logger.info {
+        "easy-domain 证书同步装配完成：region=$region，接入点=${networkKind.name.lowercase()}，" +
+                "扫描全部 namespace"
+    }
 
     return CertSyncServiceImpl(
         kubernetesClientService,
@@ -42,8 +51,9 @@ fun certSyncService(
         CasCertificateUploader(
             config.aliyunAccessKeyId!!,
             config.aliyunAccessKeySecret!!,
-            config.aliyunRegion!!,
-            config.aliyunAlbListenerId!!
+            region,
+            config.aliyunAlbListenerId!!,
+            networkKind,
         ),
     )
 }

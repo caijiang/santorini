@@ -38,7 +38,9 @@ class JobRunner(
                     application.get<HpaStatusService>().deleteUnnecessary()
                     val report = certSyncService(
                         EasyDomainConfig.fromEnv(), application.get()
-                    )?.syncEligibleCerts()
+                    )?.use {
+                        it.syncEligibleCerts()
+                    }
                     ktLogger.info {
                         "CertSyncReport: $report"
                     }

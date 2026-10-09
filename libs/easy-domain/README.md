@@ -12,8 +12,24 @@
 所有`ingress`的host如果解析目标在环境变量预设的范围之内 (包括 A 记录和 CNAME记录)，证书成功生成后则会按照环境变量配置的阿里云RAM账号同步到阿里云的
 ALB证书池中。
 
-功能开放取决于是否设置了相关的阿里云RAM账号以及`endpoint`—— **与`namespace`无关**，
+功能开放取决于是否设置了相关的阿里云RAM账号、`EASY_DOMAIN_ALIYUN_REGION` 与
+`EASY_DOMAIN_ALIYUN_ALB_LISTENER_ID` —— **与`namespace`无关**，
 它扫描的是 **集群内全部 namespace** 的`ingress`。
+
+#### 接入点（公网 / VPC）
+
+ALB 与 CAS 两个 client 都会自己挑接入点：能读到时从实例元数据拿到 `region-id` 与
+`network-type`， **在 VPC 内且 region 与 `EASY_DOMAIN_ALIYUN_REGION` 一致**就走 VPC 接入点
+（`alb-vpc.<region>.aliyuncs.com` / `cas-vpc.<region>.aliyuncs.com`），否则走各自的公网接入点。
+
+"同 region"这个条件不能省：VPC 接入点是 **地域级**的，杭州的 VPC 接入点从上海的 VPC 里
+根本解析不出来——选错是连不上，不是慢一点。
+
+元数据服务（`100.100.100.200`）读不到时（本机调试、非阿里云集群、被 NetworkPolicy 挡住）
+退回公网并在日志里留一条 INFO。要强制指定就设 `EASY_DOMAIN_ALIYUN_NETWORK=vpc|public`，
+默认 `auto`（即探测）；配了不认识的值会直接启动失败，避免静默跑到错接入点上。
+
+探测结果在进程内缓存，重复装配不会重复探测。
 
 #### 触发时机
 

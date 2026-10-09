@@ -1,5 +1,7 @@
 package io.santorini.easydomain
 
+import io.santorini.easydomain.aliyun.AliyunNetworkDetector
+import io.santorini.easydomain.aliyun.AliyunNetworkKind
 import java.io.File
 
 /**
@@ -18,6 +20,9 @@ import java.io.File
  * @param aliyunAccessKeyId 环境变量 `EASY_DOMAIN_ALIYUN_ACCESS_KEY_ID`
  * @param aliyunAccessKeySecret 环境变量 `EASY_DOMAIN_ALIYUN_ACCESS_KEY_SECRET`
  * @param aliyunRegion    环境变量 `EASY_DOMAIN_ALIYUN_REGION`，如 `cn-hangzhou`
+ * @param aliyunAlbListenerId 环境变量 `EASY_DOMAIN_ALIYUN_ALB_LISTENER_ID`
+ * @param aliyunNetwork    环境变量 `EASY_DOMAIN_ALIYUN_NETWORK`，`auto`（默认）/`vpc`/`public`；
+ *                         `auto` 表示按实例元数据自动探测（见 [AliyunNetworkDetector]）
  */
 data class EasyDomainConfig(
     val namespace: String?,
@@ -28,6 +33,7 @@ data class EasyDomainConfig(
     val aliyunAccessKeySecret: String?,
     val aliyunRegion: String?,
     val aliyunAlbListenerId: String?,
+    val aliyunNetwork: AliyunNetworkKind?,
 ) {
     val domainFeatureEnabled: Boolean
         get() = !namespace.isNullOrBlank() && !ingressTemplate.isNullOrBlank()
@@ -58,6 +64,9 @@ data class EasyDomainConfig(
         const val ENV_ALIYUN_REGION = "EASY_DOMAIN_ALIYUN_REGION"
         const val ENV_ALIYUN_ALB_LISTENER_ID = "EASY_DOMAIN_ALIYUN_ALB_LISTENER_ID"
 
+        /** 显式指定接入点网络类型；不配则按实例元数据自动探测 */
+        const val ENV_ALIYUN_NETWORK = AliyunNetworkKind.ENV_NETWORK
+
         /**
          * @param env 取环境变量的函数，默认系统环境；测试可注入
          * @throws IllegalStateException 模板正文与模板文件同时设置、或文件不可读时
@@ -86,6 +95,7 @@ data class EasyDomainConfig(
                 aliyunAccessKeySecret = env(ENV_ALIYUN_ACCESS_KEY_SECRET)?.takeIf { it.isNotBlank() },
                 aliyunRegion = env(ENV_ALIYUN_REGION)?.takeIf { it.isNotBlank() },
                 aliyunAlbListenerId = env(ENV_ALIYUN_ALB_LISTENER_ID)?.takeIf { it.isNotBlank() },
+                aliyunNetwork = AliyunNetworkKind.of(env(ENV_ALIYUN_NETWORK)),
             )
         }
     }

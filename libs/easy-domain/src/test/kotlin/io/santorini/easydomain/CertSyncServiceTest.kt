@@ -67,6 +67,9 @@ class CertSyncServiceTest {
                 uploaded.add(name)
                 return 1L
             }
+
+            override fun close() {
+            }
         }
         return uploader to uploaded
     }
@@ -239,6 +242,9 @@ class CertSyncServiceTest {
             override suspend fun upload(name: String, certPem: String, privateKeyPem: String): Long {
                 uploaded.add(name)
                 return 1L
+            }
+
+            override fun close() {
             }
         }
         val sync = service(k8s, uploader)

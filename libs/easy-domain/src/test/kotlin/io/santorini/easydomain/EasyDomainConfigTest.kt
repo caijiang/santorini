@@ -2,6 +2,7 @@
 
 package io.santorini.easydomain
 
+import io.santorini.easydomain.aliyun.AliyunNetworkKind
 import java.io.File
 import kotlin.test.*
 
@@ -59,6 +60,18 @@ class EasyDomainConfigTest {
         }
         assertFalse(config.domainFeatureEnabled)
         assertTrue(config.certSyncEnabled)
+    }
+
+    @Test
+    fun `接入点网络类型可显式指定，不配则留给探测`() {
+        fun configOf(value: String?) = EasyDomainConfig.fromEnv { key ->
+            if (key == EasyDomainConfig.ENV_ALIYUN_NETWORK) value else null
+        }
+
+        assertNull(configOf(null).aliyunNetwork)
+        assertNull(configOf("auto").aliyunNetwork)
+        assertEquals(AliyunNetworkKind.VPC, configOf("vpc").aliyunNetwork)
+        assertEquals(AliyunNetworkKind.PUBLIC, configOf("public").aliyunNetwork)
     }
 
     @Test

@@ -9,11 +9,10 @@ import com.aliyun.sdk.service.alb20200616.models.AssociateAdditionalCertificates
 import com.aliyun.sdk.service.alb20200616.models.ListListenerCertificatesRequest
 import com.aliyun.sdk.service.cas20200407.models.ListUserCertificateOrderRequest
 import com.aliyun.sdk.service.cas20200407.models.UploadUserCertificateRequest
+import darabonba.core.EndpointType
+import darabonba.core.client.ClientOverrideConfiguration
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.santorini.easydomain.aliyun.listAllListenerCertificates
-import io.santorini.easydomain.aliyun.listAllUserCertificateOrder
-import io.santorini.easydomain.aliyun.supportDomain
-import io.santorini.easydomain.aliyun.toUserCertificateDetailRequest
+import io.santorini.easydomain.aliyun.*
 import kotlinx.coroutines.future.await
 import java.io.Closeable
 import java.security.MessageDigest
@@ -27,7 +26,7 @@ private val logger = KotlinLogging.logger {}
  * ALB 自身不保存证书文件：第三方证书必须先上传到数字证书管理服务（CAS，cas 2020-04-07
  * 的 UploadUserCertificate），ALB 再从证书池引用——这是 ALB 官方唯一路径。
  */
-interface AlbCertificateUploader {
+interface AlbCertificateUploader : Closeable {
     /**
      * @param domain 证书绑定的域名
      * @return 该域名已上传证书的指纹集合（SHA-256，大写 HEX，无分隔符）
@@ -44,6 +43,10 @@ interface AlbCertificateUploader {
 
 /**
  * 基于官方 SDK [com.aliyun] 的实现。
+ *
+ * ALB 与 CAS 两个 client 都按 [networkKind] 选接入点（`alb-vpc.*` / `cas-vpc.*` 或各自的公网接入点），
+ * 且两者的实现机制不同，原因写在两处 `by lazy` 的注释里。
+ *
  * 关联 api有:
  * - https://next.api.aliyun.com/document/Alb/2020-06-16/ListListenerCertificates
  * - https://next.api.aliyun.com/api/cas/2020-04-07/GetUserCertificateDetail
@@ -55,7 +58,14 @@ class CasCertificateUploader(
     accessKeyId: String,
     accessKeySecret: String,
     private val region: String,
-    private val listenerId: String
+    private val listenerId: String,
+    /**
+     * 走公网接入点还是 VPC 接入点。
+     *
+     * 由装配方按当前网络环境决定（见 [io.santorini.easydomain.certSyncService]），默认公网。
+     * 选错是连不上，不是慢——所以这个值不接受"猜"，只接受探测结果或显式配置。
+     */
+    private val networkKind: AliyunNetworkKind = AliyunNetworkKind.PUBLIC,
 ) : AlbCertificateUploader, Closeable {
 
     private val provider = DefaultCredentialProvider.builder()
@@ -73,18 +83,37 @@ class CasCertificateUploader(
             }
         )
         .build()
+
+    private val vpc = networkKind == AliyunNetworkKind.VPC
+
     private val albClient by lazy {
-        AsyncClient.builder()
+        val builder = AsyncClient.builder()
             .region(region)
             .credentialsProvider(provider)
-            .build()
+        if (vpc) {
+            // 交给 SDK 按官方规则拼 `alb-vpc.<region>.aliyuncs.com`：
+            // 它自带 endpointMap 例外（如华东 1 金融云 cn-hangzhou-finance 没有 VPC 接入点，
+            // 会退回公网），比我们自己抄一份表可靠。
+            builder.overrideConfiguration(
+                ClientOverrideConfiguration.create().setEndpointType(EndpointType.VPC)
+            )
+        }
+        builder.build()
     }
 
     private val casClient by lazy {
-        com.aliyun.sdk.service.cas20200407.AsyncClient.builder()
+        val builder = com.aliyun.sdk.service.cas20200407.AsyncClient.builder()
             .region(region)
             .credentialsProvider(provider)
-            .build()
+        if (vpc) {
+            // CAS 只能显式覆盖：它内置的 endpointMap 把**所有** region 都指向公网的
+            // `cas.aliyuncs.com`，而 endpointMap 的优先级高于 endpointType，
+            // 光设 endpointType 是无效的。
+            builder.overrideConfiguration(
+                ClientOverrideConfiguration.create().setEndpointOverride(casVpcEndpoint(region))
+            )
+        }
+        builder.build()
     }
 
     override suspend fun listUploadedFingerprints(domain: String): Set<String> {
