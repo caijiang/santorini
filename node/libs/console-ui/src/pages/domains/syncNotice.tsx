@@ -1,4 +1,6 @@
 import type { DomainSyncInfo } from '../../apis/easyDomain';
+import { ReactNode } from 'react';
+import { Typography } from 'antd';
 
 /**
  * 域名管理页「证书去向」说明的文案构造。
@@ -13,14 +15,25 @@ import type { DomainSyncInfo } from '../../apis/easyDomain';
  *
  * 同步未启用时**不描述链路** —— 那时链路是不存在的，写出来只会让人以为证书已经上去了。
  */
-export function certPathText(info: DomainSyncInfo): string {
+export function certPathText(info: DomainSyncInfo): ReactNode {
   if (!info.certSyncEnabled) {
     return '证书同步未启用：域名只会生成集群内的 Ingress，证书不会上传到阿里云。';
   }
   const region = info.aliyunRegion ? `（${info.aliyunRegion}）` : '';
   return (
-    '域名 → Ingress → cert-manager 签发（集群 Secret）→ ' +
-    `阿里云数字证书管理服务（CAS）证书池 → ALB 监听「${info.aliyunAlbListenerId}」${region}`
+    <Typography.Paragraph>
+      域名 → Ingress → cert-manager 签发（集群
+      Secret）→阿里云数字证书管理服务（CAS）证书池 → ALB 监听「
+      {<Typography.Text copyable>{info.aliyunAlbListenerId}</Typography.Text>}」
+      {
+        <Typography.Link
+          href={`https://slb.console.aliyun.com/alb/cn-hangzhou/albs/${info.aliyunLoadBalancerId}/listeners/${info.aliyunAlbListenerId}/certs`}
+        >
+          证书
+        </Typography.Link>
+      }
+      {region}
+    </Typography.Paragraph>
   );
 }
 
@@ -30,7 +43,7 @@ export function certPathText(info: DomainSyncInfo): string {
  */
 export function syncScopeText(info: DomainSyncInfo): string {
   const byCidr = info.dnsCidrs.length
-    ? `A 记录解析到 ${info.dnsCidrs.join('、')}`
+    ? `解析到 ${info.dnsCidrs.join('、')}`
     : '';
   const byCname = info.dnsCnameSuffixes.length
     ? `CNAME 指向 ${info.dnsCnameSuffixes.join('、')}`

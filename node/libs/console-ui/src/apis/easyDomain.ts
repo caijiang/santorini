@@ -67,6 +67,8 @@ export interface DomainSyncInfo {
   aliyunAlbListenerId?: string | null;
   /** 证书同步是否已完整配置（AK/SK + region + listener 缺一不可） */
   certSyncEnabled: boolean;
+  /** 负载均衡 ID */
+  aliyunLoadBalancerId?: string | null;
 }
 
 export const {

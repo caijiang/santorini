@@ -67,7 +67,7 @@ const DomainSyncNotice = () => {
       description={
         info.certSyncEnabled ? (
           <>
-            <div>{certPathText(info)}</div>
+            {certPathText(info)}
             <div>同步范围：{syncScopeText(info)}</div>
           </>
         ) : (

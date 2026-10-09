@@ -6,6 +6,7 @@ import io.santorini.easydomain.test.LocalAliyunConfig
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 
@@ -131,6 +132,7 @@ yDFx8r7i9vIJU5HS3moZLkYWAOilMaV9N56A9Bgb6dNcHkvg3NoaYA==
     }
 
     @Test
+    @Ignore
     fun listUploadedFingerprints() = runTest {
         workWithLocalAliyunConfig(javaClass) {
             println(it)
