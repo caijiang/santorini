@@ -2,6 +2,7 @@ import {
   ModalForm,
   PageContainer,
   ProFormText,
+  ProSkeleton,
   ProTable,
 } from '@ant-design/pro-components';
 import { Alert, App, Button, Popconfirm, Typography } from 'antd';
@@ -56,7 +57,7 @@ export default () => (
  */
 const DomainSyncNotice = () => {
   const { data: info } = useSyncInfoQuery(undefined);
-  if (!info) return null;
+  if (!info) return <ProSkeleton type={'descriptions'} />;
 
   return (
     <Alert

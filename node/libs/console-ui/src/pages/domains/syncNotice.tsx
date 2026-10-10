@@ -27,7 +27,11 @@ export function certPathText(info: DomainSyncInfo): ReactNode {
       {<Typography.Text copyable>{info.aliyunAlbListenerId}</Typography.Text>}」
       {
         <Typography.Link
-          href={`https://slb.console.aliyun.com/alb/cn-hangzhou/albs/${info.aliyunLoadBalancerId}/listeners/${info.aliyunAlbListenerId}/certs`}
+          href={`https://slb.console.aliyun.com/alb/${
+            info.aliyunRegion ?? 'cn-hangzhou'
+          }/albs/${info.aliyunLoadBalancerId}/listeners/${
+            info.aliyunAlbListenerId
+          }/certs`}
         >
           证书
         </Typography.Link>
