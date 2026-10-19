@@ -1,4 +1,4 @@
-@file:Suppress("NonAsciiCharacters")
+@file:Suppress("NonAsciiCharacters", "RemoveRedundantBackticks")
 
 package io.santorini.easydomain
 
@@ -92,6 +92,50 @@ class DnsScopeMatcherTest {
             FakeDns(mapOf("x.com" to listOf("1.2.3.4")), mapOf("x.com" to "elsewhere.com"))
         )
         assertFalse(matcher.matches("x.com"))
+    }
+
+    @Test
+    fun `CNAME 链中间跳命中后缀也放行`() {
+        // 真实世界里 CDN 会串好几跳，只比对第一跳会漏
+        val matcher = DnsScopeMatcher(
+            emptyList(),
+            listOf("alb.example.com"),
+            FakeDns(
+                emptyMap(),
+                mapOf(
+                    "svc.example.com" to "svc.cdn.net",
+                    "svc.cdn.net" to "svc.alb.example.com",
+                )
+            )
+        )
+        assertTrue(matcher.matches("svc.example.com"))
+    }
+
+    @Test
+    fun `CNAME 链成环时终止且不放行`() {
+        val matcher = DnsScopeMatcher(
+            emptyList(),
+            listOf("alb.example.com"),
+            FakeDns(
+                emptyMap(),
+                mapOf(
+                    "a.example.com" to "b.example.com",
+                    "b.example.com" to "a.example.com",
+                )
+            )
+        )
+        // 没有深度上限的话这里会死循环
+        assertFalse(matcher.matches("a.example.com"))
+    }
+
+    @Test
+    fun `后缀配置的大小写与尾点被归一化`() {
+        val matcher = DnsScopeMatcher(
+            emptyList(),
+            listOf(" ALB.Example.com. "),
+            FakeDns(emptyMap(), mapOf("svc.example.com" to "XXX.alb.EXAMPLE.com."))
+        )
+        assertTrue(matcher.matches("svc.example.com"))
     }
 
     @Test

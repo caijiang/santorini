@@ -16,6 +16,15 @@ ALB证书池中。
 `EASY_DOMAIN_ALIYUN_ALB_LISTENER_ID` —— **与`namespace`无关**，
 它扫描的是 **集群内全部 namespace** 的`ingress`。
 
+#### 范围判定怎么查 DNS
+
+- A 记录：`InetAddress.getAllByName`（系统解析器）。
+- CNAME：JDK 自带的 JNDI DNS provider 查 **第一跳**，再由 `DnsScopeMatcher` 沿链比对后缀，
+  上限 8 跳并且断环。 **不要**用 `InetAddress.canonicalHostName` 当 CNAME——它拿到的是地址反解，
+  没有 PTR 时直接退化成 IP 字符串（平台相关，macOS 上必错）。
+- 查询走 Pod 自己的 resolver（即 CoreDNS），不硬编码公网 DNS。判定用的是 **集群内的解析视图**：
+  证书本来就是给集群里的 ingress 用的，公网解析到哪不影响这个结论。
+
 #### 接入点（公网 / VPC）
 
 ALB 与 CAS 两个 client 都会自己挑接入点：能读到时从实例元数据拿到 `region-id` 与
