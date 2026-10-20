@@ -59,16 +59,23 @@ class CertSyncServiceTest {
         secretName: String? = hostname.replace(".", "-"),
     ): HostData = HostData(hostname, "letsencrypt", secretName, namespace).cleanShot()
 
-    private fun fakeUploader(existing: Set<String> = emptySet()): Pair<AlbCertificateUploader, MutableList<String>> {
+    private fun fakeUploader(existing: Set<String> = emptySet()): Pair<CertificateUploader, MutableList<String>> {
         val uploaded = mutableListOf<String>()
-        val uploader = object : AlbCertificateUploader {
-            override suspend fun listUploadedFingerprints(domain: String): Set<String> = existing
-            override suspend fun upload(name: String, certPem: String, privateKeyPem: String): Long {
+        val uploader = object : CertificateUploader {
+            override suspend fun listUploadedFingerprints(domain: String, dest: CertificateDest): Set<String> = existing
+            override suspend fun upload(
+                name: String,
+                certPem: String,
+                privateKeyPem: String,
+                domain: String,
+                dest: CertificateDest
+            ): Long {
                 uploaded.add(name)
                 return 1L
             }
 
             override suspend fun loadBalancerId(): String? = null
+            override suspend fun cdnDomainCNames(): List<Pair<String, String>> = emptyList()
 
             override fun close() {
             }
@@ -104,10 +111,10 @@ class CertSyncServiceTest {
 
     private fun service(
         k8s: KubernetesClientService,
-        uploader: AlbCertificateUploader,
+        uploader: CertificateUploader,
         cnameSuffixes: List<String> = listOf("scope.example.com"),
         dns: DnsResolver = FakeDns("x.scope.example.com"),
-    ) = CertSyncServiceImpl(k8s, DnsScopeMatcher(listOf(), cnameSuffixes, dns), uploader)
+    ) = CertSyncServiceImpl(k8s, DnsScopeMatcher(listOf(), cnameSuffixes, dns), uploader, dns)
 
     @Test
     fun `证书指纹计算与 openssl sha256 对齐`() {
@@ -239,14 +246,23 @@ class CertSyncServiceTest {
             secrets = mapOf("$nsA/in-scope-example-com" to secretData()),
         )
         val uploaded = mutableListOf<String>()
-        val uploader = object : AlbCertificateUploader {
-            override suspend fun listUploadedFingerprints(domain: String): Set<String> = emptySet()
-            override suspend fun upload(name: String, certPem: String, privateKeyPem: String): Long {
+        val uploader = object : CertificateUploader {
+            override suspend fun listUploadedFingerprints(domain: String, dest: CertificateDest): Set<String> =
+                emptySet()
+
+            override suspend fun upload(
+                name: String,
+                certPem: String,
+                privateKeyPem: String,
+                domain: String,
+                dest: CertificateDest
+            ): Long {
                 uploaded.add(name)
                 return 1L
             }
 
             override suspend fun loadBalancerId(): String? = null
+            override suspend fun cdnDomainCNames(): List<Pair<String, String>> = emptyList()
 
             override fun close() {
             }

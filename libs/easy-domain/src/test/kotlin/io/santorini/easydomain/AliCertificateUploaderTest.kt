@@ -1,12 +1,15 @@
 package io.santorini.easydomain
 
+import com.aliyun.auth.credentials.Credential
+import com.aliyun.auth.credentials.ICredential
+import com.aliyun.auth.credentials.provider.DefaultCredentialProvider
+import com.aliyun.auth.credentials.provider.ICredentialProvider
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.santorini.easydomain.test.LocalAliyunConfig
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import kotlin.test.Ignore
 import kotlin.test.Test
 
 
@@ -29,7 +32,7 @@ suspend fun workWithLocalAliyunConfig(
 /**
  * @author CJ
  */
-class AlbCertificateUploaderTest {
+class AliCertificateUploaderTest {
 
     // openssl 生成的真实自签证书，CN=in-scope.example.com
     private val certPem = """
@@ -132,21 +135,93 @@ yDFx8r7i9vIJU5HS3moZLkYWAOilMaV9N56A9Bgb6dNcHkvg3NoaYA==
     }
 
     @Test
-    @Ignore
+//    @Ignore
     fun listUploadedFingerprints() = runTest {
         workWithLocalAliyunConfig(javaClass) {
-            println(it)
+            @Suppress("UnusedVariable", "unused") val provider = DefaultCredentialProvider.builder()
+                .addCustomizeProviders(
+                    object : ICredentialProvider {
+                        override fun getCredentials(): ICredential {
+                            return Credential.builder()
+                                .accessKeyId(it.accessKeyId)
+                                .accessKeySecret(it.accessKeySecret)
+                                .build()
+                        }
 
-            val uploader = CasCertificateUploader(it.accessKeyId, it.accessKeySecret, it.region, it.listenerId)
+                        override fun close() {
+                        }
+                    }
+                )
+                .build()
 
-            val result = uploader.listUploadedFingerprints(it.domain)
-            println("listUploadedFingerprints:$result")
+            val uploader = AliCertificateUploader(it.accessKeyId, it.accessKeySecret, it.region, it.listenerId)
 
-            val result2 = uploader.upload("test-domain-${it.domain}", certPem, it.pk)
-            println("upload:$result2")
+//            AsyncClient.builder()
+//                .region(it.region)
+//                .credentialsProvider(provider)
+//                .build()
+//                .use { client ->
+//                    val domains = client.describeAllUserDomains()
+//                        .map {
+//                            "${it.domainName}, ${it.cname}"
+//                        }
+//
+//                    println(domains)
+//
+//                    // 通过 cas 上传证书
+//                    val id = com.aliyun.sdk.service.cas20200407.AsyncClient.builder()
+//                        .region(it.region)
+//                        .credentialsProvider(provider)
+//                        .build()
+//                        .use { client ->
+//                            client.uploadUserCertificateIfNotExist(
+//                                "test-domain-${it.cdnDomain}",
+//                                it.cdnCert,
+//                                it.cdnPrivateKey
+//                            )
+//                        }
+//                    println(id)
+//
+//                    client.setCdnDomainSSLCertificateIfAbsent(it.cdnDomain, it.region, id)
+//                }
 
-            uploader.listUploadedFingerprints(it.domain) shouldHaveSize 1
+            println("listUploadedFingerprints,ALB:${uploader.listUploadedFingerprints(it.domain, CertificateDest.ALB)}")
+            println(
+                "listUploadedFingerprints,CDN:${
+                    uploader.listUploadedFingerprints(
+                        it.cdnDomain,
+                        CertificateDest.CDN
+                    )
+                }"
+            )
+
+            println(
+                "upload,ALB:${
+                    uploader.upload(
+                        "test-domain-${it.domain}",
+                        certPem,
+                        it.pk,
+                        it.domain,
+                        CertificateDest.ALB
+                    )
+                }"
+            )
+            println(
+                "upload,CDN:${
+                    uploader.upload(
+                        "test-domain-${it.cdnDomain}",
+                        it.cdnCert,
+                        it.cdnPrivateKey,
+                        it.cdnDomain,
+                        CertificateDest.CDN
+                    )
+                }"
+            )
+
+            uploader.listUploadedFingerprints(it.domain, CertificateDest.ALB) shouldHaveSize 1
+            uploader.listUploadedFingerprints(it.cdnDomain, CertificateDest.CDN) shouldHaveSize 1
             println("loadBalancerId:" + uploader.loadBalancerId())
+            println("cdnDomainCNames:" + uploader.cdnDomainCNames())
         }
     }
 

@@ -188,7 +188,7 @@ class EasyDomainRoutesTest {
         val k8s = mockK8s()
         application {
             easyDomain(configWithCertSync(listenerId = "lsn-test"), k8s, {
-                mockk<AlbCertificateUploader>(relaxed = true).apply {
+                mockk<CertificateUploader>(relaxed = true).apply {
                     coEvery { loadBalancerId() } returns "alb-1"
                 }
             })

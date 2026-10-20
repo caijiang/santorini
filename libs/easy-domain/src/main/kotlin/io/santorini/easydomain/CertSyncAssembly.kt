@@ -55,7 +55,7 @@ fun certSyncService(
 fun EasyDomainConfig.toAlbCertificateUploader(
     otherWork: (String, AliyunNetworkKind)
     -> Unit = { _, _ -> }
-): AlbCertificateUploader? {
+): CertificateUploader? {
     if (!certSyncEnabled) {
         return null
     }
@@ -63,7 +63,7 @@ fun EasyDomainConfig.toAlbCertificateUploader(
     val region = aliyunRegion!!
     val networkKind = aliyunNetwork ?: AliyunNetworkDetector.detect().kindFor(region)
     otherWork(region, networkKind)
-    return CasCertificateUploader(
+    return AliCertificateUploader(
         aliyunAccessKeyId!!,
         aliyunAccessKeySecret!!,
         region,

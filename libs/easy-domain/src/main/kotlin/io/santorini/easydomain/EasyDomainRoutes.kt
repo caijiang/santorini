@@ -32,7 +32,7 @@ private val logger = KotlinLogging.logger {}
 fun Application.easyDomain(
     config: EasyDomainConfig,
     kubernetesClientService: KubernetesClientService,
-    toAlbCertificateUploader: () -> AlbCertificateUploader? = {
+    toCertificateUploader: () -> CertificateUploader? = {
         config.toAlbCertificateUploader()
     }
 ) {
@@ -65,7 +65,7 @@ fun Application.easyDomain(
              * 的优先级高于参数段，何况合法域名必须含 `.`，两者本就撞不上。
              */
             get("/syncInfo") {
-                call.respond(config.syncInfo(toAlbCertificateUploader))
+                call.respond(config.syncInfo(toCertificateUploader))
             }
             get("/{domain}") {
                 val domain = call.parameters["domain"]!!
@@ -124,12 +124,12 @@ data class DomainSyncInfo(
     val aliyunLoadBalancerId: String?,
 )
 
-suspend fun EasyDomainConfig.syncInfo(toAlbCertificateUploader: () -> AlbCertificateUploader?): DomainSyncInfo =
+suspend fun EasyDomainConfig.syncInfo(toCertificateUploader: () -> CertificateUploader?): DomainSyncInfo =
     DomainSyncInfo(
     dnsCidrs = dnsCidrs,
     dnsCnameSuffixes = dnsCnameSuffixes,
     aliyunRegion = aliyunRegion,
     aliyunAlbListenerId = aliyunAlbListenerId,
     certSyncEnabled = certSyncEnabled,
-        aliyunLoadBalancerId = toAlbCertificateUploader()?.use { it.loadBalancerId() }
+        aliyunLoadBalancerId = toCertificateUploader()?.use { it.loadBalancerId() }
 )

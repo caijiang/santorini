@@ -18,5 +18,8 @@ data class LocalAliyunConfig(
     val listenerId: String,
     val domain: String,
     val pk: String,
+    val cdnCert: String,
+    val cdnPrivateKey: String,
+    val cdnDomain: String,
 ) {
 }

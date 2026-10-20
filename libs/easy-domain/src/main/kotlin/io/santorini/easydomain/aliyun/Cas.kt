@@ -2,12 +2,12 @@ package io.santorini.easydomain.aliyun
 
 import com.aliyun.sdk.service.alb20200616.models.ListListenerCertificatesResponseBody
 import com.aliyun.sdk.service.cas20200407.AsyncClient
-import com.aliyun.sdk.service.cas20200407.models.GetUserCertificateDetailRequest
-import com.aliyun.sdk.service.cas20200407.models.GetUserCertificateDetailResponseBody
-import com.aliyun.sdk.service.cas20200407.models.ListUserCertificateOrderRequest
-import com.aliyun.sdk.service.cas20200407.models.ListUserCertificateOrderResponseBody
+import com.aliyun.sdk.service.cas20200407.models.*
+import io.github.oshai.kotlinlogging.KotlinLogging
+import io.santorini.easydomain.certificateSha1Fingerprint
 import kotlinx.coroutines.future.await
 
+private val logger = KotlinLogging.logger {}
 
 fun ListListenerCertificatesResponseBody.Certificates.toUserCertificateDetailRequest(): GetUserCertificateDetailRequest {
     return GetUserCertificateDetailRequest.builder()
@@ -41,5 +41,34 @@ suspend fun AsyncClient.listAllUserCertificateOrder(builder: ListUserCertificate
         if (rs.certificateOrderList.size < rs.showSize) {
             return list
         }
+    }
+}
+
+suspend fun AsyncClient.uploadUserCertificateIfNotExist(name: String, certPem: String, privateKeyPem: String): Long {
+    val fingerprint = certificateSha1Fingerprint(certPem)
+
+    val casCurrent = listAllUserCertificateOrder(
+        ListUserCertificateOrderRequest.builder()
+            .orderType("CERT")
+    )
+
+    return casCurrent.find {
+        it.fingerprint.equals(fingerprint, ignoreCase = true)
+    }?.certificateId ?: run {
+        logger.debug { "目前没有适配的证书，上传之" }
+
+        val result = uploadUserCertificate(
+            UploadUserCertificateRequest.builder()
+                .name(name)
+                .cert(certPem)
+                .key(privateKeyPem)
+                .clientToken("upload-$name")
+                .build()
+        ).await().body
+
+        logger.info {
+            "cas上传证书: ${result.requestId} ${result.certId}"
+        }
+        result.certId
     }
 }

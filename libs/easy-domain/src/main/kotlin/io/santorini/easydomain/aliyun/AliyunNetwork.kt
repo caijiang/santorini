@@ -86,7 +86,7 @@ fun aliyunNetworkOf(regionId: String?, networkType: String?): AliyunNetwork = Al
  * `cas.aliyuncs.com` 是不带 region 的，我们抄一份表迟早抄错。
  *
  * ALB 的 VPC 接入点不在这里，它由 SDK 的 `endpointType` 机制算出来（理由见
- * [io.santorini.easydomain.CasCertificateUploader]）。
+ * [io.santorini.easydomain.AliCertificateUploader]）。
  */
 fun casVpcEndpoint(region: String): String = "cas-vpc.$region.aliyuncs.com"
 

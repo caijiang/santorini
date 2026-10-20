@@ -8,8 +8,8 @@ import com.aliyun.sdk.service.alb20200616.AsyncClient
 import com.aliyun.sdk.service.alb20200616.models.AssociateAdditionalCertificatesWithListenerRequest
 import com.aliyun.sdk.service.alb20200616.models.GetListenerAttributeRequest
 import com.aliyun.sdk.service.alb20200616.models.ListListenerCertificatesRequest
-import com.aliyun.sdk.service.cas20200407.models.ListUserCertificateOrderRequest
-import com.aliyun.sdk.service.cas20200407.models.UploadUserCertificateRequest
+import com.aliyun.sdk.service.cas20200407.models.GetUserCertificateDetailRequest
+import com.aliyun.sdk.service.cdn20180510.models.DescribeDomainCertificateInfoRequest
 import darabonba.core.EndpointType
 import darabonba.core.client.ClientOverrideConfiguration
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -27,24 +27,35 @@ private val logger = KotlinLogging.logger {}
  * ALB 自身不保存证书文件：第三方证书必须先上传到数字证书管理服务（CAS，cas 2020-04-07
  * 的 UploadUserCertificate），ALB 再从证书池引用——这是 ALB 官方唯一路径。
  */
-interface AlbCertificateUploader : Closeable {
+interface CertificateUploader : Closeable {
     /**
      * @param domain 证书绑定的域名
      * @return 该域名已上传证书的指纹集合（SHA-256，大写 HEX，无分隔符）
      */
-    suspend fun listUploadedFingerprints(domain: String): Set<String>
+    suspend fun listUploadedFingerprints(domain: String, dest: CertificateDest): Set<String>
 
     /**
      * 上传一张证书到证书池
      *
      * @return CAS 侧的证书 ID
      */
-    suspend fun upload(name: String, certPem: String, privateKeyPem: String): Long
+    suspend fun upload(
+        name: String,
+        certPem: String,
+        privateKeyPem: String,
+        domain: String,
+        dest: CertificateDest
+    ): Long
 
     /**
      * @return 获取 alb-id
      */
     suspend fun loadBalancerId(): String?
+
+    /**
+     * @return 获取cdn的域名的 cname 列表
+     */
+    suspend fun cdnDomainCNames(): List<Pair<String, String>>
 }
 
 /**
@@ -59,8 +70,11 @@ interface AlbCertificateUploader : Closeable {
  * - https://next.api.aliyun.com/api/cas/2020-04-07/ListUserCertificateOrder
  * - https://next.api.aliyun.com/api/cas/2020-04-07/UploadUserCertificate
  * - https://next.api.aliyun.com/document/Alb/2020-06-16/AssociateAdditionalCertificatesWithListener
+ * - https://api.aliyun.com/api/Cdn/2018-05-10/DescribeUserDomains?spm=a2c4g.11186623.0.0.5d9511bcByL8iV&RegionId=cn-hangzhou&tab=DEBUG
+ * - https://api.aliyun.com/api/Cdn/2018-05-10/SetCdnDomainSSLCertificate?tab=DOC
+ * - https://api.aliyun.com/api/Cdn/2018-05-10/DescribeDomainCertificateInfo
  */
-class CasCertificateUploader(
+class AliCertificateUploader(
     accessKeyId: String,
     accessKeySecret: String,
     private val region: String,
@@ -72,7 +86,7 @@ class CasCertificateUploader(
      * 选错是连不上，不是慢——所以这个值不接受"猜"，只接受探测结果或显式配置。
      */
     private val networkKind: AliyunNetworkKind = AliyunNetworkKind.PUBLIC,
-) : AlbCertificateUploader, Closeable {
+) : CertificateUploader, Closeable {
 
     private val provider = DefaultCredentialProvider.builder()
         .addCustomizeProviders(
@@ -122,7 +136,37 @@ class CasCertificateUploader(
         builder.build()
     }
 
-    override suspend fun listUploadedFingerprints(domain: String): Set<String> {
+    private val cdnClient by lazy {
+        val builder = com.aliyun.sdk.service.cdn20180510.AsyncClient.builder()
+            .region(region)
+            .credentialsProvider(provider)
+        if (vpc) {
+            // 交给 SDK 按官方规则拼 `alb-vpc.<region>.aliyuncs.com`：
+            // 它自带 endpointMap 例外（如华东 1 金融云 cn-hangzhou-finance 没有 VPC 接入点，
+            // 会退回公网），比我们自己抄一份表可靠。
+            builder.overrideConfiguration(
+                ClientOverrideConfiguration.create().setEndpointType(EndpointType.VPC)
+            )
+        }
+        builder.build()
+    }
+
+    override suspend fun listUploadedFingerprints(domain: String, dest: CertificateDest): Set<String> {
+        if (dest == CertificateDest.CDN) {
+            val certsInCdn = cdnClient.describeDomainCertificateInfo(
+                DescribeDomainCertificateInfoRequest.builder()
+                    .domainName(domain)
+                    .build()
+            ).await().body?.certInfos?.certInfo
+            logger.debug { "CDN $domain 上证书${certsInCdn?.size}张证书" }
+            return certsInCdn?.mapNotNull {
+                casClient.getUserCertificateDetail(
+                    GetUserCertificateDetailRequest.builder()
+                        .certId(it.certId.toLong())
+                        .build()
+                ).await().body?.fingerprint
+            }?.toSet() ?: emptySet()
+        }
         // 要确保即在 alb 也在 cas
         val certsInAlb = albClient.listAllListenerCertificates(
             ListListenerCertificatesRequest.builder()
@@ -142,53 +186,42 @@ class CasCertificateUploader(
         }.toSet()
     }
 
-    override suspend fun upload(name: String, certPem: String, privateKeyPem: String): Long {
+    override suspend fun upload(
+        name: String,
+        certPem: String,
+        privateKeyPem: String,
+        domain: String,
+        dest: CertificateDest
+    ): Long {
         // 上传要稍微复杂一些, 先在 cas 上过一道(幂等),然后再在 alb 上过一道.
-        val fingerprint = certificateSha1Fingerprint(certPem)
-
-        val casCurrent = casClient.listAllUserCertificateOrder(
-            ListUserCertificateOrderRequest.builder()
-                .orderType("CERT")
-        )
-
-        val id = casCurrent.find {
-            it.fingerprint.equals(fingerprint, ignoreCase = true)
-        }?.certificateId ?: run {
-            logger.debug { "目前没有适配的证书，上传之" }
-
-            val result = casClient.uploadUserCertificate(
-                UploadUserCertificateRequest.builder()
-                    .name(name)
-                    .cert(certPem)
-                    .key(privateKeyPem)
-                    .clientToken("upload-$name")
-                    .build()
-            ).await().body
-
-            logger.info {
-                "cas上传证书: ${result.requestId} ${result.certId}"
-            }
-            result.certId
-        }
-
+        val id = casClient.uploadUserCertificateIfNotExist(name, certPem, privateKeyPem)
         logger.debug { "计划分配证书${id}" }
 
-        val result = albClient.associateAdditionalCertificatesWithListener(
-            AssociateAdditionalCertificatesWithListenerRequest.builder()
-                .listenerId(listenerId)
-                .certificates(
-                    listOf(
-                        AssociateAdditionalCertificatesWithListenerRequest.Certificates.builder()
-                            .certificateId("$id-$region")
-                            .build()
-                    )
-                )
-                .build()
-        ).await()
+        when (dest) {
+            CertificateDest.CDN -> {
+                cdnClient.setCdnDomainSSLCertificateIfAbsent(domain, region, id)
+            }
 
-        logger.info {
-            "ALB分配证书结果:${result.body.requestId} ${result.body.jobId}"
+            CertificateDest.ALB -> {
+                val result = albClient.associateAdditionalCertificatesWithListener(
+                    AssociateAdditionalCertificatesWithListenerRequest.builder()
+                        .listenerId(listenerId)
+                        .certificates(
+                            listOf(
+                                AssociateAdditionalCertificatesWithListenerRequest.Certificates.builder()
+                                    .certificateId("$id-$region")
+                                    .build()
+                            )
+                        )
+                        .build()
+                ).await()
+
+                logger.info {
+                    "ALB分配证书结果:${result.body.requestId} ${result.body.jobId}"
+                }
+            }
         }
+
 
         return id
     }
@@ -201,9 +234,16 @@ class CasCertificateUploader(
         ).await()?.body?.loadBalancerId
     }
 
+    override suspend fun cdnDomainCNames(): List<Pair<String, String>> {
+        return cdnClient.describeAllUserDomains().map {
+            Pair(it.domainName, it.cname)
+        }
+    }
+
     override fun close() {
         albClient.close()
         casClient.close()
+        cdnClient.close()
     }
 }
 

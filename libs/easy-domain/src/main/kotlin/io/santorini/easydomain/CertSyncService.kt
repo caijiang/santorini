@@ -38,47 +38,51 @@ interface CertSyncService : Closeable {
 class CertSyncServiceImpl(
     private val kubernetesClientService: KubernetesClientService,
     private val matcher: DnsScopeMatcher,
-    private val uploader: AlbCertificateUploader,
+    private val uploader: CertificateUploader,
+    private val resolver: DnsResolver = SystemDnsResolver
 ) : CertSyncService {
 
     override suspend fun syncEligibleCerts(): CertSyncReport = withContext(Dispatchers.IO) {
-        val candidates = eligibleHosts()
+        val cdnCNames = uploader.cdnDomainCNames()
+        val candidates = eligibleHosts(cdnCNames)
 
         if (candidates.isEmpty()) {
             return@withContext CertSyncReport(emptyList(), emptyList(), emptyMap())
         }
-        logger.info { "证书同步候选：${candidates.map { "${it.namespace}/${it.hostname}" }}" }
+        logger.info { "证书同步候选ALB：${(candidates[CertificateDest.ALB] ?: emptyList()).map { "${it.namespace}/${it.hostname}" }}" }
+        logger.info { "证书同步候选CDN：${(candidates[CertificateDest.CDN] ?: emptyList()).map { "${it.namespace}/${it.hostname}" }}" }
 
         val synced = mutableListOf<String>()
         val skipped = mutableListOf<String>()
         val failed = mutableMapOf<String, String>()
 
-        for (host in candidates) {
-            val domain = host.hostname
-            val namespace = host.namespace!!
-            val secretName = host.secretName!!
-            try {
-                val data = kubernetesClientService.readStringSecret(namespace, secretName)
-                val certPem = data?.get("tls.crt")
-                val keyPem = data?.get("tls.key")
-                if (certPem.isNullOrBlank() || keyPem.isNullOrBlank()) {
-                    failed[domain] = "secret $namespace/$secretName 缺少 tls.crt/tls.key"
-                    continue
-                }
+        for ((key, value) in candidates) {
+            for ((domain, _, secretName1, namespace1) in value) {
+                val namespace = namespace1!!
+                val secretName = secretName1!!
+                try {
+                    val data = kubernetesClientService.readStringSecret(namespace, secretName)
+                    val certPem = data?.get("tls.crt")
+                    val keyPem = data?.get("tls.key")
+                    if (certPem.isNullOrBlank() || keyPem.isNullOrBlank()) {
+                        failed[domain] = "secret $namespace/$secretName 缺少 tls.crt/tls.key"
+                        continue
+                    }
 
-                val fingerprint = certificateSha1Fingerprint(certPem)
-                val existing = uploader.listUploadedFingerprints(domain)
-                if (fingerprint in existing) {
-                    logger.debug { "证书 $domain 已在证书池（指纹相同），跳过" }
-                    skipped.add(domain)
-                    continue
-                }
+                    val fingerprint = certificateSha1Fingerprint(certPem)
+                    val existing = uploader.listUploadedFingerprints(domain, key)
+                    if (fingerprint in existing) {
+                        logger.debug { "证书 $domain 已在证书池（指纹相同），跳过" }
+                        skipped.add(domain)
+                        continue
+                    }
 
-                uploader.upload(certificateName(secretName, fingerprint), certPem, keyPem)
-                synced.add(domain)
-            } catch (e: Exception) {
-                logger.error(e) { "同步 $namespace/$domain 的证书失败" }
-                failed[domain] = e.message ?: e.javaClass.simpleName
+                    uploader.upload(certificateName(secretName, fingerprint), certPem, keyPem, domain, key)
+                    synced.add(domain)
+                } catch (e: Exception) {
+                    logger.error(e) { "同步 $namespace/$domain 的证书失败" }
+                    failed[domain] = e.message ?: e.javaClass.simpleName
+                }
             }
         }
 
@@ -92,7 +96,7 @@ class CertSyncServiceImpl(
      * 一个 hostname 在集群里只会被一个 ingress 生效，上传两张不同的证书进同一个域名，
      * 只会让 ALB 侧变成随机命中。冲突必须告警而不是各传一份。
      */
-    private fun eligibleHosts(): List<HostData> {
+    private fun eligibleHosts(cdnCNames: List<Pair<String, String>>): Map<CertificateDest, List<HostData>> {
         val parsed = kubernetesClientService.readIngressHostFromAllNamespaces()
             // 没有证书的不参与同步
             .filter { it.issuerName != null && it.secretName != null }
@@ -110,13 +114,20 @@ class CertSyncServiceImpl(
             }
         }
 
-        return parsed
+        val allHosts = parsed
             .groupBy { it.hostname }
             .map { (_, hosts) ->
                 hosts.sortedWith(compareBy({ it.namespace }, { it.secretName })).first()
             }
-            // DNS 必须解析到预设范围
-            .filter { matcher.matches(it.hostname) }
+        val byMatcher = allHosts.groupBy {
+            matcher.matches(it.hostname)
+        }
+        return mapOf(
+            CertificateDest.ALB to (byMatcher[true] ?: emptyList()),
+            CertificateDest.CDN to (byMatcher[false] ?: emptyList()).filter { host ->
+                cdnCNames.any { it.second == resolver.resolveCname(host.hostname) && it.first == host.hostname }
+            },
+        )
     }
 
     /**

@@ -25,9 +25,10 @@ dependencies {
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.server.content.negotiation)
-    implementation("org.bouncycastle:bcprov-jdk18on:1.84")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.86")
     implementation(libs.aliyun.cas)
     implementation(libs.aliyun.alb)
+    implementation(libs.aliyun.cdn)
 
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)

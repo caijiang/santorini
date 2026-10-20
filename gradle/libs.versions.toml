@@ -28,6 +28,7 @@ fabric8-kubernetes-httpclient-jdk = { module = "io.fabric8:kubernetes-httpclient
 
 aliyun-cas = { module = "com.aliyun:alibabacloud-cas20200407", version = "3.0.27" }
 aliyun-alb = { module = "com.aliyun:alibabacloud-alb20200616", version = "1.0.24" }
+aliyun-cdn = { module = "com.aliyun:alibabacloud-cdn20180510", version = "8.0.2" }
 
 kotlin-kotlinLogging = { module = "io.github.oshai:kotlin-logging", version = "7.0.13" }
 
