@@ -167,9 +167,11 @@ class AliCertificateUploader(
             ).await().body?.certInfos?.certInfo
             logger.debug { "CDN $domain 上证书${certsInCdn?.size}张证书" }
             return certsInCdn?.mapNotNull {
+                it?.certId?.toLongOrNull()
+            }?.mapNotNull {
                 casClient.getUserCertificateDetail(
                     GetUserCertificateDetailRequest.builder()
-                        .certId(it.certId.toLong())
+                        .certId(it)
                         .build()
                 ).await().body?.fingerprint
             }?.toSet() ?: emptySet()
