@@ -34,6 +34,12 @@ ALB 与 CAS 两个 client 都会自己挑接入点：能读到时从实例元数
 "同 region"这个条件不能省：VPC 接入点是 **地域级**的，杭州的 VPC 接入点从上海的 VPC 里
 根本解析不出来——选错是连不上，不是慢一点。
 
+CDN 是特例：官方只在上海（`cn-shanghai`）、上海金融云、深圳金融云提供
+`cdn.vpc-proxy.aliyuncs.com`—— **不带 region 的中央代理**；其余地域（包括杭州、北京、深圳）
+根本没有 VPC 接入点，进程即使在 VPC 内也只能走 `cdn.aliyuncs.com`。
+SDK 的 `endpointType=vpc` 对 CDN **不能用**：它的 endpointRule 是 `central`，
+会拼出不存在的 `cdn-vpc.aliyuncs.com`，所以这里必须显式 override，且查表回退。
+
 元数据服务（`100.100.100.200`）读不到时（本机调试、非阿里云集群、被 NetworkPolicy 挡住）
 退回公网并在日志里留一条 INFO。要强制指定就设 `EASY_DOMAIN_ALIYUN_NETWORK=vpc|public`，
 默认 `auto`（即探测）；配了不认识的值会直接启动失败，避免静默跑到错接入点上。

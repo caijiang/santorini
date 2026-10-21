@@ -61,8 +61,9 @@ interface CertificateUploader : Closeable {
 /**
  * 基于官方 SDK [com.aliyun] 的实现。
  *
- * ALB 与 CAS 两个 client 都按 [networkKind] 选接入点（`alb-vpc.*` / `cas-vpc.*` 或各自的公网接入点），
- * 且两者的实现机制不同，原因写在两处 `by lazy` 的注释里。
+ * ALB / CAS / CDN 三个 client 都按 [networkKind] 选接入点，但机制各不相同
+ * （ALB 用 `endpointType`，CAS 与 CDN 必须显式 override，且 CDN 只有部分地域有内网接入点），
+ * 原因写在三处 `by lazy` 的注释里。
  *
  * 关联 api有:
  * - https://next.api.aliyun.com/document/Alb/2020-06-16/ListListenerCertificates
@@ -141,12 +142,18 @@ class AliCertificateUploader(
             .region(region)
             .credentialsProvider(provider)
         if (vpc) {
-            // 交给 SDK 按官方规则拼 `alb-vpc.<region>.aliyuncs.com`：
-            // 它自带 endpointMap 例外（如华东 1 金融云 cn-hangzhou-finance 没有 VPC 接入点，
-            // 会退回公网），比我们自己抄一份表可靠。
-            builder.overrideConfiguration(
-                ClientOverrideConfiguration.create().setEndpointType(EndpointType.VPC)
-            )
+            // 不能设 endpointType=VPC：CDN 的 endpointRule 是 `central`，SDK 会拼出
+            // `cdn-vpc.aliyuncs.com`（没有 region，这个域名也不存在）。
+            // 它唯一的内网接入点是 `cdn.vpc-proxy.aliyuncs.com`，且只有部分地域开放；
+            // 不支持的地域只能回退公网，硬指过去就是连不上。
+            val endpoint = cdnVpcEndpoint(region)
+            if (endpoint == null) {
+                logger.info { "region=$region 没有 CDN VPC 接入点，CDN 客户端走公网 cdn.aliyuncs.com" }
+            } else {
+                builder.overrideConfiguration(
+                    ClientOverrideConfiguration.create().setEndpointOverride(endpoint)
+                )
+            }
         }
         builder.build()
     }

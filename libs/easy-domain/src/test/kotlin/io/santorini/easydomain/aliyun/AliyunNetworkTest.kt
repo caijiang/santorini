@@ -56,4 +56,21 @@ class AliyunNetworkTest {
         assertEquals("cas-vpc.cn-hangzhou.aliyuncs.com", casVpcEndpoint("cn-hangzhou"))
         assertEquals("cas-vpc.ap-southeast-1.aliyuncs.com", casVpcEndpoint("ap-southeast-1"))
     }
+
+    @Test
+    fun `CDN 的 VPC 接入点是不带 region 的中央代理`() {
+        // 官方表：华东2（上海）与两个金融云地域才有 VPC 接入
+        assertEquals("cdn.vpc-proxy.aliyuncs.com", cdnVpcEndpoint("cn-shanghai"))
+        assertEquals("cdn.vpc-proxy.aliyuncs.com", cdnVpcEndpoint(" cn-shanghai-finance-1 "))
+        assertEquals("cdn.vpc-proxy.aliyuncs.com", cdnVpcEndpoint("cn-shenzhen-finance-1"))
+    }
+
+    @Test
+    fun `CDN 在杭州等地域没有 VPC 接入点，必须回退公网`() {
+        // 设成 cdn-vpc.cn-hangzhou.aliyuncs.com 这类"看起来合理"的地址是连不上的
+        assertNull(cdnVpcEndpoint("cn-hangzhou"))
+        assertNull(cdnVpcEndpoint("cn-beijing"))
+        assertNull(cdnVpcEndpoint("cn-shenzhen"))
+        assertNull(cdnVpcEndpoint("ap-southeast-1"))
+    }
 }

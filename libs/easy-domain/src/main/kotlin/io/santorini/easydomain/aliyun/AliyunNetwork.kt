@@ -18,6 +18,9 @@ private val logger = KotlinLogging.logger {}
  * 能解析、能连通，走它不消耗公网带宽、也不受公网链路抖动影响。
  *
  * 注意这不是"快一点/慢一点"的选择：选错是**直接连不上**，所以不能拍脑袋猜。
+ *
+ * 例外：CDN 的内网接入点是不带 region 的中央代理，且只对部分地区开放，
+ * 见 [cdnVpcEndpoint]。
  */
 enum class AliyunNetworkKind {
     PUBLIC,
@@ -89,6 +92,36 @@ fun aliyunNetworkOf(regionId: String?, networkType: String?): AliyunNetwork = Al
  * [io.santorini.easydomain.AliCertificateUploader]）。
  */
 fun casVpcEndpoint(region: String): String = "cas-vpc.$region.aliyuncs.com"
+
+/** CDN 唯一的 VPC 接入点：中央代理，不带 region */
+private const val CDN_VPC_ENDPOINT = "cdn.vpc-proxy.aliyuncs.com"
+
+/**
+ * 官方「服务接入点」表里开放了 CDN VPC 接入的地域。
+ *
+ * 杭州、北京、深圳（普通地域）都**没有** VPC 接入点，只能走公网；
+ * 深圳只有金融云地域有。
+ */
+private val CDN_VPC_REGIONS = setOf(
+    "cn-shanghai",
+    "cn-shanghai-finance-1",
+    "cn-shenzhen-finance-1",
+)
+
+/**
+ * CDN 的 VPC 接入点。
+ *
+ * 与 ALB / CAS 都不同：它是一个**不带 region 的中央代理** `cdn.vpc-proxy.aliyuncs.com`，
+ * 且只对 [CDN_VPC_REGIONS] 里的地域开放。
+ *
+ * 更不能交给 SDK 的 `EndpointType.VPC`：CDN 的 `endpointRule` 是 `central`，
+ * 拼出来是 `cdn-vpc.aliyuncs.com`——既没有 region，这个域名也不存在，请求直接 NXDOMAIN。
+ *
+ * @return 该 region 可用的 VPC 接入点；不支持时返回 null，调用方**回退公网**而不是硬上
+ * @see <a href="https://help.aliyun.com/zh/cdn/developer-reference/api-cdn-2018-05-10-endpoint">CDN 服务接入点</a>
+ */
+fun cdnVpcEndpoint(region: String): String? =
+    if (region.trim().lowercase() in CDN_VPC_REGIONS) CDN_VPC_ENDPOINT else null
 
 /**
  * 探测进程所在的阿里云网络环境。
